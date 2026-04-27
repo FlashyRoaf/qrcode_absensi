@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->boolean('is_admin')->default(false);
             $table->string('role')->nullable();
+            $table->timestamp('admin_assigned_at')->nullable();
             // $table->string('shift');
             // $table->string('division');
             //

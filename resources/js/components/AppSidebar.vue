@@ -16,6 +16,24 @@ const mainNavItems: NavItem[] = [
     },
 ];
 
+const AdminNavItems: NavItem[] = [
+    {
+        title: 'User Management',
+        href: '/admin/users',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Attendance',
+        href: '/admin/attendance',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Weekly Report',
+        href: '/admin/weekly-report',
+        icon: LayoutGrid,
+    },
+];
+
 const footerNavItems: NavItem[] = [
     {
         title: 'Github Repo',
@@ -46,6 +64,7 @@ const footerNavItems: NavItem[] = [
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
+            <NavMain :items="AdminNavItems" label="Admin"/>
         </SidebarContent>
 
         <SidebarFooter>

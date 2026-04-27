@@ -21,6 +21,15 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'is_admin',
+        'role',
+        'admin_assigned_at',
+    ];
+
+    protected $casts = [
+        'is_admin' => 'boolean',
+        'admin_assigned_at' => 'datetime',
+
     ];
 
     /**

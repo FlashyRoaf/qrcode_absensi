@@ -15,7 +15,7 @@ class AttendanceSeeder extends Seeder
     public function run(): void
     {
         //
-        Attendance::factory()->count(50)->create();
+        Attendance::factory()->count(75)->create();
         // $users = User::all();
 
         // foreach ($users as $user) {
