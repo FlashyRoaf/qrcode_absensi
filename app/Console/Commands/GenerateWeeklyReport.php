@@ -15,7 +15,7 @@ class GenerateWeeklyReport extends Command
      *
      * @var string
      */
-    protected $signature = 'app:generate-weekly-report {--week-end= : Tanggal Sabtu akhir minggu (Y-m-d)}';
+    protected $signature = 'app:generate-weekly-report {--week-start= : Tanggal Senin akhir minggu (Y-m-d)}';
 
     /**
      * The console command description.
@@ -34,17 +34,17 @@ class GenerateWeeklyReport extends Command
         $this->newLine();
 
         $today = Carbon::now();
-        $lastSaturday = $today->copy()->subDay();
+        // $lastSaturday = $today->copy()->subDay();
 
         // Tentukan minggu yang akan di-generate
-        if ($this->option('week-end')) {
+        if ($this->option('week-start')) {
             // Manual: dari parameter
-            $weekEnd = Carbon::parse($this->option('week-end'))->endOfDay();
-            $weekStart = $weekEnd->copy()->startOfWeek(1);
+            $weekStart = Carbon::parse($this->option('week-start'))->startOfDay();
+            $weekEnd = $weekStart->copy()->endOfWeek(6);
         } else {
             // Auto: minggu lalu (Senin - Minggu)
-            $weekStart = $lastSaturday->copy()->startOfWeek(1);
-            $weekEnd = $lastSaturday->copy()->endOfDay();
+            $weekStart = $today->copy()->subWeek()->startOfWeek(1);
+            $weekEnd = $today->copy()->subWeek()->endOfWeek(6);
         }
 
 

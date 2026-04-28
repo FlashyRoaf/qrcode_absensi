@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\WeeklyReportController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -21,6 +22,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/admin/users', [UserController::class, 'store'])->name('users.store');
     Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+    Route::get('/admin/weekly-report', [WeeklyReportController::class, 'show'])->middleware('admin')->name('weekly-reports');
 });
 
 require __DIR__.'/settings.php';

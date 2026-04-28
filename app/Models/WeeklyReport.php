@@ -13,4 +13,9 @@ class WeeklyReport extends Model
         'total_minutes',
         'status',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
