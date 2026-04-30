@@ -62,9 +62,11 @@ class AttendanceController extends Controller
             ]);
         }
 
-        // if (Carbon::now()->isSunday()) {
-        //     abort(403, 'Hari Minggu tidak diperbolehkan untuk melakukan absensi');
-        // }        
+        if (Carbon::now()->isSunday()) {
+            return Inertia::render('qrcode/scanned', [
+                'message' => 'Hari Minggu tidak diperbolehkan untuk melakukan absensi.',
+            ]);
+        }        
 
         if ($qrCode->type === 'check_in') {
             // if ($attendance && $attendance->check_in) {

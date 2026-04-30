@@ -1,100 +1,9 @@
-<template>
-  <Head title="Absensi QR Code | 25-ji, Nightcord de." />
-  <div class="attendance-container">
-    <!-- Animated particles background -->
-    <div class="particles">
-      <div v-for="particle in particles" :key="particle.id" class="particle" :style="{
-        width: particle.size + 'px',
-        height: particle.size + 'px',
-        left: particle.left + '%',
-        top: particle.top + '%',
-        animationDelay: particle.delay + 's',
-        animationDuration: particle.duration + 's'
-      }"></div>
-    </div>
-
-    <!-- Navigation -->
-    <!-- <NavBar /> -->
-
-    <!-- Main content -->
-    <main class="main-content">
-      <!-- Header Section -->
-      <section class="header-section fade-in">
-        <div class="header-content">
-          <div class="icon-container">
-            <QrCode class="header-icon" />
-          </div>
-          <h1>Absensi Digital</h1>
-          <p class="subtitle">Scan QR Code untuk melakukan absensi kehadiran</p>
-        </div>
-      </section>
-
-      <!-- QR Code Section -->
-      <section class="qr-section fade-in">
-        <div class="qr-container">
-          <!-- QR Code Display -->
-          <div class="qr-wrapper">
-            <div class="qr-frame">
-              <div class="qr-corners">
-                <div class="corner top-left"></div>
-                <div class="corner top-right"></div>
-                <div class="corner bottom-left"></div>
-                <div class="corner bottom-right"></div>
-              </div>
-              
-              <div v-html="qrCode">
-              </div>
-                
-              <!-- Scanning animation overlay -->
-              <div class="scan-line" :class="{ 'scanning': isScanning }"></div>
-            </div>
-            
-            <!-- QR Code Info -->
-            <div v-if="qrCode" class="qr-info">
-              <!-- <h3>{{ attendanceData.sessionName }}</h3> -->
-              <p class="session-time">{{ formatTime(attendanceData.timestamp) }}</p>
-              <p class="session-id">ID Sesi: {{ attendanceData.sessionId }}</p>
-              <p v-html="expires_at"></p>
-            </div>
-          </div>
-
-          <!-- Instructions -->
-          <form @submit.prevent="submit" class="instructions">
-            <div class="instruction-item">
-              <div class="step-number">1</div>
-              <div class="step-content">
-                <h4>Pilih tipe</h4>
-                <!-- <select v-model="form.shift" required class="select-option" > -->
-                <select v-model="form.type" required class="select-option" >
-                  <!-- <option v-for="shift in shifts" :key="shift.id" :value="shift.name">{{ shift.name }}</option> -->
-                  <option value="check_in">Check In</option>
-                  <option value="check_out">Check Out</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- <div class="instruction-item">
-              <div class="step-number">2</div>
-              <div class="step-content">
-                <h4>Pilih Divisi</h4>
-                <select v-model="form.division" required class="select-option">
-                  <option v-for="division in divisions" :key="division.id" :value="division.name">{{ division.name }}</option>
-                </select>
-              </div>
-            </div> -->
-
-            <button type="submit" class="submit" :disabled="form.processing">Buat QrCode</button>
-          </form>
-        </div>
-      </section>
-    </main>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref, onMounted, onUnmounted } from 'vue';
-import { QrCode } from 'lucide-vue-next';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { QrCode, Clock, LogIn, LogOut, RefreshCw, AlertCircle } from 'lucide-vue-next';
+
+// ─── INTERFACES (tidak diubah) ───────────────────────────────────────────────
 
 interface Particle {
   id: number;
@@ -107,9 +16,7 @@ interface Particle {
 
 interface AttendanceData {
   sessionId: string;
-  // sessionName: string;
   timestamp: Date;
-  // qrData: string;
 }
 
 interface Props {
@@ -117,6 +24,7 @@ interface Props {
   expires_at?: String,
 }
 
+// ─── BACKEND (tidak diubah) ──────────────────────────────────────────────────
 
 const form = useForm({
   type: '',
@@ -124,31 +32,17 @@ const form = useForm({
 });
 
 const props = defineProps<Props>();
-// const expireTime = ref(0);
 const particles = ref<Particle[]>([]);
 const isScanning = ref(false);
 
-// const calculateRemaining = () => {
-//   if (!props.expires_at) return;
-  
-//   const now = new Date().getTime()
-//   const expire = new Date(props.expires_at).getTime()
-//   expireTime.value = Math.max(0, Math.floor((expire - now) / 1000))
-// }
-
-// Attendance data
 const attendanceData = ref<AttendanceData>({
   sessionId: 'N25-' + Date.now().toString(36),
-  // sessionName: 'Latihan Malam N25',
   timestamp: new Date(),
-  // qrData: ''
 });
 
-// Methods
 const createParticles = () => {
   const particleCount = 25;
   const newParticles = [];
-
   for (let i = 0; i < particleCount; i++) {
     const particle: Particle = {
       id: i,
@@ -183,9 +77,7 @@ const formatTime = (date: Date): string => {
 const submit = () => {
   form.post(route('qrcode.create'), {
     onSuccess: () => {
-      // Reset form after successful submission
       form.reset();
-      // Optionally, you can show a success message or redirect
       console.log('QR Code created successfully');
     },
     onError: (errors) => {
@@ -194,240 +86,367 @@ const submit = () => {
   });
 }
 
-// Lifecycle hooks
+// ─── COUNTDOWN & AUTO-REFRESH (tambahan UI) ──────────────────────────────────
+
+const remainingSeconds = ref(0)
+const isExpired = ref(false)
+let countdownInterval: ReturnType<typeof setInterval> | null = null
+
+const remainingMinutes = computed(() => Math.floor(remainingSeconds.value / 60))
+const remainingSecondsOnly = computed(() => remainingSeconds.value % 60)
+
+const countdownDisplay = computed(() => {
+  const m = String(remainingMinutes.value).padStart(2, '0')
+  const s = String(remainingSecondsOnly.value).padStart(2, '0')
+  return `${m}:${s}`
+})
+
+const urgencyLevel = computed(() => {
+  if (remainingSeconds.value <= 30) return 'critical'
+  if (remainingSeconds.value <= 60) return 'warning'
+  return 'normal'
+})
+
+const startCountdown = () => {
+  if (!props.expires_at) return
+
+  if (countdownInterval) clearInterval(countdownInterval)
+
+  const tick = () => {
+    const now = new Date().getTime()
+    const expire = new Date(props.expires_at as string).getTime()
+    const diff = Math.max(0, Math.floor((expire - now) / 1000))
+    remainingSeconds.value = diff
+
+    if (diff <= 0) {
+      isExpired.value = true
+      if (countdownInterval) clearInterval(countdownInterval)
+      // Auto-refresh halaman saat expired
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
+    }
+  }
+
+  tick()
+  countdownInterval = setInterval(tick, 1000)
+}
+
+watch(() => props.expires_at, (newVal) => {
+  if (newVal) {
+    isExpired.value = false
+    startCountdown()
+  }
+})
+
 onMounted(() => {
   createParticles();
-  
-  // Start scanning animation every 10 seconds
+
   const scanInterval = setInterval(startScanning, 10000);
+  console.log(props.expires_at)
+
+  if (props.expires_at) {
+    startCountdown()
+  }
 
   onUnmounted(() => {
     clearInterval(scanInterval);
+    if (countdownInterval) clearInterval(countdownInterval)
   });
 });
 </script>
 
+<template>
+  <Head title="Absensi QR Code" />
+
+  <div class="min-h-screen bg-zinc-950 text-zinc-100 font-sans overflow-x-hidden relative">
+
+    <!-- Subtle grid background -->
+    <div class="fixed inset-0 z-0 pointer-events-none"
+      style="background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 40px 40px;">
+    </div>
+
+    <!-- Glow blob -->
+    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] z-0 pointer-events-none"
+      style="background: radial-gradient(ellipse, rgba(16,185,129,0.06) 0%, transparent 70%);">
+    </div>
+
+    <!-- ── HEADER ── -->
+    <header class="relative z-10 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur">
+      <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 bg-emerald-500 rounded-md flex items-center justify-center">
+            <QrCode class="w-4 h-4 text-black" />
+          </div>
+          <div>
+            <p class="text-xs text-zinc-500 uppercase tracking-widest">Admin Panel</p>
+            <h1 class="text-sm font-bold text-zinc-100 leading-tight">Absensi Digital</h1>
+          </div>
+        </div>
+        <p class="text-xs text-zinc-600 font-mono">{{ formatTime(attendanceData.timestamp) }}</p>
+      </div>
+    </header>
+
+    <!-- ── MAIN ── -->
+    <main class="relative z-10 max-w-5xl mx-auto px-6 py-10">
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+
+        <!-- ── KIRI: QR CODE ── -->
+        <div class="flex flex-col gap-5">
+
+          <!-- QR Frame -->
+          <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col items-center gap-5">
+            <div class="flex items-center justify-between w-full">
+              <p class="text-xs text-zinc-500 uppercase tracking-widest font-mono">QR Code</p>
+              <span
+                v-if="qrCode"
+                class="text-xs px-2 py-0.5 rounded-full font-mono"
+                :class="{
+                  'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20': urgencyLevel === 'normal',
+                  'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20': urgencyLevel === 'warning',
+                  'bg-red-500/10 text-red-400 border border-red-500/20': urgencyLevel === 'critical',
+                }"
+              >
+                {{ isExpired ? 'Expired' : 'Aktif' }}
+              </span>
+            </div>
+
+            <!-- QR Image area -->
+            <div class="relative">
+              <!-- QR Kosong (placeholder) -->
+              <div
+                v-if="!qrCode"
+                class="w-52 h-52 border-2 border-dashed border-zinc-700 rounded-xl flex flex-col items-center justify-center gap-3 text-zinc-600"
+              >
+                <QrCode class="w-12 h-12" />
+                <p class="text-xs text-center px-4">Pilih tipe & buat QR Code</p>
+              </div>
+
+              <!-- QR Ada -->
+              <div v-else class="relative">
+                <!-- Overlay expired -->
+                <div
+                  v-if="isExpired"
+                  class="absolute inset-0 z-10 bg-zinc-950/80 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center gap-2"
+                >
+                  <AlertCircle class="w-8 h-8 text-red-400" />
+                  <p class="text-sm text-red-400 font-semibold">QR Code Expired</p>
+                  <p class="text-xs text-zinc-500">Halaman akan direfresh...</p>
+                  <RefreshCw class="w-4 h-4 text-zinc-500 animate-spin" />
+                </div>
+
+                <!-- QR SVG -->
+                <div
+                  class="bg-white rounded-xl p-3"
+                  :class="{ 'opacity-40': isExpired }"
+                  v-html="qrCode"
+                ></div>
+
+                <!-- Scan line animation -->
+                <div
+                  class="scan-line absolute top-3 left-3 right-3 h-0.5 rounded-full z-10"
+                  :class="{ 'scanning': isScanning && !isExpired }"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Info QR -->
+            <div v-if="qrCode" class="w-full space-y-2">
+              <!-- <div class="flex items-center justify-between text-xs font-mono">
+                <span class="text-zinc-600">Session ID</span>
+                <span v-if="qrCode" class="text-zinc-400">{{ attendanceData.sessionId }}</span>
+              </div> -->
+
+              <!-- Countdown -->
+              <div class="bg-zinc-800/60 border rounded-xl px-4 py-3 flex items-center gap-3 transition-all"
+                :class="{
+                  'border-zinc-700': urgencyLevel === 'normal',
+                  'border-yellow-500/30': urgencyLevel === 'warning',
+                  'border-red-500/30': urgencyLevel === 'critical',
+                }"
+              >
+                <Clock class="w-4 h-4 flex-shrink-0"
+                  :class="{
+                    'text-emerald-400': urgencyLevel === 'normal',
+                    'text-yellow-400': urgencyLevel === 'warning',
+                    'text-red-400': urgencyLevel === 'critical',
+                  }"
+                />
+                <div class="flex-1">
+                  <p class="text-xs text-zinc-500">Berlaku selama</p>
+                  <p class="font-mono font-bold text-lg leading-tight"
+                    :class="{
+                      'text-zinc-200': urgencyLevel === 'normal',
+                      'text-yellow-400': urgencyLevel === 'warning',
+                      'text-red-400': urgencyLevel === 'critical',
+                    }"
+                  >
+                    {{ isExpired ? '00:00' : countdownDisplay }}
+                  </p>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs text-zinc-600">lagi</p>
+                  <p class="text-xs font-mono"
+                    :class="{
+                      'text-zinc-500': urgencyLevel === 'normal',
+                      'text-yellow-500': urgencyLevel === 'warning',
+                      'text-red-500': urgencyLevel === 'critical',
+                    }"
+                  >
+                    {{ isExpired ? 'Expired' : urgencyLevel === 'critical' ? 'Segera expire!' : urgencyLevel === 'warning' ? 'Hampir habis' : 'Tersisa' }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Progress bar countdown -->
+              <div class="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                <div
+                  class="h-full rounded-full transition-all duration-1000"
+                  :class="{
+                    'bg-emerald-500': urgencyLevel === 'normal',
+                    'bg-yellow-500': urgencyLevel === 'warning',
+                    'bg-red-500': urgencyLevel === 'critical',
+                  }"
+                  :style="{ width: isExpired ? '0%' : (remainingSeconds / 300 * 100) + '%' }"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── KANAN: FORM ── -->
+        <div class="flex flex-col gap-5">
+
+          <!-- Title -->
+          <div>
+            <h2 class="text-2xl font-bold text-zinc-100">Buat QR Code</h2>
+            <p class="text-sm text-zinc-500 mt-1">Generate QR Code untuk sesi absensi karyawan</p>
+          </div>
+
+          <!-- Form Card -->
+          <form @submit.prevent="submit" class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col gap-6">
+
+            <!-- Step 1: Pilih Tipe -->
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-xs font-bold text-emerald-400">1</div>
+                <p class="text-sm font-semibold text-zinc-200">Pilih Tipe Absensi</p>
+              </div>
+
+              <!-- Toggle Check In / Check Out -->
+              <div class="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  @click="form.type = 'check_in'"
+                  class="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left"
+                  :class="form.type === 'check_in'
+                    ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                    : 'bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:border-zinc-600'"
+                >
+                  <LogIn class="w-4 h-4 flex-shrink-0" />
+                  <div>
+                    <p class="text-sm font-semibold">Check In</p>
+                    <p class="text-xs opacity-60">Masuk kerja</p>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  @click="form.type = 'check_out'"
+                  class="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left"
+                  :class="form.type === 'check_out'
+                    ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                    : 'bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:border-zinc-600'"
+                >
+                  <LogOut class="w-4 h-4 flex-shrink-0" />
+                  <div>
+                    <p class="text-sm font-semibold">Check Out</p>
+                    <p class="text-xs opacity-60">Selesai kerja</p>
+                  </div>
+                </button>
+              </div>
+
+              <!-- Hidden select untuk form compatibility -->
+              <select v-model="form.type" required class="sr-only" aria-hidden="true">
+                <option value="check_in">Check In</option>
+                <option value="check_out">Check Out</option>
+              </select>
+            </div>
+
+            <!-- Divider -->
+            <div class="border-t border-zinc-800"></div>
+
+            <!-- Info -->
+            <div class="bg-zinc-800/40 rounded-xl px-4 py-3 flex items-start gap-3">
+              <Clock class="w-4 h-4 text-zinc-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p class="text-xs text-zinc-400 font-medium">Durasi QR Code</p>
+                <p class="text-xs text-zinc-600 mt-0.5">QR Code akan aktif selama <span class="text-zinc-400">{{ form.expires_in_minutes }} menit</span> dan otomatis expire setelah waktu habis.</p>
+              </div>
+            </div>
+
+            <!-- Submit -->
+            <button
+              type="submit"
+              :disabled="form.processing || !form.type"
+              class="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all"
+              :class="form.type && !form.processing
+                ? 'bg-emerald-500 hover:bg-emerald-400 text-black cursor-pointer'
+                : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'"
+            >
+              <RefreshCw v-if="form.processing" class="w-4 h-4 animate-spin" />
+              <QrCode v-else class="w-4 h-4" />
+              {{ form.processing ? 'Membuat...' : 'Buat QR Code' }}
+            </button>
+          </form>
+
+          <!-- Cara penggunaan -->
+          <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+            <p class="text-xs text-zinc-500 uppercase tracking-widest font-mono">Cara Penggunaan</p>
+            <div class="space-y-3">
+              <div v-for="(step, i) in [
+                { text: 'Pilih tipe absensi (Check In atau Check Out)' },
+                { text: 'Tekan tombol Buat QR Code' },
+                { text: 'Tampilkan QR Code kepada karyawan untuk di-scan' },
+                { text: 'QR Code otomatis expire dalam 5 menit' },
+              ]" :key="i" class="flex items-start gap-3">
+                <div class="w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs text-zinc-500 flex-shrink-0 mt-0.5">
+                  {{ i + 1 }}
+                </div>
+                <p class="text-xs text-zinc-400 leading-relaxed">{{ step.text }}</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative z-10 border-t border-zinc-800 mt-10">
+      <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+        <p class="text-xs text-zinc-700 font-mono">Absensi Digital · Admin Panel</p>
+        <p class="text-xs text-zinc-700 font-mono">{{ formatTime(new Date()) }}</p>
+      </div>
+    </footer>
+
+  </div>
+</template>
+
 <style scoped>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-.submit {
-  background: linear-gradient(45deg, #9d4edd, #c77dff);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-}
-
-.submit:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(157, 78, 221, 0.4);
-}
-
-.attendance-container {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a0825 50%, #2d1b3d 100%);
-  color: #ffffff;
-  min-height: 100vh;
-  position: relative;
-  overflow-x: hidden;
-}
-
-/* Animated background particles */
-.particles {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.particle {
+.sr-only {
   position: absolute;
-  background: #9d4edd;
-  border-radius: 50%;
-  animation: float 6s ease-in-out infinite;
-  opacity: 0.3;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-    opacity: 0.3;
-  }
-  50% {
-    transform: translateY(-20px) rotate(180deg);
-    opacity: 0.6;
-  }
-}
-
-/* Main content */
-.main-content {
-  position: relative;
-  z-index: 10;
-  padding-top: 40px;
-  padding-bottom: 2rem;
-}
-
-/* Header section */
-.header-section {
-  text-align: center;
-  padding: 3rem rem;
-  margin-bottom: 2rem;
-}
-
-.header-content {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.icon-container {
-  display: inline-flex;
-  padding: 1.5rem;
-  background: linear-gradient(45deg, #9d4edd, #c77dff);
-  border-radius: 50%;
-  margin-bottom: 2rem;
-  box-shadow: 0 10px 30px rgba(157, 78, 221, 0.4);
-}
-
-.header-icon {
-  width: 48px;
-  height: 48px;
-  color: white;
-}
-
-.header-section h1 {
-  font-size: 3.5rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  background: linear-gradient(45deg, #ffffff, #9d4edd, #c77dff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 30px rgba(157, 78, 221, 0.5);
-  animation: glow 3s ease-in-out infinite alternate;
-}
-
-@keyframes glow {
-  from {
-    filter: drop-shadow(0 0 10px rgba(157, 78, 221, 0.3));
-  }
-  to {
-    filter: drop-shadow(0 0 20px rgba(157, 78, 221, 0.6));
-  }
-}
-
-.subtitle {
-  font-size: 1.3rem;
-  color: rgba(255, 255, 255, 0.8);
-  line-height: 1.6;
-}
-
-/* QR Section */
-.qr-section {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
-}
-
-.qr-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  /* border: 1px solid red; */
-  gap: 4rem;
-  align-items: center;
-}
-
-.qr-wrapper {
-  display: flex;
-  flex-direction: column;
-  /* border: 1px solid red; */
-  align-items: center;
-  gap: 4.5rem;
-}
-
-.qr-frame {
-  position: relative;
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 24px;
-  box-shadow: 
-    0 20px 60px rgba(157, 78, 221, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(157, 78, 221, 0.2);
-}
-
-.qr-corners {
-  position: absolute;
-  inset: 1rem;
-  pointer-events: none;
-}
-
-.corner {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  border: 3px solid #9d4edd;
-}
-
-.corner.top-left {
-  top: 0;
-  left: 0;
-  border-right: none;
-  border-bottom: none;
-  border-top-left-radius: 8px;
-}
-
-.corner.top-right {
-  top: 0;
-  right: 0;
-  border-left: none;
-  border-bottom: none;
-  border-top-right-radius: 8px;
-}
-
-.corner.bottom-left {
-  bottom: 0;
-  left: 0;
-  border-right: none;
-  border-top: none;
-  border-bottom-left-radius: 8px;
-}
-
-.corner.bottom-right {
-  bottom: 0;
-  right: 0;
-  border-left: none;
-  border-top: none;
-  border-bottom-right-radius: 8px;
-}
-
-.qr-canvas {
-  border-radius: 12px;
-  position: relative;
-  z-index: 2;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
 .scan-line {
-  position: absolute;
-  top: 2rem;
-  left: 2rem;
-  right: 2rem;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #9d4edd, transparent);
-  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #10b981, transparent);
   opacity: 0;
-  z-index: 3;
 }
 
 .scan-line.scanning {
@@ -435,349 +454,9 @@ onMounted(() => {
 }
 
 @keyframes scan {
-  0% {
-    transform: translateY(0);
-    opacity: 0;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(280px);
-    opacity: 0;
-  }
-}
-
-.select-option {
-  background: rgba(157, 78, 221, 0.1);
-  border: 1px solid rgba(157, 78, 221, 0.3);
-  border-radius: 12px;
-  padding: 0.75rem 1rem;
-  color: #ffffff;
-  font-size: 0.9rem;
-  min-width: 150px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.select-option:hover {
-  background: rgba(157, 78, 221, 0.2);
-  border-color: rgba(157, 78, 221, 0.5);
-}
-
-.select-option:focus {
-  outline: none;
-  border-color: #9d4edd;
-  box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.1);
-}
-
-.select-option option {
-  background: #1a0825;
-  color: #ffffff;
-}
-
-
-.qr-info {
-  text-align: center;
-  background: rgba(157, 78, 221, 0.1);
-  padding: 1.5rem;
-  border-radius: 16px;
-  border: 1px solid rgba(157, 78, 221, 0.3);
-  backdrop-filter: blur(10px);
-}
-
-.qr-info h3 {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  color: #c77dff;
-}
-
-.session-time {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 0.5rem;
-}
-
-.session-id {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
-  font-family: 'Courier New', monospace;
-}
-
-/* Instructions */
-.instructions {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.instruction-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: rgba(157, 78, 221, 0.1);
-  border-radius: 16px;
-  border: 1px solid rgba(157, 78, 221, 0.3);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-}
-
-.instruction-item:hover {
-  background: rgba(157, 78, 221, 0.15);
-  transform: translateX(5px);
-}
-
-.step-number {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(45deg, #9d4edd, #c77dff);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  color: white;
-  flex-shrink: 0;
-}
-
-.step-content h4 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #ffffff;
-}
-
-.step-content p {
-  color: rgba(255, 255, 255, 0.8);
-  line-height: 1.5;
-}
-
-/* Status section */
-.status-section {
-  max-width: 1200px;
-  margin: 4rem auto 0;
-  padding: 0 2rem;
-}
-
-.status-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-}
-
-.status-card {
-  background: rgba(157, 78, 221, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(157, 78, 221, 0.3);
-  border-radius: 16px;
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  transition: all 0.3s ease;
-}
-
-.status-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(157, 78, 221, 0.2);
-  background: rgba(157, 78, 221, 0.15);
-}
-
-.status-icon {
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(45deg, #9d4edd, #c77dff);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.status-content h3 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 0.25rem;
-}
-
-.status-content p {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.9rem;
-}
-
-/* Activity section */
-.activity-section {
-  max-width: 1200px;
-  margin: 4rem auto 0;
-  padding: 0 2rem;
-}
-
-.activity-section h2 {
-  font-size: 2.5rem;
-  font-weight: bold;
-  margin-bottom: 2rem;
-  text-align: center;
-  background: linear-gradient(45deg, #ffffff, #9d4edd);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.activity-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.activity-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: rgba(157, 78, 221, 0.1);
-  border-radius: 16px;
-  border: 1px solid rgba(157, 78, 221, 0.3);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-}
-
-.activity-item:hover {
-  background: rgba(157, 78, 221, 0.15);
-  transform: translateX(5px);
-}
-
-.activity-avatar {
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(45deg, #9d4edd, #c77dff);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  color: white;
-  flex-shrink: 0;
-}
-
-.activity-content {
-  flex: 1;
-}
-
-.activity-content h4 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-  color: #ffffff;
-}
-
-.activity-content p {
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 0.25rem;
-}
-
-.activity-time {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.activity-status {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.activity-status.present {
-  background: rgba(34, 197, 94, 0.2);
-  color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-.activity-status.late {
-  background: rgba(251, 191, 36, 0.2);
-  color: #fbbf24;
-  border: 1px solid rgba(251, 191, 36, 0.3);
-}
-
-.activity-status.absent {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-/* Footer */
-.footer {
-  background: rgba(10, 10, 10, 0.8);
-  padding: 2rem;
-  text-align: center;
-  border-top: 1px solid rgba(157, 78, 221, 0.3);
-  margin-top: 4rem;
-}
-
-/* Responsive design */
-@media (max-width: 1024px) {
-  .qr-container {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .header-section h1 {
-    font-size: 2.5rem;
-  }
-  
-  .subtitle {
-    font-size: 1.1rem;
-  }
-  
-  .activity-section h2 {
-    font-size: 2rem;
-  }
-  
-  .qr-frame {
-    padding: 1rem;
-  }
-
-  .qr-corners {
-    inset: 0.6rem;
-  }
-  
-  .status-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .main-content {
-    padding-top: 80px;
-  }
-}
-
-/* Loading animation */
-.fade-in {
-  animation: fadeIn 1s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  0%   { transform: translateY(0);    opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(200px); opacity: 0; }
 }
 </style>
