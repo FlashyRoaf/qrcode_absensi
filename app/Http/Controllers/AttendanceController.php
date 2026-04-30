@@ -59,12 +59,16 @@ class AttendanceController extends Controller
         if (now()->gt($qrCode->expires_at)) {
             return Inertia::render('qrcode/scanned', [
                 'message' => 'QR Code telah kadaluwarsa.',
+                'type' => $qrCode->type,
+                'success' => false,
             ]);
         }
 
         if (Carbon::now()->isSunday()) {
             return Inertia::render('qrcode/scanned', [
                 'message' => 'Hari Minggu tidak diperbolehkan untuk melakukan absensi.',
+                'type' => $qrCode->type,
+                'success' => false,
             ]);
         }        
 
@@ -85,6 +89,8 @@ class AttendanceController extends Controller
             if ($openSession) {
                 return Inertia::render('qrcode/scanned', [
                     'message' => 'Masih ada sesi yang belum di-checkout.',
+                    'type' => $qrCode->type,
+                    'success' => false,
                 ]);
             }
 
@@ -111,6 +117,8 @@ class AttendanceController extends Controller
             if (!$openSession || !$openSession->check_in) {
                 return Inertia::render('qrcode/scanned', [
                     'message' => 'Tidak ada sesi aktif untuk di-checkout.',
+                    'type' => $qrCode->type,
+                    'success' => false,
                 ]);
             }
 
@@ -119,6 +127,8 @@ class AttendanceController extends Controller
             if ($duration < 1) {
                 return Inertia::render('qrcode/scanned', [
                     'message' => 'Tunggu beberapa saat sebelum melakukan check-out.',
+                    'type' => $qrCode->type,
+                    'success' => false,
                 ]);
             }
             
@@ -186,6 +196,8 @@ class AttendanceController extends Controller
             // 'division' => $qrCode->division,
             // 'shift' => $qrCode->shift,
             'message' =>  $user->name . ' Berhasil melakukan ' . $tipe[$qrCode->type],
+            'type' => $qrCode->type,
+            'success' => true,
         ]);
     }
 

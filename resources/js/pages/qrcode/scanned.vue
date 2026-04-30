@@ -1,19 +1,21 @@
 <template>
-  <Head :title="isCheckIn ? 'Check In Berhasil' : 'Check Out Berhasil'" />
+  <Head :title="success ? (isCheckIn ? 'Check In Berhasil' : 'Check Out Berhasil') : 'Absensi Gagal'" />
 
   <div class="min-h-screen bg-zinc-950 text-zinc-100 font-sans overflow-x-hidden relative flex items-center justify-center">
 
-    <!-- Subtle grid background (sama persis dengan scan.vue) -->
+    <!-- Subtle grid background -->
     <div class="fixed inset-0 z-0 pointer-events-none"
       style="background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 40px 40px;">
     </div>
 
-    <!-- Glow blob (sama seperti scan.vue) -->
+    <!-- Glow blob — hijau kalau sukses, merah kalau gagal -->
     <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] z-0 pointer-events-none"
-      style="background: radial-gradient(ellipse, rgba(16,185,129,0.06) 0%, transparent 70%);">
+      :style="success
+        ? 'background: radial-gradient(ellipse, rgba(16,185,129,0.06) 0%, transparent 70%)'
+        : 'background: radial-gradient(ellipse, rgba(239,68,68,0.06) 0%, transparent 70%)'">
     </div>
 
-    <!-- ── HEADER (identik dengan scan.vue) ── -->
+    <!-- ── HEADER ── -->
     <header class="fixed top-0 left-0 right-0 z-20 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur">
       <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -39,73 +41,117 @@
 
           <!-- Status Card Utama -->
           <div class="bg-zinc-900 border rounded-2xl p-8 flex flex-col items-center gap-6 relative overflow-hidden"
-            :class="isCheckIn ? 'border-emerald-500/30' : 'border-zinc-700'">
+            :class="{
+              'border-emerald-500/30': success && isCheckIn,
+              'border-zinc-700':       success && !isCheckIn,
+              'border-red-500/30':     !success,
+            }">
 
             <!-- Glow bg di dalam card -->
             <div class="absolute inset-0 pointer-events-none rounded-2xl"
-              :style="isCheckIn
-                ? 'background: radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.08) 0%, transparent 65%)'
-                : 'background: radial-gradient(ellipse at 50% 0%, rgba(239,68,68,0.05) 0%, transparent 65%)'">
+              :style="!success
+                ? 'background: radial-gradient(ellipse at 50% 0%, rgba(239,68,68,0.08) 0%, transparent 65%)'
+                : isCheckIn
+                  ? 'background: radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.08) 0%, transparent 65%)'
+                  : 'background: radial-gradient(ellipse at 50% 0%, rgba(113,113,122,0.05) 0%, transparent 65%)'">
             </div>
 
             <!-- Orb icon -->
             <div class="relative flex items-center justify-center">
               <!-- Outer ring pulse -->
               <div class="absolute w-28 h-28 rounded-full border animate-ping-slow"
-                :class="isCheckIn ? 'border-emerald-500/20' : 'border-zinc-600/30'">
+                :class="{
+                  'border-emerald-500/20': success && isCheckIn,
+                  'border-zinc-600/30':   success && !isCheckIn,
+                  'border-red-500/20':    !success,
+                }">
               </div>
               <!-- Mid ring -->
               <div class="absolute w-20 h-20 rounded-full border"
-                :class="isCheckIn ? 'border-emerald-500/40' : 'border-zinc-600/50'">
+                :class="{
+                  'border-emerald-500/40': success && isCheckIn,
+                  'border-zinc-600/50':   success && !isCheckIn,
+                  'border-red-500/40':    !success,
+                }">
               </div>
               <!-- Core -->
-              <div class="w-16 h-16 rounded-full flex items-center justify-center relative z-10"
-                :class="isCheckIn
-                  ? 'bg-emerald-500/15 border border-emerald-500/50 shadow-emerald-glow'
-                  : 'bg-zinc-800 border border-zinc-600'">
-                <component :is="isCheckIn ? LogIn : LogOut"
+              <div class="w-16 h-16 rounded-full flex items-center justify-center relative z-10 border"
+                :class="{
+                  'bg-emerald-500/15 border-emerald-500/50 shadow-emerald-glow': success && isCheckIn,
+                  'bg-zinc-800 border-zinc-600':                                 success && !isCheckIn,
+                  'bg-red-500/10 border-red-500/40 shadow-red-glow':            !success,
+                }">
+                <component
+                  :is="!success ? XCircle : isCheckIn ? LogIn : LogOut"
                   class="w-7 h-7"
-                  :class="isCheckIn ? 'text-emerald-400' : 'text-zinc-400'" />
+                  :class="{
+                    'text-emerald-400': success && isCheckIn,
+                    'text-zinc-400':   success && !isCheckIn,
+                    'text-red-400':    !success,
+                  }" />
               </div>
             </div>
 
             <!-- Type badge -->
             <div class="flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-mono uppercase tracking-widest"
-              :class="isCheckIn
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                : 'bg-zinc-800/60 border-zinc-700 text-zinc-400'">
+              :class="{
+                'bg-emerald-500/10 border-emerald-500/30 text-emerald-400': success && isCheckIn,
+                'bg-zinc-800/60 border-zinc-700 text-zinc-400':             success && !isCheckIn,
+                'bg-red-500/10 border-red-500/30 text-red-400':            !success,
+              }">
               <span class="w-1.5 h-1.5 rounded-full animate-pulse"
-                :class="isCheckIn ? 'bg-emerald-400' : 'bg-zinc-400'">
+                :class="{
+                  'bg-emerald-400': success && isCheckIn,
+                  'bg-zinc-400':   success && !isCheckIn,
+                  'bg-red-400':    !success,
+                }">
               </span>
-              {{ isCheckIn ? 'Check In' : 'Check Out' }}
+              <span v-if="!success">Gagal</span>
+              <span v-else-if="isCheckIn">Check In</span>
+              <span v-else>Check Out</span>
             </div>
 
             <!-- Headline -->
             <div class="text-center relative z-10">
-              <h2 class="text-3xl font-bold leading-tight"
-                :class="isCheckIn ? 'text-zinc-100' : 'text-zinc-300'">
-                <template v-if="isCheckIn">
+              <!-- SUKSES CHECK IN -->
+              <template v-if="success && isCheckIn">
+                <h2 class="text-3xl font-bold leading-tight text-zinc-100">
                   Absensi <span class="text-emerald-400">Berhasil</span><br />Dicatat
-                </template>
-                <template v-else>
+                </h2>
+                <p class="text-xs text-zinc-600 font-mono mt-2 tracking-widest uppercase">— Selamat Bekerja —</p>
+              </template>
+
+              <!-- SUKSES CHECK OUT -->
+              <template v-else-if="success && !isCheckIn">
+                <h2 class="text-3xl font-bold leading-tight text-zinc-300">
                   Sampai <span class="text-zinc-400">Jumpa</span><br />Lagi
-                </template>
-              </h2>
-              <p class="text-xs text-zinc-600 font-mono mt-2 tracking-widest uppercase">
-                {{ isCheckIn ? '— Selamat Bekerja —' : '— Terima Kasih —' }}
-              </p>
+                </h2>
+                <p class="text-xs text-zinc-600 font-mono mt-2 tracking-widest uppercase">— Terima Kasih —</p>
+              </template>
+
+              <!-- GAGAL -->
+              <template v-else>
+                <h2 class="text-3xl font-bold leading-tight text-zinc-100">
+                  Absensi <span class="text-red-400">Gagal</span><br />Dicatat
+                </h2>
+                <p class="text-xs text-zinc-600 font-mono mt-2 tracking-widest uppercase">— Harap Perhatikan Pesan —</p>
+              </template>
             </div>
 
-            <!-- Scan berhasil indicator -->
+            <!-- Status indicator -->
             <div class="w-full bg-zinc-800/60 border rounded-xl px-4 py-3 flex items-center gap-3"
-              :class="isCheckIn ? 'border-emerald-500/20' : 'border-zinc-700'">
-              <CheckCircle class="w-4 h-4 flex-shrink-0"
-                :class="isCheckIn ? 'text-emerald-400' : 'text-zinc-500'" />
+              :class="{
+                'border-emerald-500/20': success,
+                'border-red-500/20':    !success,
+              }">
+              <component :is="success ? CheckCircle : AlertCircle"
+                class="w-4 h-4 flex-shrink-0"
+                :class="success ? 'text-emerald-400' : 'text-red-400'" />
               <div class="flex-1 min-w-0">
-                <p class="text-xs text-zinc-500">Status Scan</p>
+                <p class="text-xs text-zinc-500">Status</p>
                 <p class="text-sm font-semibold truncate"
-                  :class="isCheckIn ? 'text-emerald-400' : 'text-zinc-300'">
-                  QR Code valid & terverifikasi
+                  :class="success ? 'text-emerald-400' : 'text-red-400'">
+                  {{ success ? 'QR Code valid & terverifikasi' : 'Absensi tidak dapat diproses' }}
                 </p>
               </div>
               <div class="text-right flex-shrink-0">
@@ -117,13 +163,17 @@
             <div class="flex items-end gap-[2px] h-8 w-full justify-center opacity-25">
               <div v-for="(w, i) in bars" :key="i"
                 class="rounded-sm"
-                :class="isCheckIn ? 'bg-emerald-400' : 'bg-zinc-500'"
+                :class="{
+                  'bg-emerald-400': success && isCheckIn,
+                  'bg-zinc-500':   success && !isCheckIn,
+                  'bg-red-400':    !success,
+                }"
                 :style="`width: ${w}px; height: ${barHeights[i]}%`">
               </div>
             </div>
           </div>
 
-          <!-- Mini info cards row -->
+          <!-- Mini info cards -->
           <div class="grid grid-cols-2 gap-3">
             <div class="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3">
               <Clock class="w-4 h-4 text-zinc-500 flex-shrink-0" />
@@ -145,54 +195,75 @@
         <!-- ── KANAN: PESAN & DETAIL ── -->
         <div class="flex flex-col gap-5">
 
-          <!-- Title section -->
+          <!-- Title -->
           <div>
-            <h2 class="text-2xl font-bold text-zinc-100">
-              {{ isCheckIn ? 'Check In Berhasil' : 'Check Out Berhasil' }}
+            <h2 class="text-2xl font-bold"
+              :class="success ? 'text-zinc-100' : 'text-red-400'">
+              {{ success
+                ? (isCheckIn ? 'Check In Berhasil' : 'Check Out Berhasil')
+                : 'Absensi Tidak Berhasil' }}
             </h2>
             <p class="text-sm text-zinc-500 mt-1">
-              {{ isCheckIn
-                ? 'Kehadiran Anda telah tercatat dalam sistem absensi digital'
-                : 'Waktu keluar Anda telah tercatat. Istirahat yang baik!' }}
+              {{ success
+                ? (isCheckIn
+                    ? 'Kehadiran Anda telah tercatat dalam sistem absensi digital'
+                    : 'Waktu keluar Anda telah tercatat. Istirahat yang baik!')
+                : 'Terdapat kendala dalam memproses absensi Anda. Baca pesan di bawah.' }}
             </p>
           </div>
 
-          <!-- Pesan card -->
+          <!-- Pesan card — lebih menonjol saat gagal -->
           <div v-if="props.message"
-            class="bg-zinc-900 border rounded-2xl p-6 flex flex-col gap-4"
-            :class="isCheckIn ? 'border-emerald-500/20' : 'border-zinc-800'">
+            class="border rounded-2xl p-6 flex flex-col gap-4"
+            :class="{
+              'bg-zinc-900 border-emerald-500/20': success,
+              'bg-red-500/5 border-red-500/40':   !success,
+            }">
 
             <div class="flex items-center gap-2">
-              <div class="w-5 h-5 rounded-full flex items-center justify-center"
-                :class="isCheckIn ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-zinc-800 border border-zinc-700'">
-                <MessageSquare class="w-3 h-3"
-                  :class="isCheckIn ? 'text-emerald-400' : 'text-zinc-500'" />
+              <div class="w-6 h-6 rounded-full flex items-center justify-center border"
+                :class="{
+                  'bg-emerald-500/10 border-emerald-500/30': success,
+                  'bg-red-500/20 border-red-500/40':         !success,
+                }">
+                <component :is="success ? MessageSquare : AlertCircle"
+                  class="w-3 h-3"
+                  :class="success ? 'text-emerald-400' : 'text-red-400'" />
               </div>
-              <p class="text-xs text-zinc-500 uppercase tracking-widest font-mono">Pesan Sistem</p>
+              <p class="text-xs uppercase tracking-widest font-mono"
+                :class="success ? 'text-zinc-500' : 'text-red-400'">
+                {{ success ? 'Pesan Sistem' : '⚠ Perhatian' }}
+              </p>
             </div>
 
-            <p class="text-zinc-300 text-sm leading-relaxed">{{ props.message }}</p>
+            <p class="leading-relaxed font-medium"
+              :class="{
+                'text-zinc-300 text-sm': success,
+                'text-red-300 text-base': !success,
+              }">
+              {{ props.message }}
+            </p>
 
-            <!-- Garis dekoratif bawah -->
             <div class="h-px w-full"
-              :style="isCheckIn
+              :style="success
                 ? 'background: linear-gradient(90deg, rgba(16,185,129,0.4), transparent)'
-                : 'background: linear-gradient(90deg, rgba(113,113,122,0.3), transparent)'">
+                : 'background: linear-gradient(90deg, rgba(239,68,68,0.5), transparent)'">
             </div>
           </div>
 
-          <!-- Info absensi -->
+          <!-- Ringkasan -->
           <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
             <p class="text-xs text-zinc-500 uppercase tracking-widest font-mono">Ringkasan Absensi</p>
-
             <div class="space-y-3">
               <div class="flex items-center justify-between py-2 border-b border-zinc-800/60">
                 <span class="text-xs text-zinc-600">Tipe</span>
                 <span class="text-xs font-semibold font-mono px-2 py-0.5 rounded-md"
-                  :class="isCheckIn
-                    ? 'bg-emerald-500/10 text-emerald-400'
-                    : 'bg-zinc-800 text-zinc-400'">
-                  {{ isCheckIn ? 'CHECK IN' : 'CHECK OUT' }}
+                  :class="{
+                    'bg-emerald-500/10 text-emerald-400': success && isCheckIn,
+                    'bg-zinc-800 text-zinc-400':          success && !isCheckIn,
+                    'bg-red-500/10 text-red-400':         !success,
+                  }">
+                  {{ !success ? 'GAGAL' : isCheckIn ? 'CHECK IN' : 'CHECK OUT' }}
                 </span>
               </div>
               <div class="flex items-center justify-between py-2 border-b border-zinc-800/60">
@@ -201,15 +272,17 @@
               </div>
               <div class="flex items-center justify-between py-2">
                 <span class="text-xs text-zinc-600">Status</span>
-                <span class="text-xs font-mono flex items-center gap-1.5 text-emerald-400">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                  Terverifikasi
+                <span class="text-xs font-mono flex items-center gap-1.5"
+                  :class="success ? 'text-emerald-400' : 'text-red-400'">
+                  <span class="w-1.5 h-1.5 rounded-full"
+                    :class="success ? 'bg-emerald-400' : 'bg-red-400'"></span>
+                  {{ success ? 'Terverifikasi' : 'Tidak Terproses' }}
                 </span>
               </div>
             </div>
           </div>
 
-          <!-- Cara penggunaan (sama gaya dengan scan.vue) -->
+          <!-- Langkah selanjutnya -->
           <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
             <p class="text-xs text-zinc-500 uppercase tracking-widest font-mono">Langkah Selanjutnya</p>
             <div class="space-y-3">
@@ -226,7 +299,7 @@
       </div>
     </main>
 
-    <!-- ── FOOTER (identik dengan scan.vue) ── -->
+    <!-- ── FOOTER ── -->
     <footer class="fixed bottom-0 left-0 right-0 z-20 border-t border-zinc-800 bg-zinc-950/80 backdrop-blur">
       <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
         <p class="text-xs text-zinc-700 font-mono">Absensi Digital · Admin Panel</p>
@@ -240,40 +313,46 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { computed, ref, onMounted, onUnmounted } from 'vue';
-import { QrCode, LogIn, LogOut, Clock, CheckCircle, MessageSquare, CalendarDays } from 'lucide-vue-next';
+import { QrCode, LogIn, LogOut, Clock, CheckCircle, MessageSquare, CalendarDays, XCircle, AlertCircle } from 'lucide-vue-next';
 
 interface Props {
   message?: string;
   type?: 'check_in' | 'check_out';
+  success?: boolean;
 }
 
 const props = defineProps<Props>();
 
 const isCheckIn = computed(() => (props.type ?? 'check_in') === 'check_in');
+const success = computed(() => props.success ?? false);
 
-// ── Langkah selanjutnya berdasarkan mode
-const nextSteps = computed(() =>
-  isCheckIn.value
-    ? [
-        'Absensi Anda sudah tersimpan otomatis dalam sistem',
-        'Pastikan Anda bekerja sesuai jadwal yang telah ditentukan',
-        'Lakukan Check Out saat jam kerja selesai',
-      ]
-    : [
-        'Absensi keluar Anda sudah tercatat dalam sistem',
-        'Durasi kerja hari ini telah dihitung secara otomatis',
-        'Sampai jumpa besok, istirahat yang baik!',
-      ]
-);
+// Langkah selanjutnya
+const nextSteps = computed(() => {
+  if (!success.value) return [
+    'Baca pesan di atas untuk mengetahui penyebab kegagalan',
+    'Hubungi admin jika masalah terus berlanjut',
+    'Coba scan ulang QR Code yang masih aktif',
+  ]
+  if (isCheckIn.value) return [
+    'Absensi Anda sudah tersimpan otomatis dalam sistem',
+    'Pastikan Anda bekerja sesuai jadwal yang telah ditentukan',
+    'Lakukan Check Out saat jam kerja selesai',
+  ]
+  return [
+    'Absensi keluar Anda sudah tercatat dalam sistem',
+    'Durasi kerja hari ini telah dihitung secara otomatis',
+    'Sampai jumpa besok, istirahat yang baik!',
+  ]
+})
 
-// ── Barcode dekorasi
+// Barcode dekorasi
 const bars = Array.from({ length: 42 }, () => [1, 2, 3, 4][Math.floor(Math.random() * 4)]);
 const barHeights = Array.from({ length: 42 }, () => {
   const pool = [40, 55, 65, 80, 100];
   return pool[Math.floor(Math.random() * pool.length)];
 });
 
-// ── Clock
+// Clock
 const now = ref(new Date());
 let timer: ReturnType<typeof setInterval>;
 
@@ -319,5 +398,9 @@ onUnmounted(() => clearInterval(timer));
 
 .shadow-emerald-glow {
   box-shadow: 0 0 20px rgba(16, 185, 129, 0.2), 0 0 40px rgba(16, 185, 129, 0.08);
+}
+
+.shadow-red-glow {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.2), 0 0 40px rgba(239, 68, 68, 0.08);
 }
 </style>
