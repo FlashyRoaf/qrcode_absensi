@@ -13,10 +13,30 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Inertia\Inertia;
+use Inertia\Response;
+use PhpParser\Builder\Function_;
 
 class AttendanceController extends Controller
 {
     use Notifiable;
+   public function show(): Response {
+    $attendances = Attendance::with('user')
+        ->get()
+        ->map(fn($r) => [
+            'id'               => $r->id,
+            'user_id'          => $r->user_id,
+            'user_name'        => $r->user->name ?? 'Unknown',
+            'qrcode'           => $r->qrcode,
+            'date'             => $r->date,
+            'check_in'         => $r->check_in,
+            'check_out'        => $r->check_out,
+            'duration_minutes' => $r->duration_minutes,
+        ]);
+
+    return Inertia::render('admin/Attendance', [
+        'attendances' => $attendances,
+    ]);
+}
     //
     public function index($token)
     {

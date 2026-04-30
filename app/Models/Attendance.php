@@ -21,4 +21,10 @@ class Attendance extends Model
         'duration_minutes',
         'location',
     ];
+
+    public function user()
+{
+    return $this->belongsTo(User::class);
+}
+
 }
