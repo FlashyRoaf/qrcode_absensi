@@ -19,7 +19,10 @@ class Attendance extends Model
         'check_in',
         'check_out',
         'duration_minutes',
-        'location',
+        'latitude',
+        'longitude',
+        'distance',
+        // 'location',
     ];
 
     public function user()

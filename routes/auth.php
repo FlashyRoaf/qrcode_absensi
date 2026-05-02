@@ -62,6 +62,9 @@ Route::middleware('auth')->group(function () {
     Route::post('scan', [QrCodeController::class, 'create'])
         ->middleware('admin')->name('qrcode.create');
 
-    Route::get('scanned/{token}', [AttendanceController::class, 'index'])
+    // Route::get('scanned/{token}', [AttendanceController::class, 'index'])
+    //     ->name('qrcode.scanned');
+        
+    Route::match(['get', 'post'], 'scanned/{token}', [AttendanceController::class, 'index'])
         ->name('qrcode.scanned');
 });

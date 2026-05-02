@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Qrcode extends Model
 {
     //
-    protected $fillable = ['token', 'type', 'expires_at'];
+    protected $fillable = ['token', 'type', 'expires_at', 'is_used'];
 
     protected $dates = ['expires_at'];
 

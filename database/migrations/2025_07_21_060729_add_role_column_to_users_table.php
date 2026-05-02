@@ -13,8 +13,11 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->boolean('is_admin')->default(false);
-            $table->string('role')->nullable();
+            $table->string('role')->default('anggota');
+            $table->string('device_id')->nullable();
             $table->timestamp('admin_assigned_at')->nullable();
+            $table->string('identifier')->nullable();
+            $table->boolean('is_blocked')->default(false);
             // $table->string('shift');
             // $table->string('division');
             //
@@ -29,8 +32,11 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('is_admin');
             $table->dropColumn('role');
-            $table->dropColumn('shift');
-            $table->dropColumn('division');
+            $table->dropColumn('device_id');
+            $table->dropColumn('admin_assigned_at');
+            // $table->dropColumn('role');
+            // $table->dropColumn('shift');
+            // $table->dropColumn('division');
             //
         });
     }

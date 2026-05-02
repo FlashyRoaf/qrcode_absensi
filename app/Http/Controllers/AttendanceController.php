@@ -38,19 +38,24 @@ class AttendanceController extends Controller
     ]);
 }
     //
-    public function index($token)
+    public function index(Request $request, $token)
     {
+        if ($request->isMethod('get')) {
+            return Inertia::render('qrcode/scanned', [
+                'token' => $token,
+                'message' => null,
+                'type' => null,
+                'success' => null,
+            ]);
+        }
+        
         $user = Auth::user();
         $qrCode = Qrcode::where('token', $token)->first();
         // $attendance = Attendance::where('user_id', $user->id)
         // ->where('date', now()->toDateString())->first();
-        $openSession = Attendance::where('user_id', $user->id)->whereNull('check_out')->latest()->first();
-
-        $tipe = [
-            'check_in' => 'Check In',
-            'check_out' => 'Check Out',
-        ];
-
+        
+        $latitude  = $request->latitude;
+        $longitude = $request->longitude;
 
         if (!$qrCode) {
             abort(404, 'QR Code tidak ditemukan');
@@ -70,7 +75,45 @@ class AttendanceController extends Controller
                 'type' => $qrCode->type,
                 'success' => false,
             ]);
-        }        
+        }
+        
+        if ($qrCode->is_used) {
+            return Inertia::render('qrcode/scanned', [
+                'message' => 'QR Code sudah digunakan.',
+                'type' => $qrCode->type,
+                'success' => false,
+            ]);
+        }
+        
+        if (is_null($latitude) || is_null($longitude)) {
+            return Inertia::render('qrcode/scanned', [
+                'message' => 'Lokasi tidak dapat dideteksi. Aktifkan GPS dan coba lagi.',
+                'type'    => $qrCode->type ?? null,
+                'success' => false,
+            ]);
+        }
+
+        $distance = $this->getDistanceInMeters(
+            (float) config('staks.latitude'),
+            (float) config('staks.longitude'),
+            (float) $latitude,
+            (float) $longitude,
+        );
+
+        if ($distance > 50) {
+            return Inertia::render('qrcode/scanned', [
+                'message' => 'Anda berada ' . round($distance) . ' meter dari kantor. Absensi hanya bisa dilakukan dalam radius ' . 50 . ' meter.',
+                'type'    => $qrCode->type ?? null,
+                'success' => false,
+            ]);
+        }
+        
+        $openSession = Attendance::where('user_id', $user->id)->whereNull('check_out')->latest()->first();
+
+        $tipe = [
+            'check_in' => 'Check In',
+            'check_out' => 'Check Out',
+        ];
 
         if ($qrCode->type === 'check_in') {
             // if ($attendance && $attendance->check_in) {
@@ -191,6 +234,8 @@ class AttendanceController extends Controller
         //     // }
 
         // }
+
+        $qrCode->update(['is_used' => true]);
         
         return Inertia::render('qrcode/scanned', [
             // 'division' => $qrCode->division,
@@ -213,4 +258,17 @@ class AttendanceController extends Controller
 
     //     return 'present';
     // }
+
+    private function getDistanceInMeters( float $lat1, float $lon1, 
+    float $lat2, float $lon2): float {
+        $earthRadius = 6371000; // meter
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        
+        $a = sin($dLat / 2) * sin($dLat / 2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) * sin($dLon / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        
+        return $earthRadius * $c;
+    }
 }

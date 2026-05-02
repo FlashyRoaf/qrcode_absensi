@@ -146,4 +146,14 @@ class UserController extends Controller
             ->with('success', 'Akun berhasil dihapus');
     }
 
+    public function resetDevice(User $user) {
+        $user->update([
+            'device_id' => null,
+            'identifier' => null,
+        ]);
+
+        return redirect()->route('dashboard')
+            ->with('success', 'Device berhasil direset. Pengguna dapat login kembali dari perangkat baru.');
+    }
+
 }

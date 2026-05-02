@@ -15,7 +15,7 @@ interface Particle {
 }
 
 interface AttendanceData {
-  sessionId: string;
+  // sessionId: string;
   timestamp: Date;
 }
 
@@ -28,7 +28,7 @@ interface Props {
 
 const form = useForm({
   type: '',
-  expires_in_minutes: 5,
+  expires_in_minutes: 1,
 });
 
 const props = defineProps<Props>();
@@ -36,26 +36,9 @@ const particles = ref<Particle[]>([]);
 const isScanning = ref(false);
 
 const attendanceData = ref<AttendanceData>({
-  sessionId: 'N25-' + Date.now().toString(36),
+  // sessionId: 'N25-' + Date.now().toString(36),
   timestamp: new Date(),
 });
-
-const createParticles = () => {
-  const particleCount = 25;
-  const newParticles = [];
-  for (let i = 0; i < particleCount; i++) {
-    const particle: Particle = {
-      id: i,
-      size: Math.random() * 4 + 2,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      delay: Math.random() * 6,
-      duration: Math.random() * 3 + 4
-    };
-    newParticles.push(particle);
-  }
-  particles.value = newParticles;
-};
 
 const startScanning = () => {
   isScanning.value = true;
@@ -102,8 +85,8 @@ const countdownDisplay = computed(() => {
 })
 
 const urgencyLevel = computed(() => {
-  if (remainingSeconds.value <= 30) return 'critical'
-  if (remainingSeconds.value <= 60) return 'warning'
+  if (remainingSeconds.value <= 15) return 'critical'
+  if (remainingSeconds.value <= 35) return 'warning'
   return 'normal'
 })
 
@@ -140,10 +123,7 @@ watch(() => props.expires_at, (newVal) => {
 })
 
 onMounted(() => {
-  createParticles();
-
   const scanInterval = setInterval(startScanning, 10000);
-  console.log(props.expires_at)
 
   if (props.expires_at) {
     startCountdown()
@@ -308,7 +288,7 @@ onMounted(() => {
                     'bg-yellow-500': urgencyLevel === 'warning',
                     'bg-red-500': urgencyLevel === 'critical',
                   }"
-                  :style="{ width: isExpired ? '0%' : (remainingSeconds / 300 * 100) + '%' }"
+                  :style="{ width: isExpired ? '0%' : (remainingSeconds / (form.expires_in_minutes * 60) * 100) + '%' }"
                 ></div>
               </div>
             </div>

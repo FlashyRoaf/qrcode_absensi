@@ -34,7 +34,7 @@ class QrCodeController extends Controller
             // 'shift' => 'required|exists:shifts,name',
             // 'division' => 'required|exists:divisions,name',
             'type' => 'required|in:check_in,check_out',
-            'expires_in_minutes' => 'required|integer|min:1',
+            'expires_in_minutes' => 'required|numeric|min:0.1',
         ]);
 
         $token = Str::uuid();
