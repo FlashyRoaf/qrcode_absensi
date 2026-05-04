@@ -37,7 +37,7 @@ function getStatus(record: AttendanceRecord): 'present' | 'in_progress' | 'absen
 
 const circumference = 2 * Math.PI * 54
 
-const TARGET_HOURS = 16
+const TARGET_HOURS = 14.5
 
 const progressPercentage = computed(() =>
   Math.min((props.hours_worked / TARGET_HOURS) * 100, 100)
@@ -153,7 +153,7 @@ const filteredRecords = computed(() =>
               <div class="chart-meta">
                 <p class="chart-meta-value">
                   {{ hours_worked.toFixed(1) }}h
-                 <span>/ 16h</span>
+                 <span>/ {{ props.target_hours }}h</span>
                 </p>
                 <p class="chart-meta-label">Jam minggu ini</p>
               </div>
@@ -191,7 +191,7 @@ const filteredRecords = computed(() =>
               <p class="stat-label">Jam Minggu Ini</p>
               <p class="stat-value">
                 {{ hours_worked.toFixed(1) }}h
-                <span class="stat-value-sub">/ 16h</span>
+                <span class="stat-value-sub">/ {{ props.target_hours }}h</span>
               </p>
             </div>
           </div>

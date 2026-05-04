@@ -3,7 +3,7 @@
 
     <AppLayout>
         <div class="min-h-screen bg-zinc-950 text-zinc-100 font-mono">
-    
+
             <!-- Header -->
             <header class="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur sticky top-0 z-40">
                 <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -23,9 +23,9 @@
                     </div>
                 </div>
             </header>
-    
+
             <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
-    
+
                 <!-- ── STAT CARDS ── -->
                 <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                     <div class="col-span-2 md:col-span-1 lg:col-span-1 bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex flex-col gap-1">
@@ -55,7 +55,7 @@
                         </p>
                     </div>
                 </section>
-    
+
                 <!-- ── COMPLIANCE BAR ── -->
                 <section class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
                     <div class="flex items-center justify-between mb-3">
@@ -75,7 +75,7 @@
                         <span>100%</span>
                     </div>
                 </section>
-    
+
                 <!-- ── TAB NAVIGATION ── -->
                 <div class="flex gap-1 border-b border-zinc-800">
                     <button
@@ -94,12 +94,12 @@
                         {{ tab.label }}
                     </button>
                 </div>
-    
+
                 <!-- ══════════════════════════════════════
                      TAB 1: TABEL LAPORAN
                 ══════════════════════════════════════ -->
                 <section v-if="activeTab === 'tabel'" class="space-y-4">
-    
+
                     <!-- Filter & Search Bar -->
                     <div class="flex flex-col md:flex-row gap-3">
                         <input
@@ -109,7 +109,7 @@
                             class="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition"
                             @input="currentPage = 1"
                         />
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 flex-wrap">
                             <button
                                 v-for="f in [
                                     { val: 'all', label: 'Semua' },
@@ -125,9 +125,46 @@
                             >
                                 {{ f.label }}
                             </button>
+
+                            <!-- ✅ Tombol Export Excel (Diperbarui dengan target="_blank") -->
+                            <a
+                                :href="exportUrl"
+                                target="_blank"
+                                :class="[
+                                    'px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition flex items-center gap-1.5',
+                                    isExporting
+                                        ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-500 cursor-wait'
+                                        : 'bg-zinc-900 border-zinc-700 text-emerald-400 hover:bg-emerald-500 hover:border-emerald-500 hover:text-black'
+                                ]"
+                                @click="handleExportClick"
+                            >
+                                <!-- Spinner saat loading -->
+                                <svg
+                                    v-if="isExporting"
+                                    class="w-3.5 h-3.5 animate-spin"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                                </svg>
+                                <!-- Icon download normal -->
+                                <svg
+                                    v-else
+                                    class="w-3.5 h-3.5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    stroke-width="2.5"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                {{ isExporting ? 'Mengekspor...' : 'Export Excel' }}
+                            </a>
                         </div>
                     </div>
-    
+
                     <!-- Table -->
                     <div class="rounded-xl border border-zinc-800 overflow-hidden">
                         <table class="w-full text-sm">
@@ -207,7 +244,7 @@
                             </tbody>
                         </table>
                     </div>
-    
+
                     <!-- Pagination -->
                     <div class="flex items-center justify-between text-xs text-zinc-500">
                         <span>
@@ -236,15 +273,15 @@
                         </div>
                     </div>
                 </section>
-    
+
                 <!-- ══════════════════════════════════════
                      TAB 2: PER USER
                 ══════════════════════════════════════ -->
                 <section v-if="activeTab === 'user'" class="space-y-3">
                     <p class="text-xs text-zinc-500 uppercase tracking-widest mb-4">Ringkasan per karyawan</p>
-    
+
                     <div v-if="userStats.length === 0" class="text-center py-16 text-zinc-600">Tidak ada data.</div>
-    
+
                     <div
                         v-for="(u, i) in userStats"
                         :key="u.user_id"
@@ -261,7 +298,7 @@
                                 <p class="text-zinc-600 text-xs">ID #{{ u.user_id }}</p>
                             </div>
                         </div>
-    
+
                         <!-- Stats -->
                         <div class="flex gap-6 flex-1 flex-wrap">
                             <div class="text-center">
@@ -281,7 +318,7 @@
                                 <p class="text-xs text-zinc-600">Rata-rata/minggu</p>
                             </div>
                         </div>
-    
+
                         <!-- Mini compliance bar -->
                         <div class="flex-shrink-0 w-full md:w-40">
                             <div class="flex justify-between text-xs text-zinc-600 mb-1">
@@ -300,15 +337,15 @@
                         </div>
                     </div>
                 </section>
-    
+
                 <!-- ══════════════════════════════════════
                      TAB 3: TREN MINGGUAN
                 ══════════════════════════════════════ -->
                 <section v-if="activeTab === 'trend'" class="space-y-4">
                     <p class="text-xs text-zinc-500 uppercase tracking-widest">Tren 8 minggu terakhir</p>
-    
+
                     <div v-if="weeklyTrend.length === 0" class="text-center py-16 text-zinc-600">Tidak ada data.</div>
-    
+
                     <!-- Bar Chart -->
                     <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
                         <div class="flex items-end gap-2 h-48">
@@ -342,7 +379,7 @@
                             <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-red-500/70 inline-block"></span> Tidak Memenuhi</span>
                         </div>
                     </div>
-    
+
                     <!-- Table ringkasan per minggu -->
                     <div class="rounded-xl border border-zinc-800 overflow-hidden">
                         <table class="w-full text-sm">
@@ -384,7 +421,7 @@
                         </table>
                     </div>
                 </section>
-    
+
                 <!-- Footer -->
                 <div class="pt-4 border-t border-zinc-800 text-center text-xs text-zinc-700">
                     Admin Panel · Weekly Work Report · Target 16 jam/minggu (960 menit)
@@ -406,15 +443,17 @@ const props = defineProps({
     }
 })
 
-// --- State ---
-const search = ref('')
+// ── State ─────────────────────────────────────────────────────────────────────
+const search       = ref('')
 const filterStatus = ref('all')
-const sortKey = ref('week_start')
-const sortDir = ref('desc')
-const currentPage = ref(1)
-const perPage = 10
+const sortKey      = ref('week_start')
+const sortDir      = ref('desc')
+const currentPage  = ref(1)
+const perPage      = 10
+const activeTab    = ref('tabel')
+const isExporting  = ref(false)
 
-// --- Computed ---
+// ── Computed: Filter + Sort + Paginate ────────────────────────────────────────
 const filtered = computed(() => {
     let data = [...props.reports]
 
@@ -446,36 +485,32 @@ const filtered = computed(() => {
 })
 
 const totalPages = computed(() => Math.ceil(filtered.value.length / perPage))
-const paginated = computed(() => {
+const paginated  = computed(() => {
     const start = (currentPage.value - 1) * perPage
     return filtered.value.slice(start, start + perPage)
 })
 
-// --- Stats ---
-const totalUsers = computed(() => new Set(props.reports.map(r => r.user_id)).size)
-const totalWeeks = computed(() => new Set(props.reports.map(r => r.week_start)).size)
-const memenuhi = computed(() => props.reports.filter(r => r.status === 'memenuhi').length)
-const tidakMemenuhi = computed(() => props.reports.filter(r => r.status === 'tidak_memenuhi').length)
+// ── Computed: Stats ───────────────────────────────────────────────────────────
+const totalUsers     = computed(() => new Set(props.reports.map(r => r.user_id)).size)
+const totalWeeks     = computed(() => new Set(props.reports.map(r => r.week_start)).size)
+const memenuhi       = computed(() => props.reports.filter(r => r.status === 'memenuhi').length)
+const tidakMemenuhi  = computed(() => props.reports.filter(r => r.status === 'tidak_memenuhi').length)
 const complianceRate = computed(() =>
     props.reports.length ? Math.round((memenuhi.value / props.reports.length) * 100) : 0
 )
-const avgMinutes = computed(() => {
-    if (!props.reports.length) return 0
-    return Math.round(props.reports.reduce((s, r) => s + Number(r.total_minutes), 0) / props.reports.length)
-})
 
-// --- Per User Stats ---
+// ── Computed: Per User Stats ──────────────────────────────────────────────────
 const userStats = computed(() => {
     const map = {}
     for (const r of props.reports) {
         if (!map[r.user_id]) {
             map[r.user_id] = {
-                user_id: r.user_id,
-                user_name: r.user_name || `User #${r.user_id}`,
-                total: 0,
-                memenuhi: 0,
+                user_id:        r.user_id,
+                user_name:      r.user_name || `User #${r.user_id}`,
+                total:          0,
+                memenuhi:       0,
                 tidak_memenuhi: 0,
-                total_minutes: 0,
+                total_minutes:  0,
             }
         }
         map[r.user_id].total++
@@ -486,7 +521,7 @@ const userStats = computed(() => {
     return Object.values(map).sort((a, b) => b.memenuhi - a.memenuhi)
 })
 
-// --- Weekly Trend ---
+// ── Computed: Weekly Trend ────────────────────────────────────────────────────
 const weeklyTrend = computed(() => {
     const map = {}
     for (const r of props.reports) {
@@ -500,9 +535,18 @@ const weeklyTrend = computed(() => {
 
 const maxTrendTotal = computed(() => Math.max(...weeklyTrend.value.map(w => w.total), 1))
 
-// --- Helpers ---
+// ── Computed: Export URL — sinkron dengan filter aktif ────────────────────────
+const exportUrl = computed(() => {
+    const params = new URLSearchParams()
+    if (search.value)                 params.set('search', search.value)
+    if (filterStatus.value !== 'all') params.set('status', filterStatus.value)
+    const qs = params.toString()
+    return `/admin/weekly-report/export${qs ? `?${qs}` : ''}`
+})
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtMinutes(m) {
-    const h = Math.floor(m / 60)
+    const h   = Math.floor(m / 60)
     const min = m % 60
     return `${h}j ${min}m`
 }
@@ -520,8 +564,16 @@ function toggleSort(key) {
 
 function setFilter(val) {
     filterStatus.value = val
-    currentPage.value = 1
+    currentPage.value  = 1
 }
 
-const activeTab = ref('tabel')
+// ✅ Diperbarui: Feedback visual + pencegahan klik saat loading
+function handleExportClick(e) {
+    if (isExporting.value) {
+        e.preventDefault(); // Cegah buka tab baru lagi jika sedang proses
+        return;
+    }
+    isExporting.value = true;
+    setTimeout(() => { isExporting.value = false }, 3000);
+}
 </script>

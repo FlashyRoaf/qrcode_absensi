@@ -20,6 +20,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     Route::get('/admin/attendance', [AttendanceController::class, 'show'])->middleware('admin')->name('attendance');
     Route::get('/admin/weekly-report', [WeeklyReportController::class, 'show'])->middleware('admin')->name('weekly-reports');
+    Route::get('/admin/weekly-report/export', [WeeklyReportController::class, 'export'])->name('admin.weekly-report.export');
 });
 
 require __DIR__.'/settings.php';

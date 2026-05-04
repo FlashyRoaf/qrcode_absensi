@@ -56,7 +56,7 @@ class DashboardController extends Controller
             'present_today' => $presentToday,
             'avg_hours'     => $avgHours,
             'hours_worked'  => round($totalHours, 2),
-            'target_hours'  => 40,
+            'target_hours'  => 14.5,
         ]);
     }
 }
