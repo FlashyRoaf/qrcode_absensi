@@ -24,11 +24,15 @@ class User extends Authenticatable
         'is_admin',
         'role',
         'admin_assigned_at',
+        'device_id',
+        'identifier',
+        'is_blocked',
     ];
 
     protected $casts = [
         'is_admin' => 'boolean',
         'admin_assigned_at' => 'datetime',
+        'device_id' => 'string',
 
     ];
 

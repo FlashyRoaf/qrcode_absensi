@@ -18,6 +18,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/admin/users', [UserController::class, 'store'])->name('users.store');
     Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+    Route::post('/admin/users/{user}/reset-device', [UserController::class, 'resetDevice'])
+        ->name('users.reset-device');
+    
     Route::get('/admin/attendance', [AttendanceController::class, 'show'])->middleware('admin')->name('attendance');
     Route::get('/admin/weekly-report', [WeeklyReportController::class, 'show'])->middleware('admin')->name('weekly-reports');
     Route::get('/admin/weekly-report/export', [WeeklyReportController::class, 'export'])->name('admin.weekly-report.export');

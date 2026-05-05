@@ -22,7 +22,10 @@ return new class extends Migration
             $table->time('check_in')->nullable();
             $table->time('check_out')->nullable();
             $table->integer('duration_minutes')->nullable();
-            $table->string('location')->nullable(); // Optional location field
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
+            $table->float('distance')->nullable();
+            // $table->string('location')->nullable(); // Optional location field
             $table->timestamps();
         });
     }

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('token')->unique(); 
             // $table->string('shift'); 
             // $table->string('division'); 
+            $table->boolean('is_used')->default(false);
             $table->enum('type', ['check_in', 'check_out']);
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();

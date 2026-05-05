@@ -19,26 +19,32 @@ class DashboardController extends Controller
         $weekAttendances = Attendance::where('user_id', $user->id)
             ->whereBetween('date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
             ->get()
-            ->keyBy('date');
+            ->groupBy('date');
 
         $records = collect();
 
         for ($day = $startOfWeek->copy(); $day->lte($endOfWeek); $day->addDay()) {
             $dateKey    = $day->toDateString();
-            $attendance = $weekAttendances->get($dateKey);
+            $attendance = $weekAttendances->get($dateKey, collect());
 
+            $firstCheckIn = $attendance->sortBy('check_in')->first();
+
+            $lastCheckOut = $attendance->sortByDesc('check_out')->first();
+
+            $totalMinutes = $attendance->sum('duration_minutes');
+            
             $records->push([
                 'id'           => $dateKey,
                 'day'          => $day->locale('id')->isoFormat('dddd'),
                 'date'         => $day->locale('id')->isoFormat('D MMM YYYY'),
-                'check_in'     => $attendance?->check_in
-                                    ? Carbon::parse($attendance->check_in)->format('H:i')
+                'check_in'     => $firstCheckIn?->check_in
+                                    ? Carbon::parse($firstCheckIn->check_in)->format('H:i')
                                     : null,
-                'check_out'    => $attendance?->check_out
-                                    ? Carbon::parse($attendance->check_out)->format('H:i')
+                'check_out'    => $lastCheckOut?->check_out
+                                    ? Carbon::parse($lastCheckOut->check_out)->format('H:i')
                                     : null,
-                'hours_worked' => $attendance?->duration_minutes
-                                    ? round($attendance->duration_minutes / 60, 2)
+                'hours_worked' => $totalMinutes
+                                    ? round($totalMinutes / 60, 2)
                                     : 0,
             ]);
         }

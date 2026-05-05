@@ -1,4 +1,5 @@
 <template>
+
   <Head title="User Management" />
 
   <AppLayout>
@@ -25,23 +26,29 @@
       <!-- Stats Cards -->
       <div class="stats-mini">
         <div class="stat-card-mini" style="--i:0">
-          <div class="stat-icon-mini"><Users /></div>
+          <div class="stat-icon-mini">
+            <Users />
+          </div>
           <div class="stat-content-mini">
             <h4>{{ users.length }}</h4>
             <p>Total Users</p>
           </div>
         </div>
         <div class="stat-card-mini" style="--i:1">
-          <div class="stat-icon-mini"><UserCheck /></div>
+          <div class="stat-icon-mini">
+            <UserCheck />
+          </div>
           <div class="stat-content-mini">
-            <h4>{{ users.filter(u => u.is_admin).length }}</h4>
+            <h4>{{users.filter(u => u.is_admin).length}}</h4>
             <p>Admin</p>
           </div>
         </div>
         <div class="stat-card-mini" style="--i:2">
-          <div class="stat-icon-mini"><UserIcon /></div>
+          <div class="stat-icon-mini">
+            <UserIcon />
+          </div>
           <div class="stat-content-mini">
-            <h4>{{ users.filter(u => !u.is_admin).length }}</h4>
+            <h4>{{users.filter(u => !u.is_admin).length}}</h4>
             <p>User</p>
           </div>
         </div>
@@ -52,7 +59,9 @@
         <div class="modal-content" @click.stop>
           <div class="modal-header">
             <h3>Tambah User Baru</h3>
-            <button class="modal-close" @click="closeCreateModal"><X /></button>
+            <button class="modal-close" @click="closeCreateModal">
+              <X />
+            </button>
           </div>
           <form @submit.prevent="createUser" class="modal-form">
             <div class="form-group">
@@ -62,17 +71,20 @@
             </div>
             <div class="form-group">
               <label>Email:</label>
-              <input v-model="createForm.email" type="email" required class="form-control" placeholder="Masukkan email" />
+              <input v-model="createForm.email" type="email" required class="form-control"
+                placeholder="Masukkan email" />
               <span v-if="createErrors.email" class="error">{{ createErrors.email }}</span>
             </div>
             <div class="form-group">
               <label>Password:</label>
-              <input v-model="createForm.password" type="password" required class="form-control" placeholder="Masukkan password" />
+              <input v-model="createForm.password" type="password" required class="form-control"
+                placeholder="Masukkan password" />
               <span v-if="createErrors.password" class="error">{{ createErrors.password }}</span>
             </div>
             <div class="form-group">
               <label>Konfirmasi Password:</label>
-              <input v-model="createForm.password_confirmation" type="password" required class="form-control" placeholder="Konfirmasi password" />
+              <input v-model="createForm.password_confirmation" type="password" required class="form-control"
+                placeholder="Konfirmasi password" />
             </div>
             <div class="form-group">
               <label>Admin:</label>
@@ -102,7 +114,9 @@
         <div class="modal-content" @click.stop>
           <div class="modal-header">
             <h3>Edit User</h3>
-            <button class="modal-close" @click="closeEditModal"><X /></button>
+            <button class="modal-close" @click="closeEditModal">
+              <X />
+            </button>
           </div>
           <form @submit.prevent="updateUser" class="modal-form">
             <div class="form-group">
@@ -117,12 +131,14 @@
             </div>
             <div class="form-group">
               <label>Password Baru (kosongkan jika tidak ingin mengubah):</label>
-              <input v-model="editForm.password" type="password" class="form-control" placeholder="Masukkan password baru" />
+              <input v-model="editForm.password" type="password" class="form-control"
+                placeholder="Masukkan password baru" />
               <span v-if="editErrors.password" class="error">{{ editErrors.password }}</span>
             </div>
             <div class="form-group" v-if="editForm.password">
               <label>Konfirmasi Password Baru:</label>
-              <input v-model="editForm.password_confirmation" type="password" class="form-control" placeholder="Konfirmasi password baru" />
+              <input v-model="editForm.password_confirmation" type="password" class="form-control"
+                placeholder="Konfirmasi password baru" />
             </div>
             <div class="form-group">
               <label>Admin:</label>
@@ -153,22 +169,50 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th><div class="th-content"><Hash class="th-icon" />ID</div></th>
-                <th><div class="th-content"><UserIcon class="th-icon" />Name</div></th>
-                <th><div class="th-content"><Mail class="th-icon" />Email</div></th>
-                <th><div class="th-content"><Shield class="th-icon" />Admin</div></th>
-                <th><div class="th-content"><UserCheck class="th-icon" />Role</div></th>
-                <th><div class="th-content"><Calendar class="th-icon" />Dibuat</div></th>
-                <th><div class="th-content"><Settings class="th-icon" />Aksi</div></th>
+                <th>
+                  <div class="th-content">
+                    <Hash class="th-icon" />ID
+                  </div>
+                </th>
+                <th>
+                  <div class="th-content">
+                    <UserIcon class="th-icon" />Name
+                  </div>
+                </th>
+                <th>
+                  <div class="th-content">
+                    <Mail class="th-icon" />Email
+                  </div>
+                </th>
+                <th>
+                  <div class="th-content">
+                    <Shield class="th-icon" />Admin
+                  </div>
+                </th>
+                <th>
+                  <div class="th-content">
+                    <UserCheck class="th-icon" />Role
+                  </div>
+                </th>
+                <th>
+                  <div class="th-content">
+                    <Smartphone class="th-icon" />Device
+                  </div>
+                </th>
+                <th>
+                  <div class="th-content">
+                    <Calendar class="th-icon" />Dibuat
+                  </div>
+                </th>
+                <th>
+                  <div class="th-content">
+                    <Settings class="th-icon" />Aksi
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="(user, index) in users"
-                :key="user.id"
-                class="table-row"
-                :style="{ '--row-i': index }"
-              >
+              <tr v-for="(user, index) in users" :key="user.id" class="table-row" :style="{ '--row-i': index }">
                 <td><span class="user-id">#{{ user.id }}</span></td>
                 <td>
                   <div class="user-info">
@@ -185,11 +229,17 @@
                 <td>
                   <span class="badge-role">{{ user.role }}</span>
                 </td>
+                <td>
+                  <span class="badge-admin" :class="user.device_id ? 'badge--yes' : 'badge--no'">{{ user.device_id ? 'Terhubung' : 'Belum terhubung' }}</span>
+                </td>
                 <td><span class="date">{{ formatDate(user.created_at) }}</span></td>
                 <td>
                   <div class="actions">
                     <button @click="openEditModal(user)" class="btn-action btn-edit" title="Edit user">
                       <Edit class="icon" />
+                    </button>
+                    <button @click="resetDevice(user)" class="btn-action btn-reset" title="Reset Device">
+                      <RotateCcw class="icon" />
                     </button>
                     <button @click="deleteUser(user)" class="btn-action btn-delete" title="Hapus user">
                       <Trash class="icon" />
@@ -201,7 +251,9 @@
           </table>
 
           <div v-if="users.length === 0" class="empty-state">
-            <div class="empty-icon"><Users /></div>
+            <div class="empty-icon">
+              <Users />
+            </div>
             <h3>Tidak ada user</h3>
             <p>Belum ada user yang terdaftar dalam sistem.</p>
             <button class="btn btn-primary" @click="openCreateModal">
@@ -222,7 +274,8 @@ import { Head, router } from '@inertiajs/vue3'
 import {
   Plus, RefreshCw, Edit, Trash, X,
   Users, UserCheck, User as UserIcon,
-  Hash, Mail, Shield, Calendar, Settings,
+  Hash, Mail, Shield, Calendar, Settings, 
+  RotateCcw, Smartphone
 } from 'lucide-vue-next'
 import type { User } from '@/types'
 import { useInitials } from '@/composables/useInitials'
@@ -306,6 +359,14 @@ const updateUser = () => {
   })
 }
 
+const resetDevice = (user: User) => {
+  if (!confirm(`Apakah Anda yakin ingin mereset device user "${user.name}"?`)) return
+  router.post(`/admin/users/${user.id}/reset-device`, {}, {
+    onSuccess: () => emit('refresh'),
+    onError: (err) => alert('Gagal mereset device user: ' + Object.values(err).join(', '))
+  })
+}
+
 const deleteUser = (user: User) => {
   if (!confirm(`Apakah Anda yakin ingin menghapus user "${user.name}"?`)) return
   router.delete(`/admin/users/${user.id}`, {
@@ -323,17 +384,24 @@ const formatDate = (dateString: string) => {
 </script>
 
 <style scoped>
-
 /* ── Page load ── */
 .crud-container {
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  animation: pageIn 0.45s cubic-bezier(.22,1,.36,1) both;
+  animation: pageIn 0.45s cubic-bezier(.22, 1, .36, 1) both;
 }
+
 @keyframes pageIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ── Header ── */
@@ -344,16 +412,19 @@ const formatDate = (dateString: string) => {
   gap: 1.5rem;
   flex-wrap: wrap;
 }
+
 .header-info h2 {
   font-size: 1.75rem;
   font-weight: 700;
   color: #ffffff;
   margin-bottom: 0.25rem;
 }
+
 .header-subtitle {
   color: #71717a;
   font-size: 0.9rem;
 }
+
 .crud-actions {
   display: flex;
   gap: 0.75rem;
@@ -372,29 +443,38 @@ const formatDate = (dateString: string) => {
   border: none;
   transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
 }
+
 .btn-primary {
   background: #ffffff;
   color: #09090b;
 }
+
 .btn-primary:hover {
   background: #e4e4e7;
   transform: translateY(-1px);
 }
+
 .btn-secondary {
   background: #1c1c1f;
   color: #a1a1aa;
   border: 1px solid #27272a;
 }
+
 .btn-secondary:hover {
   background: #27272a;
   color: #ffffff;
 }
+
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
 }
-.icon { width: 16px; height: 16px; }
+
+.icon {
+  width: 16px;
+  height: 16px;
+}
 
 /* ── Stat cards ── */
 .stats-mini {
@@ -402,6 +482,7 @@ const formatDate = (dateString: string) => {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
 }
+
 .stat-card-mini {
   background: #09090b;
   border: 1px solid #27272a;
@@ -410,18 +491,28 @@ const formatDate = (dateString: string) => {
   display: flex;
   align-items: center;
   gap: 0.9rem;
-  animation: cardIn 0.45s cubic-bezier(.22,1,.36,1) calc(var(--i, 0) * 60ms) both;
+  animation: cardIn 0.45s cubic-bezier(.22, 1, .36, 1) calc(var(--i, 0) * 60ms) both;
   transition: border-color 0.25s, transform 0.25s;
   cursor: default;
 }
+
 .stat-card-mini:hover {
   border-color: #52525b;
   transform: translateY(-2px);
 }
+
 @keyframes cardIn {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 .stat-icon-mini {
   width: 38px;
   height: 38px;
@@ -435,16 +526,19 @@ const formatDate = (dateString: string) => {
   flex-shrink: 0;
   transition: background 0.25s, color 0.25s;
 }
+
 .stat-card-mini:hover .stat-icon-mini {
   background: #27272a;
   color: #ffffff;
 }
+
 .stat-content-mini h4 {
   font-size: 1.4rem;
   font-weight: 700;
   color: #ffffff;
   line-height: 1.2;
 }
+
 .stat-content-mini p {
   color: #71717a;
   font-size: 0.8rem;
@@ -462,9 +556,15 @@ const formatDate = (dateString: string) => {
   z-index: 1000;
   animation: overlayIn 0.2s ease both;
 }
+
 @keyframes overlayIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-content {
@@ -477,11 +577,19 @@ const formatDate = (dateString: string) => {
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #3f3f46 #09090b;
-  animation: modalIn 0.3s cubic-bezier(.22,1,.36,1) both;
+  animation: modalIn 0.3s cubic-bezier(.22, 1, .36, 1) both;
 }
+
 @keyframes modalIn {
-  from { opacity: 0; transform: scale(0.95) translateY(12px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .modal-header {
@@ -491,11 +599,13 @@ const formatDate = (dateString: string) => {
   padding: 1.25rem 1.75rem;
   border-bottom: 1px solid #1c1c1f;
 }
+
 .modal-header h3 {
   font-size: 1.1rem;
   font-weight: 600;
   color: #ffffff;
 }
+
 .modal-close {
   background: none;
   border: none;
@@ -508,11 +618,20 @@ const formatDate = (dateString: string) => {
   justify-content: center;
   transition: background 0.2s, color 0.2s;
 }
-.modal-close:hover { background: #1c1c1f; color: #ffffff; }
 
-.modal-form { padding: 1.75rem; }
+.modal-close:hover {
+  background: #1c1c1f;
+  color: #ffffff;
+}
 
-.form-group { margin-bottom: 1.25rem; }
+.modal-form {
+  padding: 1.75rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
 .form-group label {
   display: block;
   margin-bottom: 0.45rem;
@@ -520,6 +639,7 @@ const formatDate = (dateString: string) => {
   font-size: 0.825rem;
   font-weight: 500;
 }
+
 .form-control {
   width: 100%;
   padding: 0.65rem 0.9rem;
@@ -531,13 +651,21 @@ const formatDate = (dateString: string) => {
   transition: border-color 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
 }
+
 .form-control:focus {
   outline: none;
   border-color: #52525b;
   box-shadow: 0 0 0 3px rgba(82, 82, 91, 0.2);
 }
-.form-control::placeholder { color: #52525b; }
-.form-control option { background: #09090b; color: #ffffff; }
+
+.form-control::placeholder {
+  color: #52525b;
+}
+
+.form-control option {
+  background: #09090b;
+  color: #ffffff;
+}
 
 .error {
   color: #f87171;
@@ -562,17 +690,25 @@ const formatDate = (dateString: string) => {
   border-radius: 14px;
   overflow: hidden;
 }
+
 .table-wrapper {
   overflow-x: auto;
   scrollbar-width: thin;
   scrollbar-color: #3f3f46 #09090b;
 }
-.table-wrapper::-webkit-scrollbar { height: 6px; }
+
+.table-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
 .table-wrapper::-webkit-scrollbar-thumb {
   background: #3f3f46;
   border-radius: 6px;
 }
-.table-wrapper::-webkit-scrollbar-track { background: #09090b; }
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: #09090b;
+}
 
 .data-table {
   width: 100%;
@@ -584,10 +720,12 @@ const formatDate = (dateString: string) => {
   background: #111113;
   border-bottom: 1px solid #1c1c1f;
 }
+
 .data-table th {
   padding: 0.9rem 1.25rem;
   text-align: left;
 }
+
 .th-content {
   display: flex;
   align-items: center;
@@ -598,7 +736,12 @@ const formatDate = (dateString: string) => {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-.th-icon { width: 14px; height: 14px; color: #52525b; }
+
+.th-icon {
+  width: 14px;
+  height: 14px;
+  color: #52525b;
+}
 
 .data-table td {
   padding: 0.85rem 1.25rem;
@@ -609,20 +752,42 @@ const formatDate = (dateString: string) => {
 /* Row staggered animation */
 .table-row {
   transition: background 0.18s;
-  animation: rowIn 0.4s cubic-bezier(.22,1,.36,1) calc(var(--row-i, 0) * 30ms) both;
+  animation: rowIn 0.4s cubic-bezier(.22, 1, .36, 1) calc(var(--row-i, 0) * 30ms) both;
 }
-.table-row:hover { background: #0d0d10; }
-.table-row:last-child td { border-bottom: none; }
+
+.table-row:hover {
+  background: #0d0d10;
+}
+
+.table-row:last-child td {
+  border-bottom: none;
+}
 
 @keyframes rowIn {
-  from { opacity: 0; transform: translateX(-6px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Cells */
-.user-id { color: #52525b; font-size: 0.85rem; font-weight: 500; }
+.user-id {
+  color: #52525b;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
 
-.user-info { display: flex; align-items: center; gap: 0.65rem; }
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
 .user-avatar {
   width: 32px;
   height: 32px;
@@ -638,13 +803,27 @@ const formatDate = (dateString: string) => {
   flex-shrink: 0;
   transition: background 0.2s, border-color 0.2s;
 }
+
 .table-row:hover .user-avatar {
   background: #27272a;
   border-color: #52525b;
 }
-.username { color: #ffffff; font-size: 0.875rem; font-weight: 500; }
-.email    { color: #a1a1aa; font-size: 0.875rem; }
-.date     { color: #71717a; font-size: 0.825rem; }
+
+.username {
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.email {
+  color: #a1a1aa;
+  font-size: 0.875rem;
+}
+
+.date {
+  color: #71717a;
+  font-size: 0.825rem;
+}
 
 /* ── Badge Admin (hijau) ── */
 .badge-admin {
@@ -656,11 +835,13 @@ const formatDate = (dateString: string) => {
   font-weight: 500;
   border: 1px solid transparent;
 }
+
 .badge--yes {
   background: #052e16;
   color: #4ade80;
   border-color: #166534;
 }
+
 .badge--no {
   background: #111113;
   color: #71717a;
@@ -682,7 +863,11 @@ const formatDate = (dateString: string) => {
 }
 
 /* ── Action buttons ── */
-.actions { display: flex; gap: 0.4rem; }
+.actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
 .btn-action {
   width: 32px;
   height: 32px;
@@ -694,13 +879,18 @@ const formatDate = (dateString: string) => {
   justify-content: center;
   transition: background 0.2s, border-color 0.2s, transform 0.2s;
 }
-.btn-action .icon { width: 14px; height: 14px; }
+
+.btn-action .icon {
+  width: 14px;
+  height: 14px;
+}
 
 .btn-edit {
   background: #1c1c1f;
   color: #a1a1aa;
   border-color: #27272a;
 }
+
 .btn-edit:hover {
   background: #27272a;
   color: #ffffff;
@@ -708,11 +898,24 @@ const formatDate = (dateString: string) => {
   transform: translateY(-1px);
 }
 
+.btn-reset {
+  background: #1c1c1f;
+  color: #a1a1aa;
+  border-color: #27272a;
+}
+
+.btn-reset:hover {
+  background: rgba(250, 204, 21, 0.1);
+  color: #facc15;
+  border-color: rgba(250, 204, 21, 0.4);
+}
+
 .btn-delete {
   background: #1c1c1f;
   color: #71717a;
   border-color: #27272a;
 }
+
 .btn-delete:hover {
   background: #3f0d0d;
   color: #f87171;
@@ -730,19 +933,54 @@ const formatDate = (dateString: string) => {
   gap: 0.75rem;
   animation: fadeIn 0.4s ease both;
 }
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.empty-icon { color: #27272a; width: 56px; height: 56px; }
-.empty-state h3 { font-size: 1.25rem; font-weight: 600; color: #ffffff; }
-.empty-state p  { color: #71717a; font-size: 0.9rem; max-width: 360px; }
+
+.empty-icon {
+  color: #27272a;
+  width: 56px;
+  height: 56px;
+}
+
+.empty-state h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.empty-state p {
+  color: #71717a;
+  font-size: 0.9rem;
+  max-width: 360px;
+}
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .crud-header { flex-direction: column; }
-  .crud-actions { width: 100%; }
-  .stats-mini { grid-template-columns: 1fr; }
-  .modal-content { min-width: 90vw; margin: 1rem; }
+  .crud-header {
+    flex-direction: column;
+  }
+
+  .crud-actions {
+    width: 100%;
+  }
+
+  .stats-mini {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+    min-width: 90vw;
+    margin: 1rem;
+  }
 }
 </style>
