@@ -86,7 +86,7 @@ class GenerateWeeklyReport extends Command
 
                 $this->info("Total menit {$user->name} : {$totalMinutes}");
                 // $totalHours = $totalMinutes / 60;
-                $targetMinutes = 16 * 60; // 960 menit
+                $targetMinutes = 14.5 * 60; // 870 menit
                 // $targetHours = 16;
                 $isTargetMet = $totalMinutes >= $targetMinutes;
                 // $percentage = min(100, ($totalMinutes / $targetMinutes) * 100);

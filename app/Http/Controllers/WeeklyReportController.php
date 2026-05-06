@@ -45,7 +45,7 @@ class WeeklyReportController extends Controller
         ]);
 
     // Terima filter dari request
-    $filters = $request->only(['search', 'status']);
+    $filters = $request->only(['search', 'status', 'week_start']);
 
     $filename = 'weekly-report-' . now()->format('Y-m-d_His') . '.xlsx';
 

@@ -57,7 +57,7 @@ const filteredRecords = computed(() =>
 
 <template>
   <AppLayout>
-    <div class="page-root">
+    <div class="page-root text-[#0a0a0a] dark:text-[#ffffff]">
 
       <!-- Header -->
       <div class="page-header">
@@ -68,7 +68,7 @@ const filteredRecords = computed(() =>
       <div class="dashboard-grid">
 
         <!-- Attendance Table -->
-        <div class="table-card">
+        <div class="table-card bg-[#fafafa] text-[#0a0a0a] dark:bg-[#09090b] dark:text-[#ffffff]">
           <div class="card-header">
             <h3>Attendance History</h3>
             <p>Catatan check-in dan check-out minggu ini</p>
@@ -77,7 +77,7 @@ const filteredRecords = computed(() =>
           <div class="table-wrapper">
             <table class="data-table">
               <thead>
-                <tr>
+                <tr class="bg-[#bad5ff] dark:bg-[#111113]">
                   <th>Hari / Tanggal</th>
                   <th>Check In</th>
                   <th>Check Out</th>
@@ -89,7 +89,7 @@ const filteredRecords = computed(() =>
                 <tr
                   v-for="(record, index) in filteredRecords"
                   :key="record.id"
-                  class="table-row"
+                  class="table-row text-[#0a0a0a] hover:bg-[#c6c6c6] dark:text-white dark:hover:bg-[#0d0d10]"
                   :style="{ '--row-i': index }"
                 >
                   <td>
@@ -218,7 +218,7 @@ const filteredRecords = computed(() =>
 .page-header h1 {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #ffffff;
+  /* color: #ffffff; */
   margin-bottom: 0.25rem;
 }
 .page-header p { color: #71717a; font-size: 0.9rem; }
@@ -237,7 +237,7 @@ const filteredRecords = computed(() =>
 /* Card base */
 .table-card,
 .chart-card {
-  background: #09090b;
+  /* background: #09090b; */
   border: 1px solid #27272a;
   border-radius: 14px;
   overflow: hidden;
@@ -249,7 +249,7 @@ const filteredRecords = computed(() =>
 .card-header h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: #ffffff;
+  /* color: #ffffff; */
   margin-bottom: 0.2rem;
 }
 .card-header p { font-size: 0.8rem; color: #71717a; }
@@ -262,7 +262,7 @@ const filteredRecords = computed(() =>
   border-collapse: collapse;
 }
 .data-table thead tr {
-  background: #111113;
+  /* background: #111113; */
   border-bottom: 1px solid #1c1c1f;
 }
 .data-table th {
@@ -283,16 +283,20 @@ const filteredRecords = computed(() =>
   transition: background 0.18s;
   animation: rowIn 0.4s cubic-bezier(.22,1,.36,1) calc(var(--row-i, 0) * 40ms) both;
 }
-.table-row:hover { background: #0d0d10; }
+/* .table-row:hover { background: #0d0d10; } */
 .table-row:last-child td { border-bottom: none; }
 @keyframes rowIn {
   from { opacity: 0; transform: translateX(-6px); }
   to   { opacity: 1; transform: translateX(0); }
 }
 
-.day-name  { color: #ffffff; font-size: 0.875rem; font-weight: 500; }
+.day-name  {
+   /* color: #ffffff;  */
+   font-size: 0.875rem; font-weight: 500; }
 .day-date  { color: #71717a; font-size: 0.75rem; margin-top: 1px; }
-.time-text { color: #ffffff; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.time-text { 
+  /* color: #ffffff;  */
+  font-size: 0.875rem; font-variant-numeric: tabular-nums; }
 .empty-text { color: #3f3f46; }
 .hours-text { color: #a1a1aa; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
 

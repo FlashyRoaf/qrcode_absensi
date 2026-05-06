@@ -51,7 +51,7 @@ class DashboardController extends Controller
 
         $todayKey     = Carbon::today()->toDateString();
         $todayRecord  = $weekAttendances->get($todayKey);
-        $presentToday = $todayRecord && $todayRecord->check_in !== null;
+        $presentToday = $todayRecord && $todayRecord->whereNotNull('check_in')->isNotEmpty();
 
         $totalHours = $records->sum('hours_worked');
         $workedDays = $records->where('hours_worked', '>', 0)->count();
