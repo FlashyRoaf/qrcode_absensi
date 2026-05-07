@@ -19,24 +19,25 @@ use PhpParser\Builder\Function_;
 class AttendanceController extends Controller
 {
     use Notifiable;
-   public function show(): Response {
-    $attendances = Attendance::with('user')
-        ->get()
-        ->map(fn($r) => [
-            'id'               => $r->id,
-            'user_id'          => $r->user_id,
-            'user_name'        => $r->user->name ?? 'Unknown',
-            'qrcode'           => $r->qrcode,
-            'date'             => $r->date,
-            'check_in'         => $r->check_in,
-            'check_out'        => $r->check_out,
-            'duration_minutes' => $r->duration_minutes,
-        ]);
+    public function show(): Response
+    {
+        $attendances = Attendance::with('user')
+            ->get()
+            ->map(fn($r) => [
+                'id'               => $r->id,
+                'user_id'          => $r->user_id,
+                'user_name'        => $r->user->name ?? 'Unknown',
+                'qrcode'           => $r->qrcode,
+                'date'             => $r->date,
+                'check_in'         => $r->check_in,
+                'check_out'        => $r->check_out,
+                'duration_minutes' => $r->duration_minutes,
+            ]);
 
-    return Inertia::render('admin/Attendance', [
-        'attendances' => $attendances,
-    ]);
-}
+        return Inertia::render('admin/Attendance', [
+            'attendances' => $attendances,
+        ]);
+    }
     //
     public function index(Request $request, $token)
     {
@@ -48,19 +49,19 @@ class AttendanceController extends Controller
                 'success' => null,
             ]);
         }
-        
+
         $user = Auth::user();
         $qrCode = Qrcode::where('token', $token)->first();
         // $attendance = Attendance::where('user_id', $user->id)
         // ->where('date', now()->toDateString())->first();
-        
+
         $latitude  = $request->latitude;
         $longitude = $request->longitude;
 
         if (!$qrCode) {
             abort(404, 'QR Code tidak ditemukan');
         }
-        
+
         if (now()->gt($qrCode->expires_at)) {
             return Inertia::render('qrcode/scanned', [
                 'message' => 'QR Code telah kadaluwarsa.',
@@ -76,7 +77,7 @@ class AttendanceController extends Controller
                 'success' => false,
             ]);
         }
-        
+
         if ($qrCode->is_used) {
             return Inertia::render('qrcode/scanned', [
                 'message' => 'QR Code sudah digunakan.',
@@ -84,7 +85,7 @@ class AttendanceController extends Controller
                 'success' => false,
             ]);
         }
-        
+
         if (is_null($latitude) || is_null($longitude)) {
             return Inertia::render('qrcode/scanned', [
                 'message' => 'Lokasi tidak dapat dideteksi. Aktifkan GPS dan coba lagi.',
@@ -107,8 +108,16 @@ class AttendanceController extends Controller
                 'success' => false,
             ]);
         }
-        
+
         $openSession = Attendance::where('user_id', $user->id)->whereNull('check_out')->latest()->first();
+
+        if ($openSession && $openSession->date !== now()->toDateString()) {
+            $openSession->update([
+                'check_out'        => null,
+                'duration_minutes' => 0,
+            ]);
+            $openSession = null;
+        }
 
         $tipe = [
             'check_in' => 'Check In',
@@ -143,7 +152,6 @@ class AttendanceController extends Controller
                 'date' => now()->toDateString(),
                 'check_in' => now(),
             ]);
-
         } else {
             // if (!$attendance || !$attendance->check_in) {
             //     return Inertia::render('qrcode/scanned', [
@@ -166,7 +174,7 @@ class AttendanceController extends Controller
             }
 
             $duration = Carbon::parse($openSession->check_in)->diffInMinutes(Carbon::now());
-            
+
             if ($duration < 1) {
                 return Inertia::render('qrcode/scanned', [
                     'message' => 'Tunggu beberapa saat sebelum melakukan check-out.',
@@ -174,13 +182,13 @@ class AttendanceController extends Controller
                     'success' => false,
                 ]);
             }
-            
+
             $openSession->update([
                 'check_out' => Carbon::now(),
                 'duration_minutes' => $duration,
             ]);
         }
-        
+
         // if ($user->shift !== $qrCode->shift || $user->division !== $qrCode->division) {
         //     abort(403, 'Anda tidak diizinkan untuk mengikuti shift atau divisi ini');
         // }
@@ -199,7 +207,7 @@ class AttendanceController extends Controller
         //     $attendance->update([
         //         'check_out' => Carbon::now(),
         //     ]);
-            
+
         // } else {
 
         //     if ($attendance) {
@@ -211,7 +219,7 @@ class AttendanceController extends Controller
         //     }
 
         //     // $status = $this->attendStatus($qrCode);
-            
+
         //     Attendance::create([
         //         'name' => $user->name,
         //         'qrcode' => $qrCode->token,
@@ -236,7 +244,7 @@ class AttendanceController extends Controller
         // }
 
         $qrCode->update(['is_used' => true]);
-        
+
         return Inertia::render('qrcode/scanned', [
             // 'division' => $qrCode->division,
             // 'shift' => $qrCode->shift,
@@ -259,16 +267,20 @@ class AttendanceController extends Controller
     //     return 'present';
     // }
 
-    private function getDistanceInMeters( float $lat1, float $lon1, 
-    float $lat2, float $lon2): float {
+    private function getDistanceInMeters(
+        float $lat1,
+        float $lon1,
+        float $lat2,
+        float $lon2
+    ): float {
         $earthRadius = 6371000; // meter
 
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);
-        
+
         $a = sin($dLat / 2) * sin($dLat / 2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) * sin($dLon / 2);
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-        
+
         return $earthRadius * $c;
     }
 }

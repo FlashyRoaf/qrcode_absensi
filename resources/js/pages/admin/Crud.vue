@@ -3,7 +3,7 @@
   <Head title="User Management" />
 
   <AppLayout>
-    <div class="crud-container">
+    <div class="crud-container px-6 py-8">
 
       <!-- Header -->
       <div class="crud-header">
@@ -35,20 +35,20 @@
           </div>
         </div>
         <div class="stat-card-mini" style="--i:1">
-          <div class="stat-icon-mini">
+          <div class="stat-icon-mini stat-icon-mini--blue">
             <UserCheck />
           </div>
           <div class="stat-content-mini">
-            <h4>{{users.filter(u => u.is_admin).length}}</h4>
+            <h4>{{ users.filter(u => u.is_admin).length }}</h4>
             <p>Admin</p>
           </div>
         </div>
         <div class="stat-card-mini" style="--i:2">
-          <div class="stat-icon-mini">
+          <div class="stat-icon-mini stat-icon-mini--mint">
             <UserIcon />
           </div>
           <div class="stat-content-mini">
-            <h4>{{users.filter(u => !u.is_admin).length}}</h4>
+            <h4>{{ users.filter(u => !u.is_admin).length }}</h4>
             <p>User</p>
           </div>
         </div>
@@ -71,20 +71,17 @@
             </div>
             <div class="form-group">
               <label>Email:</label>
-              <input v-model="createForm.email" type="email" required class="form-control"
-                placeholder="Masukkan email" />
+              <input v-model="createForm.email" type="email" required class="form-control" placeholder="Masukkan email" />
               <span v-if="createErrors.email" class="error">{{ createErrors.email }}</span>
             </div>
             <div class="form-group">
               <label>Password:</label>
-              <input v-model="createForm.password" type="password" required class="form-control"
-                placeholder="Masukkan password" />
+              <input v-model="createForm.password" type="password" required class="form-control" placeholder="Masukkan password" />
               <span v-if="createErrors.password" class="error">{{ createErrors.password }}</span>
             </div>
             <div class="form-group">
               <label>Konfirmasi Password:</label>
-              <input v-model="createForm.password_confirmation" type="password" required class="form-control"
-                placeholder="Konfirmasi password" />
+              <input v-model="createForm.password_confirmation" type="password" required class="form-control" placeholder="Konfirmasi password" />
             </div>
             <div class="form-group">
               <label>Admin:</label>
@@ -131,14 +128,12 @@
             </div>
             <div class="form-group">
               <label>Password Baru (kosongkan jika tidak ingin mengubah):</label>
-              <input v-model="editForm.password" type="password" class="form-control"
-                placeholder="Masukkan password baru" />
+              <input v-model="editForm.password" type="password" class="form-control" placeholder="Masukkan password baru" />
               <span v-if="editErrors.password" class="error">{{ editErrors.password }}</span>
             </div>
             <div class="form-group" v-if="editForm.password">
               <label>Konfirmasi Password Baru:</label>
-              <input v-model="editForm.password_confirmation" type="password" class="form-control"
-                placeholder="Konfirmasi password baru" />
+              <input v-model="editForm.password_confirmation" type="password" class="form-control" placeholder="Konfirmasi password baru" />
             </div>
             <div class="form-group">
               <label>Admin:</label>
@@ -169,46 +164,14 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>
-                  <div class="th-content">
-                    <Hash class="th-icon" />ID
-                  </div>
-                </th>
-                <th>
-                  <div class="th-content">
-                    <UserIcon class="th-icon" />Name
-                  </div>
-                </th>
-                <th>
-                  <div class="th-content">
-                    <Mail class="th-icon" />Email
-                  </div>
-                </th>
-                <th>
-                  <div class="th-content">
-                    <Shield class="th-icon" />Admin
-                  </div>
-                </th>
-                <th>
-                  <div class="th-content">
-                    <UserCheck class="th-icon" />Role
-                  </div>
-                </th>
-                <th>
-                  <div class="th-content">
-                    <Smartphone class="th-icon" />Device
-                  </div>
-                </th>
-                <th>
-                  <div class="th-content">
-                    <Calendar class="th-icon" />Dibuat
-                  </div>
-                </th>
-                <th>
-                  <div class="th-content">
-                    <Settings class="th-icon" />Aksi
-                  </div>
-                </th>
+                <th><div class="th-content"><Hash class="th-icon" />ID</div></th>
+                <th><div class="th-content"><UserIcon class="th-icon" />Name</div></th>
+                <th><div class="th-content"><Mail class="th-icon" />Email</div></th>
+                <th><div class="th-content"><Shield class="th-icon" />Admin</div></th>
+                <th><div class="th-content"><UserCheck class="th-icon" />Role</div></th>
+                <th><div class="th-content"><Smartphone class="th-icon" />Device</div></th>
+                <th><div class="th-content"><Calendar class="th-icon" />Dibuat</div></th>
+                <th><div class="th-content"><Settings class="th-icon" />Aksi</div></th>
               </tr>
             </thead>
             <tbody>
@@ -230,7 +193,9 @@
                   <span class="badge-role">{{ user.role }}</span>
                 </td>
                 <td>
-                  <span class="badge-admin" :class="user.device_id ? 'badge--yes' : 'badge--no'">{{ user.device_id ? 'Terhubung' : 'Belum terhubung' }}</span>
+                  <span class="badge-admin" :class="user.device_id ? 'badge--yes' : 'badge--no'">
+                    {{ user.device_id ? 'Terhubung' : 'Belum terhubung' }}
+                  </span>
                 </td>
                 <td><span class="date">{{ formatDate(user.created_at) }}</span></td>
                 <td>
@@ -274,7 +239,7 @@ import { Head, router } from '@inertiajs/vue3'
 import {
   Plus, RefreshCw, Edit, Trash, X,
   Users, UserCheck, User as UserIcon,
-  Hash, Mail, Shield, Calendar, Settings, 
+  Hash, Mail, Shield, Calendar, Settings,
   RotateCcw, Smartphone
 } from 'lucide-vue-next'
 import type { User } from '@/types'
@@ -384,24 +349,23 @@ const formatDate = (dateString: string) => {
 </script>
 
 <style scoped>
+
 /* ── Page load ── */
 .crud-container {
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  background: #f4f4f5;
   animation: pageIn 0.45s cubic-bezier(.22, 1, .36, 1) both;
 }
 
-@keyframes pageIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
+.dark .crud-container {
+  background: #0a0a0a;
+}
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Header ── */
@@ -416,8 +380,12 @@ const formatDate = (dateString: string) => {
 .header-info h2 {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #0a0a0a;
   margin-bottom: 0.25rem;
+}
+
+.dark .header-info h2 {
+  color: #ffffff;
 }
 
 .header-subtitle {
@@ -445,22 +413,42 @@ const formatDate = (dateString: string) => {
 }
 
 .btn-primary {
+  background: #BAD5FF;
+  color: #0a0a0a;
+}
+
+.dark .btn-primary {
   background: #ffffff;
   color: #09090b;
 }
 
 .btn-primary:hover {
-  background: #e4e4e7;
+  background: #a8c8ff;
   transform: translateY(-1px);
 }
 
+.dark .btn-primary:hover {
+  background: #e4e4e7;
+}
+
 .btn-secondary {
+  background: #FFF0BA;
+  color: #92680a;
+  border: 1px solid #ffe88a;
+}
+
+.dark .btn-secondary {
   background: #1c1c1f;
   color: #a1a1aa;
   border: 1px solid #27272a;
 }
 
 .btn-secondary:hover {
+  background: #ffe88a;
+  transform: translateY(-1px);
+}
+
+.dark .btn-secondary:hover {
   background: #27272a;
   color: #ffffff;
 }
@@ -484,8 +472,8 @@ const formatDate = (dateString: string) => {
 }
 
 .stat-card-mini {
-  background: #09090b;
-  border: 1px solid #27272a;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
   border-radius: 12px;
   padding: 1.1rem 1.25rem;
   display: flex;
@@ -496,48 +484,92 @@ const formatDate = (dateString: string) => {
   cursor: default;
 }
 
+.dark .stat-card-mini {
+  background: #09090b;
+  border: 1px solid #27272a;
+}
+
 .stat-card-mini:hover {
-  border-color: #52525b;
+  border-color: #a1a1aa;
   transform: translateY(-2px);
 }
 
-@keyframes cardIn {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
+.dark .stat-card-mini:hover {
+  border-color: #52525b;
+}
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .stat-icon-mini {
   width: 38px;
   height: 38px;
-  background: #1c1c1f;
-  border: 1px solid #27272a;
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
   border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #a1a1aa;
+  color: #71717a;
   flex-shrink: 0;
   transition: background 0.25s, color 0.25s;
 }
 
+.dark .stat-icon-mini {
+  background: #1c1c1f;
+  border: 1px solid #27272a;
+}
+
+/* Aksen warna per stat card */
+.stat-icon-mini--blue {
+  background: #EEF5FF;
+  border-color: #BAD5FF;
+  color: #3b6ea8;
+}
+
+.stat-icon-mini--mint {
+  background: #EDFFF7;
+  border-color: #BAFFE5;
+  color: #1a7a52;
+}
+
 .stat-card-mini:hover .stat-icon-mini {
+  background: #e4e4e7;
+  color: #0a0a0a;
+}
+
+.dark .stat-icon-mini--blue, .dark .stat-icon-mini--mint {
+  color: #71717a;
+}
+
+.dark .stat-card-mini:hover .stat-icon-mini {
   background: #27272a;
-  color: #ffffff;
+  color: #ffffff; 
+}
+
+.stat-card-mini:hover .stat-icon-mini--blue {
+  background: #BAD5FF;
+  color: #0a0a0a;
+}
+
+.stat-card-mini:hover .stat-icon-mini--mint {
+  background: #BAFFE5;
+  color: #0a0a0a;
 }
 
 .stat-content-mini h4 {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #0a0a0a;
   line-height: 1.2;
 }
+
+.dark .stat-content-mini h4 {
+  color: #ffffff;
+}
+
 
 .stat-content-mini p {
   color: #71717a;
@@ -548,7 +580,7 @@ const formatDate = (dateString: string) => {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -558,38 +590,32 @@ const formatDate = (dateString: string) => {
 }
 
 @keyframes overlayIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .modal-content {
-  background: #09090b;
-  border: 1px solid #27272a;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
   border-radius: 16px;
   min-width: 480px;
   max-width: 90vw;
   max-height: 90vh;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #3f3f46 #09090b;
+  scrollbar-color: #d4d4d8 #f4f4f5;
   animation: modalIn 0.3s cubic-bezier(.22, 1, .36, 1) both;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.dark .modal-content {
+  background: #09090b;
+  border: 1px solid #27272a; 
 }
 
 @keyframes modalIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(12px);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+  from { opacity: 0; transform: scale(0.95) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .modal-header {
@@ -597,19 +623,29 @@ const formatDate = (dateString: string) => {
   justify-content: space-between;
   align-items: center;
   padding: 1.25rem 1.75rem;
+  border-bottom: 1px solid #e4e4e7;
+  background: #fafafa;
+}
+
+.dark .modal-header {
+  background: #09090b;
   border-bottom: 1px solid #1c1c1f;
 }
 
 .modal-header h3 {
   font-size: 1.1rem;
   font-weight: 600;
+  color: #0a0a0a;
+}
+
+.dark .modal-header h3 {
   color: #ffffff;
 }
 
 .modal-close {
   background: none;
   border: none;
-  color: #71717a;
+  color: #a1a1aa;
   cursor: pointer;
   padding: 0.4rem;
   border-radius: 7px;
@@ -619,7 +655,16 @@ const formatDate = (dateString: string) => {
   transition: background 0.2s, color 0.2s;
 }
 
+.dark .modal-close {
+  color: #71717a;
+}
+
 .modal-close:hover {
+  background: #f4f4f5;
+  color: #0a0a0a;
+}
+
+.dark .modal-close:hover {
   background: #1c1c1f;
   color: #ffffff;
 }
@@ -635,43 +680,71 @@ const formatDate = (dateString: string) => {
 .form-group label {
   display: block;
   margin-bottom: 0.45rem;
-  color: #a1a1aa;
+  color: #3f3f46;
   font-size: 0.825rem;
   font-weight: 500;
+}
+
+.dark .form-group label {
+  color: #a1a1aa;
 }
 
 .form-control {
   width: 100%;
   padding: 0.65rem 0.9rem;
-  background: #111113;
-  border: 1px solid #27272a;
+  background: #fafafa;
+  border: 1px solid #e4e4e7;
   border-radius: 8px;
-  color: #ffffff;
+  color: #0a0a0a;
   font-size: 0.875rem;
   transition: border-color 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
 }
 
+.dark .form-control {
+  background: #111113;
+  border: 1px solid #27272a;
+  color: #ffffff;
+}
+
 .form-control:focus {
   outline: none;
+  border-color: #BAD5FF;
+  box-shadow: 0 0 0 3px rgba(186, 213, 255, 0.35);
+}
+
+.dark .form-control:focus {
   border-color: #52525b;
   box-shadow: 0 0 0 3px rgba(82, 82, 91, 0.2);
 }
 
 .form-control::placeholder {
+  color: #a1a1aa;
+}
+
+.dark .form-control::placeholder {
   color: #52525b;
 }
 
 .form-control option {
+  background: #ffffff;
+  color: #0a0a0a;
+}
+
+.dark .form-control option {
   background: #09090b;
   color: #ffffff;
 }
 
 .error {
-  color: #f87171;
+  color: #dc2626;
   font-size: 0.775rem;
   margin-top: 0.35rem;
   display: block;
+}
+
+.dark .error {
+  color: #f87171;
 }
 
 .form-actions {
@@ -680,20 +753,33 @@ const formatDate = (dateString: string) => {
   justify-content: flex-end;
   margin-top: 1.75rem;
   padding-top: 1.25rem;
+  border-top: 1px solid #e4e4e7;
+}
+
+.dark .form-actions {
   border-top: 1px solid #1c1c1f;
 }
 
 /* ── Table ── */
 .table-container {
-  background: #09090b;
-  border: 1px solid #27272a;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
   border-radius: 14px;
   overflow: hidden;
+}
+
+.dark .table-container {
+  background: #09090b;
+  border: 1px solid #27272a;
 }
 
 .table-wrapper {
   overflow-x: auto;
   scrollbar-width: thin;
+  scrollbar-color: #d4d4d8 #f4f4f5;
+}
+
+.dark .table-wrapper {
   scrollbar-color: #3f3f46 #09090b;
 }
 
@@ -702,11 +788,19 @@ const formatDate = (dateString: string) => {
 }
 
 .table-wrapper::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: #d4d4d8;
   border-radius: 6px;
 }
 
+.dark .table-wrapper::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+}
+
 .table-wrapper::-webkit-scrollbar-track {
+  background: #f4f4f5;
+}
+
+.dark .table-wrapper::-webkit-scrollbar-track {
   background: #09090b;
 }
 
@@ -717,6 +811,11 @@ const formatDate = (dateString: string) => {
 }
 
 .data-table thead tr {
+  background: #EEF5FF;
+  border-bottom: 1px solid #e4e4e7;
+}
+
+.dark .data-table thead tr {
   background: #111113;
   border-bottom: 1px solid #1c1c1f;
 }
@@ -730,32 +829,48 @@ const formatDate = (dateString: string) => {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  color: #a1a1aa;
+  color: #3b6ea8;
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
+.dark .th-content {
+  color: #a1a1aa;
+}
+
 .th-icon {
   width: 14px;
   height: 14px;
+  color: #7aaee0;
+}
+
+.dark .th-icon {
   color: #52525b;
 }
 
 .data-table td {
   padding: 0.85rem 1.25rem;
-  border-bottom: 1px solid #111113;
+  border-bottom: 1px solid #f4f4f5;
   vertical-align: middle;
 }
 
-/* Row staggered animation */
+.dark .data-table td {
+  border-bottom: 1px solid #111113;
+}
+
+/* Row animation */
 .table-row {
   transition: background 0.18s;
   animation: rowIn 0.4s cubic-bezier(.22, 1, .36, 1) calc(var(--row-i, 0) * 30ms) both;
 }
 
 .table-row:hover {
+  background: #f8f8f9;
+}
+
+.dark .table-row:hover {
   background: #0d0d10;
 }
 
@@ -764,22 +879,19 @@ const formatDate = (dateString: string) => {
 }
 
 @keyframes rowIn {
-  from {
-    opacity: 0;
-    transform: translateX(-6px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 /* Cells */
 .user-id {
-  color: #52525b;
+  color: #a1a1aa;
   font-size: 0.85rem;
   font-weight: 500;
+}
+
+.dark .user-id {
+  color: #52525b;
 }
 
 .user-info {
@@ -792,40 +904,64 @@ const formatDate = (dateString: string) => {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #1c1c1f;
-  border: 1px solid #3f3f46;
+  background: #f0f6ff;
+  border: 1px solid #BAD5FF;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #d4d4d8;
+  color: #3b6ea8;
   font-weight: 600;
   font-size: 0.75rem;
   flex-shrink: 0;
   transition: background 0.2s, border-color 0.2s;
 }
 
+.dark .user-avatar {
+  background: #1c1c1f;
+  border: 1px solid #3f3f46;
+  color: #d4d4d8;
+}
+
 .table-row:hover .user-avatar {
+  background: #BAD5FF;
+  border-color: #a8c8ff;
+  color: #0a0a0a;
+}
+
+.dark .table-row:hover .user-avatar {
   background: #27272a;
   border-color: #52525b;
+  color: #d4d4d8;
 }
 
 .username {
-  color: #ffffff;
+  color: #0a0a0a;
   font-size: 0.875rem;
   font-weight: 500;
 }
 
+.dark .username {
+  color: #ffffff;  
+}
 .email {
-  color: #a1a1aa;
+  color: #71717a;
   font-size: 0.875rem;
 }
 
+.dark .email {
+  color: #a1a1aa;
+}
+
 .date {
-  color: #71717a;
+  color: #a1a1aa;
   font-size: 0.825rem;
 }
 
-/* ── Badge Admin (hijau) ── */
+.dark .date {
+  color: #71717a;
+}
+
+/* ── Badge Admin ── */
 .badge-admin {
   display: inline-flex;
   align-items: center;
@@ -837,18 +973,30 @@ const formatDate = (dateString: string) => {
 }
 
 .badge--yes {
+  background: #f0fdf4;
+  color: #16a34a;
+  border-color: #bbf7d0;
+}
+
+.dark .badge--yes {
   background: #052e16;
   color: #4ade80;
   border-color: #166534;
 }
 
 .badge--no {
+  background: #f4f4f5;
+  color: #71717a;
+  border-color: #e4e4e7;
+}
+
+.dark .badge--no {
   background: #111113;
   color: #71717a;
   border-color: #27272a;
 }
 
-/* ── Badge Role (hijau) ── */
+/* ── Badge Role ── */
 .badge-role {
   display: inline-flex;
   align-items: center;
@@ -856,10 +1004,16 @@ const formatDate = (dateString: string) => {
   border-radius: 9999px;
   font-size: 0.775rem;
   font-weight: 500;
+  background: #EDFFF7;
+  color: #1a7a52;
+  border: 1px solid #BAFFE5;
+  text-transform: capitalize;
+}
+
+.dark .badge-role {
   background: #052e16;
   color: #86efac;
   border: 1px solid #166534;
-  text-transform: capitalize;
 }
 
 /* ── Action buttons ── */
@@ -886,41 +1040,79 @@ const formatDate = (dateString: string) => {
 }
 
 .btn-edit {
+  background: #f4f4f5;
+  color: #71717a;
+  border-color: #e4e4e7;
+}
+
+.dark .btn-edit {
   background: #1c1c1f;
   color: #a1a1aa;
   border-color: #27272a;
 }
 
 .btn-edit:hover {
-  background: #27272a;
-  color: #ffffff;
-  border-color: #3f3f46;
+  background: #EEF5FF;
+  color: #3b6ea8;
+  border-color: #BAD5FF;
   transform: translateY(-1px);
 }
 
+.dark .btn-edit:hover {
+  background: rgba(59, 110, 168, 0.1);
+  color: #55a0f4;
+  border-color: #3b6ea8;
+
+}
+
 .btn-reset {
+  background: #f4f4f5;
+  color: #71717a;
+  border-color: #e4e4e7;
+}
+
+.dark .btn-reset {
   background: #1c1c1f;
   color: #a1a1aa;
   border-color: #27272a;
 }
 
 .btn-reset:hover {
+  background: #fffbeb;
+  color: #d97706;
+  border-color: #fde68a;
+  transform: translateY(-1px);
+}
+
+.dark .btn-reset:hover {
   background: rgba(250, 204, 21, 0.1);
   color: #facc15;
   border-color: rgba(250, 204, 21, 0.4);
 }
 
 .btn-delete {
+  background: #f4f4f5;
+  color: #71717a;
+  border-color: #e4e4e7;
+}
+
+.dark .btn-delete {
   background: #1c1c1f;
   color: #71717a;
   border-color: #27272a;
 }
 
 .btn-delete:hover {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+  transform: translateY(-1px);
+}
+
+.dark .btn-delete:hover {
   background: #3f0d0d;
   color: #f87171;
   border-color: #7f1d1d;
-  transform: translateY(-1px);
 }
 
 /* ── Empty state ── */
@@ -935,26 +1127,27 @@ const formatDate = (dateString: string) => {
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .empty-icon {
-  color: #27272a;
+  color: #d4d4d8;
   width: 56px;
   height: 56px;
+}
+
+.dark .empty-icon {
+  color: #27272a;
 }
 
 .empty-state h3 {
   font-size: 1.25rem;
   font-weight: 600;
+  color: #0a0a0a;
+}
+
+.dark .empty-state h3 {
   color: #ffffff;
 }
 
@@ -966,21 +1159,9 @@ const formatDate = (dateString: string) => {
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .crud-header {
-    flex-direction: column;
-  }
-
-  .crud-actions {
-    width: 100%;
-  }
-
-  .stats-mini {
-    grid-template-columns: 1fr;
-  }
-
-  .modal-content {
-    min-width: 90vw;
-    margin: 1rem;
-  }
+  .crud-header { flex-direction: column; }
+  .crud-actions { width: 100%; }
+  .stats-mini { grid-template-columns: 1fr; }
+  .modal-content { min-width: 90vw; margin: 1rem; }
 }
 </style>

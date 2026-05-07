@@ -139,31 +139,31 @@ onMounted(() => {
 <template>
   <Head title="Absensi QR Code" />
 
-  <div class="min-h-screen bg-zinc-950 text-zinc-100 font-sans overflow-x-hidden relative">
+  <div class="min-h-screen bg-gray-50 dark:bg-zinc-950 text-gray-800 dark:text-zinc-100 font-sans overflow-x-hidden relative">
 
-    <!-- Subtle grid background -->
-    <div class="fixed inset-0 z-0 pointer-events-none"
+    <!-- Subtle grid background - tetap hanya di dark mode -->
+    <div class="fixed inset-0 z-0 pointer-events-none hidden dark:block"
       style="background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 40px 40px;">
     </div>
 
-    <!-- Glow blob -->
-    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] z-0 pointer-events-none"
+    <!-- Glow blob - hanya dark mode -->
+    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] z-0 pointer-events-none hidden dark:block"
       style="background: radial-gradient(ellipse, rgba(16,185,129,0.06) 0%, transparent 70%);">
     </div>
 
     <!-- ── HEADER ── -->
-    <header class="relative z-10 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur">
+    <header class="relative z-10 border-b bg-white/80 dark:bg-zinc-950/80 backdrop-blur border-gray-200 dark:border-zinc-800">
       <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 bg-emerald-500 rounded-md flex items-center justify-center">
-            <QrCode class="w-4 h-4 text-black" />
+            <QrCode class="w-4 h-4 text-white dark:text-black" />
           </div>
           <div>
-            <p class="text-xs text-zinc-500 uppercase tracking-widest">Admin Panel</p>
-            <h1 class="text-sm font-bold text-zinc-100 leading-tight">Absensi Digital</h1>
+            <p class="text-xs text-gray-500 dark:text-zinc-500 uppercase tracking-widest">Admin Panel</p>
+            <h1 class="text-sm font-bold text-gray-900 dark:text-zinc-100 leading-tight">Absensi Digital</h1>
           </div>
         </div>
-        <p class="text-xs text-zinc-600 font-mono">{{ formatTime(attendanceData.timestamp) }}</p>
+        <p class="text-xs text-gray-500 dark:text-zinc-600 font-mono">{{ formatTime(attendanceData.timestamp) }}</p>
       </div>
     </header>
 
@@ -176,16 +176,16 @@ onMounted(() => {
         <div class="flex flex-col gap-5">
 
           <!-- QR Frame -->
-          <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col items-center gap-5">
+          <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 flex flex-col items-center gap-5 shadow-sm dark:shadow-none">
             <div class="flex items-center justify-between w-full">
-              <p class="text-xs text-zinc-500 uppercase tracking-widest font-mono">QR Code</p>
+              <p class="text-xs text-gray-500 dark:text-zinc-500 uppercase tracking-widest font-mono">QR Code</p>
               <span
                 v-if="qrCode"
                 class="text-xs px-2 py-0.5 rounded-full font-mono"
                 :class="{
-                  'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20': urgencyLevel === 'normal',
-                  'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20': urgencyLevel === 'warning',
-                  'bg-red-500/10 text-red-400 border border-red-500/20': urgencyLevel === 'critical',
+                  'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20': urgencyLevel === 'normal',
+                  'bg-yellow-100 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20': urgencyLevel === 'warning',
+                  'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/20': urgencyLevel === 'critical',
                 }"
               >
                 {{ isExpired ? 'Expired' : 'Aktif' }}
@@ -197,7 +197,7 @@ onMounted(() => {
               <!-- QR Kosong (placeholder) -->
               <div
                 v-if="!qrCode"
-                class="w-52 h-52 border-2 border-dashed border-zinc-700 rounded-xl flex flex-col items-center justify-center gap-3 text-zinc-600"
+                class="w-52 h-52 border-2 border-dashed border-gray-300 dark:border-zinc-700 rounded-xl flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-zinc-600"
               >
                 <QrCode class="w-12 h-12" />
                 <p class="text-xs text-center px-4">Pilih tipe & buat QR Code</p>
@@ -208,12 +208,12 @@ onMounted(() => {
                 <!-- Overlay expired -->
                 <div
                   v-if="isExpired"
-                  class="absolute inset-0 z-10 bg-zinc-950/80 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center gap-2"
+                  class="absolute inset-0 z-10 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center gap-2"
                 >
-                  <AlertCircle class="w-8 h-8 text-red-400" />
-                  <p class="text-sm text-red-400 font-semibold">QR Code Expired</p>
-                  <p class="text-xs text-zinc-500">Halaman akan direfresh...</p>
-                  <RefreshCw class="w-4 h-4 text-zinc-500 animate-spin" />
+                  <AlertCircle class="w-8 h-8 text-red-500 dark:text-red-400" />
+                  <p class="text-sm text-red-600 dark:text-red-400 font-semibold">QR Code Expired</p>
+                  <p class="text-xs text-gray-500 dark:text-zinc-500">Halaman akan direfresh...</p>
+                  <RefreshCw class="w-4 h-4 text-gray-500 dark:text-zinc-500 animate-spin" />
                 </div>
 
                 <!-- QR SVG -->
@@ -233,45 +233,40 @@ onMounted(() => {
 
             <!-- Info QR -->
             <div v-if="qrCode" class="w-full space-y-2">
-              <!-- <div class="flex items-center justify-between text-xs font-mono">
-                <span class="text-zinc-600">Session ID</span>
-                <span v-if="qrCode" class="text-zinc-400">{{ attendanceData.sessionId }}</span>
-              </div> -->
-
               <!-- Countdown -->
-              <div class="bg-zinc-800/60 border rounded-xl px-4 py-3 flex items-center gap-3 transition-all"
+              <div class="bg-gray-100 dark:bg-zinc-800/60 border rounded-xl px-4 py-3 flex items-center gap-3 transition-all"
                 :class="{
-                  'border-zinc-700': urgencyLevel === 'normal',
-                  'border-yellow-500/30': urgencyLevel === 'warning',
-                  'border-red-500/30': urgencyLevel === 'critical',
+                  'border-gray-200 dark:border-zinc-700': urgencyLevel === 'normal',
+                  'border-yellow-200 dark:border-yellow-500/30': urgencyLevel === 'warning',
+                  'border-red-200 dark:border-red-500/30': urgencyLevel === 'critical',
                 }"
               >
                 <Clock class="w-4 h-4 flex-shrink-0"
                   :class="{
-                    'text-emerald-400': urgencyLevel === 'normal',
-                    'text-yellow-400': urgencyLevel === 'warning',
-                    'text-red-400': urgencyLevel === 'critical',
+                    'text-emerald-600 dark:text-emerald-400': urgencyLevel === 'normal',
+                    'text-yellow-600 dark:text-yellow-400': urgencyLevel === 'warning',
+                    'text-red-600 dark:text-red-400': urgencyLevel === 'critical',
                   }"
                 />
                 <div class="flex-1">
-                  <p class="text-xs text-zinc-500">Berlaku selama</p>
+                  <p class="text-xs text-gray-500 dark:text-zinc-500">Berlaku selama</p>
                   <p class="font-mono font-bold text-lg leading-tight"
                     :class="{
-                      'text-zinc-200': urgencyLevel === 'normal',
-                      'text-yellow-400': urgencyLevel === 'warning',
-                      'text-red-400': urgencyLevel === 'critical',
+                      'text-gray-800 dark:text-zinc-200': urgencyLevel === 'normal',
+                      'text-yellow-700 dark:text-yellow-400': urgencyLevel === 'warning',
+                      'text-red-700 dark:text-red-400': urgencyLevel === 'critical',
                     }"
                   >
                     {{ isExpired ? '00:00' : countdownDisplay }}
                   </p>
                 </div>
                 <div class="text-right">
-                  <p class="text-xs text-zinc-600">lagi</p>
+                  <p class="text-xs text-gray-400 dark:text-zinc-600">lagi</p>
                   <p class="text-xs font-mono"
                     :class="{
-                      'text-zinc-500': urgencyLevel === 'normal',
-                      'text-yellow-500': urgencyLevel === 'warning',
-                      'text-red-500': urgencyLevel === 'critical',
+                      'text-gray-500 dark:text-zinc-500': urgencyLevel === 'normal',
+                      'text-yellow-600 dark:text-yellow-500': urgencyLevel === 'warning',
+                      'text-red-600 dark:text-red-500': urgencyLevel === 'critical',
                     }"
                   >
                     {{ isExpired ? 'Expired' : urgencyLevel === 'critical' ? 'Segera expire!' : urgencyLevel === 'warning' ? 'Hampir habis' : 'Tersisa' }}
@@ -280,7 +275,7 @@ onMounted(() => {
               </div>
 
               <!-- Progress bar countdown -->
-              <div class="h-1 bg-zinc-800 rounded-full overflow-hidden">
+              <div class="h-1 bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                 <div
                   class="h-full rounded-full transition-all duration-1000"
                   :class="{
@@ -300,18 +295,18 @@ onMounted(() => {
 
           <!-- Title -->
           <div>
-            <h2 class="text-2xl font-bold text-zinc-100">Buat QR Code</h2>
-            <p class="text-sm text-zinc-500 mt-1">Generate QR Code untuk sesi absensi karyawan</p>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Buat QR Code</h2>
+            <p class="text-sm text-gray-500 dark:text-zinc-500 mt-1">Generate QR Code untuk sesi absensi karyawan</p>
           </div>
 
           <!-- Form Card -->
-          <form @submit.prevent="submit" class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col gap-6">
+          <form @submit.prevent="submit" class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 flex flex-col gap-6 shadow-sm dark:shadow-none">
 
             <!-- Step 1: Pilih Tipe -->
             <div class="space-y-3">
               <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-xs font-bold text-emerald-400">1</div>
-                <p class="text-sm font-semibold text-zinc-200">Pilih Tipe Absensi</p>
+                <div class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center text-xs font-bold text-emerald-700 dark:text-emerald-400">1</div>
+                <p class="text-sm font-semibold text-gray-800 dark:text-zinc-200">Pilih Tipe Absensi</p>
               </div>
 
               <!-- Toggle Check In / Check Out -->
@@ -321,8 +316,8 @@ onMounted(() => {
                   @click="form.type = 'check_in'"
                   class="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left"
                   :class="form.type === 'check_in'
-                    ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                    : 'bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:border-zinc-600'"
+                    ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-300 dark:border-emerald-500/50 text-emerald-700 dark:text-emerald-400'
+                    : 'bg-gray-50 dark:bg-zinc-800/50 border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 hover:border-gray-300 dark:hover:border-zinc-600'"
                 >
                   <LogIn class="w-4 h-4 flex-shrink-0" />
                   <div>
@@ -336,8 +331,8 @@ onMounted(() => {
                   @click="form.type = 'check_out'"
                   class="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left"
                   :class="form.type === 'check_out'
-                    ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                    : 'bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:border-zinc-600'"
+                    ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-300 dark:border-emerald-500/50 text-emerald-700 dark:text-emerald-400'
+                    : 'bg-gray-50 dark:bg-zinc-800/50 border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 hover:border-gray-300 dark:hover:border-zinc-600'"
                 >
                   <LogOut class="w-4 h-4 flex-shrink-0" />
                   <div>
@@ -355,14 +350,14 @@ onMounted(() => {
             </div>
 
             <!-- Divider -->
-            <div class="border-t border-zinc-800"></div>
+            <div class="border-t border-gray-200 dark:border-zinc-800"></div>
 
             <!-- Info -->
-            <div class="bg-zinc-800/40 rounded-xl px-4 py-3 flex items-start gap-3">
-              <Clock class="w-4 h-4 text-zinc-500 mt-0.5 flex-shrink-0" />
+            <div class="bg-gray-100 dark:bg-zinc-800/40 rounded-xl px-4 py-3 flex items-start gap-3">
+              <Clock class="w-4 h-4 text-gray-400 dark:text-zinc-500 mt-0.5 flex-shrink-0" />
               <div>
-                <p class="text-xs text-zinc-400 font-medium">Durasi QR Code</p>
-                <p class="text-xs text-zinc-600 mt-0.5">QR Code akan aktif selama <span class="text-zinc-400">{{ form.expires_in_minutes }} menit</span> dan otomatis expire setelah waktu habis.</p>
+                <p class="text-xs text-gray-600 dark:text-zinc-400 font-medium">Durasi QR Code</p>
+                <p class="text-xs text-gray-500 dark:text-zinc-600 mt-0.5">QR Code akan aktif selama <span class="text-gray-700 dark:text-zinc-400">{{ form.expires_in_minutes }} menit</span> dan otomatis expire setelah waktu habis.</p>
               </div>
             </div>
 
@@ -372,8 +367,8 @@ onMounted(() => {
               :disabled="form.processing || !form.type"
               class="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all"
               :class="form.type && !form.processing
-                ? 'bg-emerald-500 hover:bg-emerald-400 text-black cursor-pointer'
-                : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'"
+                ? 'bg-emerald-500 hover:bg-emerald-400 text-white dark:text-black cursor-pointer'
+                : 'bg-gray-300 dark:bg-zinc-800 text-gray-500 dark:text-zinc-600 cursor-not-allowed'"
             >
               <RefreshCw v-if="form.processing" class="w-4 h-4 animate-spin" />
               <QrCode v-else class="w-4 h-4" />
@@ -382,8 +377,8 @@ onMounted(() => {
           </form>
 
           <!-- Cara penggunaan -->
-          <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
-            <p class="text-xs text-zinc-500 uppercase tracking-widest font-mono">Cara Penggunaan</p>
+          <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-5 space-y-4 shadow-sm dark:shadow-none">
+            <p class="text-xs text-gray-500 dark:text-zinc-500 uppercase tracking-widest font-mono">Cara Penggunaan</p>
             <div class="space-y-3">
               <div v-for="(step, i) in [
                 { text: 'Pilih tipe absensi (Check In atau Check Out)' },
@@ -391,10 +386,10 @@ onMounted(() => {
                 { text: 'Tampilkan QR Code kepada karyawan untuk di-scan' },
                 { text: 'QR Code otomatis expire dalam 5 menit' },
               ]" :key="i" class="flex items-start gap-3">
-                <div class="w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs text-zinc-500 flex-shrink-0 mt-0.5">
+                <div class="w-5 h-5 rounded-full bg-gray-200 dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 flex items-center justify-center text-xs text-gray-600 dark:text-zinc-500 flex-shrink-0 mt-0.5">
                   {{ i + 1 }}
                 </div>
-                <p class="text-xs text-zinc-400 leading-relaxed">{{ step.text }}</p>
+                <p class="text-xs text-gray-600 dark:text-zinc-400 leading-relaxed">{{ step.text }}</p>
               </div>
             </div>
           </div>
@@ -404,10 +399,10 @@ onMounted(() => {
     </main>
 
     <!-- Footer -->
-    <footer class="relative z-10 border-t border-zinc-800 mt-10">
+    <footer class="relative z-10 border-t border-gray-200 dark:border-zinc-800 mt-10">
       <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-        <p class="text-xs text-zinc-700 font-mono">Absensi Digital · Admin Panel</p>
-        <p class="text-xs text-zinc-700 font-mono">{{ formatTime(new Date()) }}</p>
+        <p class="text-xs text-gray-500 dark:text-zinc-700 font-mono">Absensi Digital · Admin Panel</p>
+        <p class="text-xs text-gray-500 dark:text-zinc-700 font-mono">{{ formatTime(new Date()) }}</p>
       </div>
     </footer>
 
