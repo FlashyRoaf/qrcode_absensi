@@ -21,7 +21,7 @@ class WeeklyReportExport implements
     FromCollection,
     WithHeadings,
     WithMapping,
-    // WithStyles,
+    WithStyles,
     WithTitle,
     WithColumnWidths,
     WithEvents
@@ -50,10 +50,6 @@ class WeeklyReportExport implements
         // Terapkan filter status
         if (!empty($this->filters['status']) && $this->filters['status'] !== 'all') {
             $data = $data->filter(fn($r) => $r['status'] === $this->filters['status']);
-        }
-
-        if (!empty($this->filters['week_start'])) {
-            $data = $data->filter(fn($r) => $r['week_start'] === $this->filters['week_start']);
         }
 
         // Reset array keys
@@ -98,20 +94,20 @@ class WeeklyReportExport implements
 
     // ── Styling ───────────────────────────────────────────────────────────────
 
-    // public function styles(Worksheet $sheet): array
-    // {
-    //     return [
-    //         // Baris header (baris 1 = summary, baris 2 = kolom header)
-    //         3 => [
-    //             'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
-    //             'fill' => [
-    //                 'fillType'   => Fill::FILL_SOLID,
-    //                 'startColor' => ['argb' => 'FF10B981'], // emerald-500
-    //             ],
-    //             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-    //         ],
-    //     ];
-    // }
+    public function styles(Worksheet $sheet): array
+    {
+        return [
+            // Baris header (baris 1 = summary, baris 2 = kolom header)
+            3 => [
+                'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+                'fill' => [
+                    'fillType'   => Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FF10B981'], // emerald-500
+                ],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            ],
+        ];
+    }
 
     public function columnWidths(): array
     {
@@ -199,15 +195,7 @@ class WeeklyReportExport implements
                         if ($row % 2 === 0) {
                             $sheet->getStyle("A{$row}:H{$row}")->applyFromArray([
                                 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF27272A']],
-                                // 'font' => ['color' => ['argb' => 'E4E4E7']]
                             ]);
-                            $sheet->getStyle("H{$row}")->applyFromArray([
-                                'font' => ['color' => ['argb' => 'E4E4E7']]
-                            ]);
-                            $sheet->getStyle("A{$row}:E{$row}")->applyFromArray([
-                                'font' => ['color' => ['argb' => 'E4E4E7']]
-                            ]);
-
                         }
                     }
 

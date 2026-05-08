@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->boolean('is_admin')->default(false);
+            $table->string('phone')->nullable()->after('email');
             $table->string('role')->default('anggota');
             $table->string('device_id')->nullable();
             $table->timestamp('admin_assigned_at')->nullable();

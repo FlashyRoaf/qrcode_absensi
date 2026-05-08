@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'latitude' => env('OFFICE_LAT'),
-    'longitude' => env('OFFICE_LNG'),
-]
+    'latitude' => env('STAKS_LATITUDE'),
+    'longitude' => env('STAKS_LONGITUDE'),
+];
 
 ?>

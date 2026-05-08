@@ -1,3 +1,23 @@
-resources/js/components/ui/*
-resources/js/ziggy.js
-resources/views/mail/*
+# Laravel
+vendor/
+storage/
+bootstrap/cache/
+public/build/
+public/hot/
+
+# Node
+node_modules/
+.vite/
+
+# WA Bot
+wa-bot/node_modules/
+wa-bot/auth_info/
+
+# Database
+database/database.sqlite
+
+# Generated / compiled
+public/js/
+public/css/
+*.min.js
+*.min.css
