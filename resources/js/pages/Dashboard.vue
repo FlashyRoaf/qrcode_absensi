@@ -29,9 +29,9 @@ function formatHours(hours: number): string {
   return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 
-function getStatus(record: AttendanceRecord): 'present dark:bg-[#052e16]' | 'in_progress dark:bg-[#1c1206]' | 'absent' {
-  if (record.hours_worked > 0) return 'present dark:bg-[#052e16]'
-  if (record.check_in)         return 'in_progress dark:bg-[#1c1206]'
+function getStatus(record: AttendanceRecord): 'present' | 'in_progress' | 'absent' {
+  if (record.hours_worked > 0) return 'present'
+  if (record.check_in)         return 'in_progress'
   return 'absent'
 }
 
@@ -57,7 +57,7 @@ const filteredRecords = computed(() =>
 
 <template>
   <AppLayout>
-    <div class="page-root px-6 py-8 bg-[#f8f8f9] text-[#0a0a0a] dark:bg-[#0a0a0a] dark:text-[#ffffff]">
+    <div class="page-root">
 
       <!-- Header -->
       <div class="page-header">
@@ -68,8 +68,8 @@ const filteredRecords = computed(() =>
       <div class="dashboard-grid">
 
         <!-- Attendance Table -->
-        <div class="table-card bg-[#fafafa] text-[#0a0a0a] dark:bg-[#09090b] dark:text-[#ffffff]">
-          <div class="card-header border-b border-[#e4e4e7] dark:border-[#1c1c1f]">
+        <div class="table-card">
+          <div class="card-header">
             <h3>Attendance History</h3>
             <p>Catatan check-in dan check-out minggu ini</p>
           </div>
@@ -77,7 +77,7 @@ const filteredRecords = computed(() =>
           <div class="table-wrapper">
             <table class="data-table">
               <thead>
-                <tr class="bg-[#bad5ff] dark:bg-[#111113] border border-b-[#e4e4e7] dark:border-b-[#1c1c1f]">
+                <tr>
                   <th>Hari / Tanggal</th>
                   <th>Check In</th>
                   <th>Check Out</th>
@@ -89,7 +89,7 @@ const filteredRecords = computed(() =>
                 <tr
                   v-for="(record, index) in filteredRecords"
                   :key="record.id"
-                  class="table-row text-[#0a0a0a] hover:bg-[#f8f8f9] dark:text-white dark:hover:bg-[#0d0d10] border border-b-[#e4e4e7] dark:border-b-[#111113]"
+                  class="table-row"
                   :style="{ '--row-i': index }"
                 >
                   <td>
@@ -108,9 +108,9 @@ const filteredRecords = computed(() =>
                     <span class="hours-text">{{ formatHours(record.hours_worked) }}</span>
                   </td>
                   <td>
-                    <span class="badge shadow-lg dark:shadow-none" :class="`badge--${getStatus(record)}`">
-                      <template v-if="getStatus(record) === 'present dark:bg-[#052e16]'">Present</template>
-                      <template v-else-if="getStatus(record) === 'in_progress dark:bg-[#1c1206]'">In Progress</template>
+                    <span class="badge" :class="`badge--${getStatus(record)}`">
+                      <template v-if="getStatus(record) === 'present'">Present</template>
+                      <template v-else-if="getStatus(record) === 'in_progress'">In Progress</template>
                       <template v-else>Absent</template>
                     </span>
                   </td>
@@ -125,23 +125,24 @@ const filteredRecords = computed(() =>
 
           <!-- Donut Progress -->
           <div class="chart-card">
-            <div class="card-header border border-b-[#e4e4e7] dark:border-none">
+            <div class="card-header">
               <h3>Work Progress</h3>
               <p>Target jam kerja minggu ini</p>
             </div>
             <div class="chart-body">
               <div class="donut-wrap">
                 <svg viewBox="0 0 120 120" class="donut-svg">
-                  <circle class="stroke-[#82b2a0] dark:stroke-[#1c1c1f]" cx="60" cy="60" r="54" fill="none" stroke-width="10" />
+                  <circle cx="60" cy="60" r="54" fill="none" stroke="#1c1c1f" stroke-width="10" />
                   <circle
                     cx="60" cy="60" r="54"
                     fill="none"
+                    stroke="#ffffff"
                     stroke-width="10"
                     stroke-linecap="round"
                     :stroke-dasharray="circumference"
                     :stroke-dashoffset="strokeDashoffset"
                     transform="rotate(-90 60 60)"
-                    class="donut-progress stroke-[#baffe5] dark:stroke-white"
+                    class="donut-progress"
                   />
                 </svg>
                 <div class="donut-label">
@@ -160,8 +161,8 @@ const filteredRecords = computed(() =>
           </div>
 
           <!-- Present Today -->
-          <div class="stat-card dark:[#09090b]" style="--i: 0">
-            <div class="stat-icon" :class="present_today ? 'bg-[#baffe5] dark:bg-[#052e16]' : 'bg-[#1c1c1f]'">
+          <div class="stat-card" style="--i: 0">
+            <div class="stat-icon" :class="present_today ? 'stat-icon--green' : 'stat-icon--muted'">
               <CheckCircle class="stat-svg" :class="present_today ? 'icon--green' : 'icon--muted'" />
             </div>
             <div>
@@ -171,8 +172,8 @@ const filteredRecords = computed(() =>
           </div>
 
           <!-- Avg Hours -->
-          <div class="stat-card dark:[#09090b]" style="--i: 1">
-            <div class="stat-icon bg-[#bad5ff] dark:bg-[#0c1a2e]">
+          <div class="stat-card" style="--i: 1">
+            <div class="stat-icon stat-icon--blue">
               <Clock class="stat-svg icon--blue" />
             </div>
             <div>
@@ -182,8 +183,8 @@ const filteredRecords = computed(() =>
           </div>
 
           <!-- Hours This Week -->
-          <div class="stat-card dark:[#09090b]" style="--i: 2">
-            <div class="stat-icon bg-[#fff0ba] dark:bg-[#1c1206]">
+          <div class="stat-card" style="--i: 2">
+            <div class="stat-icon stat-icon--amber">
               <Clock class="stat-svg icon--amber" />
             </div>
             <div>
@@ -217,7 +218,7 @@ const filteredRecords = computed(() =>
 .page-header h1 {
   font-size: 1.75rem;
   font-weight: 700;
-  /* color: #ffffff; */
+  color: #ffffff;
   margin-bottom: 0.25rem;
 }
 .page-header p { color: #71717a; font-size: 0.9rem; }
@@ -236,19 +237,19 @@ const filteredRecords = computed(() =>
 /* Card base */
 .table-card,
 .chart-card {
-  /* background: #09090b; */
+  background: #09090b;
   border: 1px solid #27272a;
   border-radius: 14px;
   overflow: hidden;
 }
 .card-header {
   padding: 1.25rem 1.5rem;
-  /* border-bottom: 1px solid #1c1c1f; */
+  border-bottom: 1px solid #1c1c1f;
 }
 .card-header h3 {
   font-size: 1rem;
   font-weight: 600;
-  /* color: #ffffff; */
+  color: #ffffff;
   margin-bottom: 0.2rem;
 }
 .card-header p { font-size: 0.8rem; color: #71717a; }
@@ -260,10 +261,10 @@ const filteredRecords = computed(() =>
   min-width: 500px;
   border-collapse: collapse;
 }
-/* .data-table thead tr {
+.data-table thead tr {
   background: #111113;
   border-bottom: 1px solid #1c1c1f;
-} */
+}
 .data-table th {
   padding: 0.75rem 1.25rem;
   text-align: left;
@@ -275,27 +276,23 @@ const filteredRecords = computed(() =>
 }
 .data-table td {
   padding: 0.85rem 1.25rem;
-  /* border-bottom: 1px solid #111113; */
+  border-bottom: 1px solid #111113;
   vertical-align: middle;
 }
 .table-row {
   transition: background 0.18s;
   animation: rowIn 0.4s cubic-bezier(.22,1,.36,1) calc(var(--row-i, 0) * 40ms) both;
 }
-/* .table-row:hover { background: #0d0d10; } */
+.table-row:hover { background: #0d0d10; }
 .table-row:last-child td { border-bottom: none; }
 @keyframes rowIn {
   from { opacity: 0; transform: translateX(-6px); }
   to   { opacity: 1; transform: translateX(0); }
 }
 
-.day-name  {
-   /* color: #ffffff;  */
-   font-size: 0.875rem; font-weight: 500; }
+.day-name  { color: #ffffff; font-size: 0.875rem; font-weight: 500; }
 .day-date  { color: #71717a; font-size: 0.75rem; margin-top: 1px; }
-.time-text { 
-  /* color: #ffffff;  */
-  font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.time-text { color: #ffffff; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
 .empty-text { color: #3f3f46; }
 .hours-text { color: #a1a1aa; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
 
@@ -309,15 +306,9 @@ const filteredRecords = computed(() =>
   font-weight: 500;
   border: 1px solid transparent;
 }
-.badge--present     { 
-/* background: #052e16; */
-color: #4ade80; border-color: #166534; }
-.badge--in_progress { 
-/* background: #1c1206;  */
-color: #fbbf24; border-color: #78350f; }
-.badge--absent      { 
-/* background: #111113;  */
-color: #52525b; border-color: #27272a; }
+.badge--present     { background: #052e16; color: #4ade80; border-color: #166534; }
+.badge--in_progress { background: #1c1206; color: #fbbf24; border-color: #78350f; }
+.badge--absent      { background: #111113; color: #52525b; border-color: #27272a; }
 
 /* Right col */
 .right-col {
@@ -352,20 +343,16 @@ color: #52525b; border-color: #27272a; }
   flex-direction: column;
   align-items: center;
 }
-.donut-pct { font-size: 1.5rem; font-weight: 700; 
-  /* color: #ffffff;  */
-  line-height: 1.1; }
+.donut-pct { font-size: 1.5rem; font-weight: 700; color: #ffffff; line-height: 1.1; }
 .donut-sub { font-size: 0.68rem; color: #71717a; }
 .chart-meta { text-align: center; }
-.chart-meta-value { font-size: 1rem; font-weight: 600; 
-  /* color: #ffffff; */
- }
+.chart-meta-value { font-size: 1rem; font-weight: 600; color: #ffffff; }
 .chart-meta-value span { font-size: 0.825rem; font-weight: 400; color: #71717a; }
 .chart-meta-label { font-size: 0.75rem; color: #71717a; margin-top: 2px; }
 
 /* Stat cards */
 .stat-card {
-  /* background: #09090b; */
+  background: #09090b;
   border: 1px solid #27272a;
   border-radius: 12px;
   padding: 1rem 1.25rem;
@@ -391,10 +378,10 @@ color: #52525b; border-color: #27272a; }
   justify-content: center;
   flex-shrink: 0;
 }
-/* .stat-icon--green { background: #052e16; }
+.stat-icon--green { background: #052e16; }
 .stat-icon--muted { background: #1c1c1f; }
 .stat-icon--blue  { background: #0c1a2e; }
-.stat-icon--amber { background: #1c1206; } */
+.stat-icon--amber { background: #1c1206; }
 
 .stat-svg { width: 20px; height: 20px; }
 .icon--green { color: #4ade80; }
@@ -403,9 +390,7 @@ color: #52525b; border-color: #27272a; }
 .icon--amber { color: #fbbf24; }
 
 .stat-label { font-size: 0.775rem; color: #71717a; margin-bottom: 0.15rem; }
-.stat-value { font-size: 1.2rem; font-weight: 600; 
-  /* color: #ffffff;  */
-  line-height: 1.2; }
+.stat-value { font-size: 1.2rem; font-weight: 600; color: #ffffff; line-height: 1.2; }
 .stat-value-sub { font-size: 0.78rem; font-weight: 400; color: #71717a; }
 
 </style>

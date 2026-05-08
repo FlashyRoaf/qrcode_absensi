@@ -13,11 +13,9 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
-    'telegram-bot-api' => [
-        'token' => env('TELEGRAM_BOT_TOKEN'),
+    'wa_bot' => [
+        'url' => env('WA_BOT_URL', 'http://localhost:3000'),
     ],
-
-    'telegram_id' => env('TELEGRAM_ID'),
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
