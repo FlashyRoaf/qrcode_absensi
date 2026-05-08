@@ -32,6 +32,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('is_admin');
+            $table->dropColumn('phone');
             $table->dropColumn('role');
             $table->dropColumn('device_id');
             $table->dropColumn('admin_assigned_at');
