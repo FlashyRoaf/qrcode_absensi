@@ -57,7 +57,7 @@ import { Head, Link } from '@inertiajs/vue3'
                     </p>
                     <p class="mb-6 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                         Catat kehadiran anggota dengan mudah, cepat, dan terintegrasi. <br />Dibangun khusus untuk
-                        lingkungan digital STMIK Kharisma.
+                        lingkungan STAKS.
                     </p>
 
                     <!-- Feature List -->
@@ -71,8 +71,8 @@ import { Head, Link } from '@inertiajs/vue3'
                                 </svg>
                             </span>
                             <span class="text-sm text-slate-700 dark:text-slate-300">
-                                <strong class="font-semibold text-slate-900 dark:text-white">Presensi Real-time</strong>
-                                <br />Catat kehadiran langsung dari perangkat apa pun.
+                                <strong class="font-semibold text-slate-900 dark:text-white">Presensi Anti Titip Absen</strong>
+                                <br />Peningkatan keamanan terhadap celah titip absen.
                             </span>
                         </li>
                         <li class="flex items-start gap-3">
@@ -85,7 +85,7 @@ import { Head, Link } from '@inertiajs/vue3'
                             </span>
                             <span class="text-sm text-slate-700 dark:text-slate-300">
                                 <strong class="font-semibold text-slate-900 dark:text-white">Laporan Lengkap</strong>
-                                <br />Rekap kehadiran anggota secara otomatis dan terperinci.
+                                <br />Rekap kehadiran anggota secara otomatis dan fleksibel.
                             </span>
                         </li>
                         <li class="flex items-start gap-3">
@@ -98,7 +98,7 @@ import { Head, Link } from '@inertiajs/vue3'
                             </span>
                             <span class="text-sm text-slate-700 dark:text-slate-300">
                                 <strong class="font-semibold text-slate-900 dark:text-white">Notifikasi Cerdas</strong>
-                                <br />Dapatkan pengingat jadwal dan info penting seputar organisasi.
+                                <br />Dapatkan notifikasi info penting seputar absensi.
                             </span>
                         </li>
                     </ul>
@@ -132,10 +132,10 @@ import { Head, Link } from '@inertiajs/vue3'
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                             </svg>
                         </div>
-                        <h2 class="text-2xl font-bold tracking-tight">STAKS</h2>
-                        <p class="mt-1 text-sm font-medium text-blue-100 dark:text-blue-200">Sistem Absensi Tepercaya</p>
+                        <h2 class="text-2xl font-bold tracking-tight">SKAQS</h2>
+                        <!-- <p class="mt-1 text-sm font-medium text-blue-100 dark:text-blue-200">Startup Kharisma Attendance Qrcode System</p> -->
                         <p class="mt-4 text-xs text-blue-200/80 dark:text-blue-300/70">
-                            Powered by STMIK Kharisma
+                            Powered by STAKS
                         </p>
                     </div>
 
