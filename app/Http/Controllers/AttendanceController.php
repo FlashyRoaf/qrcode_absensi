@@ -103,13 +103,13 @@ class AttendanceController extends Controller
             (float) $longitude,
         );
 
-        // if ($distance > 50) {
-        //     return Inertia::render('qrcode/scanned', [
-        //         'message' => 'Anda berada ' . round($distance) . ' meter dari kantor. Absensi hanya bisa dilakukan dalam radius 50 meter.',
-        //         'type'    => $qrCode->type ?? null,
-        //         'success' => false,
-        //     ]);
-        // }
+        if ($distance > 50) {
+            return Inertia::render('qrcode/scanned', [
+                'message' => 'Anda berada ' . round($distance) . ' meter dari kantor. Absensi hanya bisa dilakukan dalam radius 50 meter.',
+                'type'    => $qrCode->type ?? null,
+                'success' => false,
+            ]);
+        }
 
         // ── Proses Absensi ────────────────────────────────────────────────
 
