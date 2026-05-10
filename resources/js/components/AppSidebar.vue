@@ -47,9 +47,13 @@ const AdminNavItems: NavItem[] = [
         <SidebarHeader>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton size="lg" as-child>
-                        <Link :href="route('dashboard')">
-                            <AppLogo />
+                    <SidebarMenuButton size="lg" class="h-20" as-child>
+                        <Link :href="route('dashboard')" class="flex w-full items-center group-data-[collapsible=icon]:justify-center">
+                            <img src="/images/logo-full.png" class="w-[140px] h-auto group-data-[collapsible=icon]:hidden">
+
+                            <!-- Logo ICON -->
+                            <img src="/images/logo-icon.png"
+                                class="hidden w-[20px] h-auto group-data-[collapsible=icon]:block">
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -58,7 +62,7 @@ const AdminNavItems: NavItem[] = [
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
-            <NavMain v-if="isAdmin" :items="AdminNavItems" label="Admin"/>
+            <NavMain v-if="isAdmin" :items="AdminNavItems" label="Admin" />
         </SidebarContent>
 
         <SidebarFooter>
