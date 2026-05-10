@@ -1,12 +1,15 @@
 <script setup lang="ts">
-// import logo from '@/components/logo.png';
+
+interface Props {
+    size?: string,
+}
+
+const props = defineProps<Props>()
 </script>
 
 <template>
-    <div class="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-        <img src="/images/logo.png" alt="logo" class="size-5 object-contain" />
-    </div>
-    <div class="ml-1 grid flex-1 text-left text-sm">
-        <span class="mb-0.5 truncate leading-tight font-semibold">STAKS</span>
+    <div>
+        <img src="/images/logo-dark-full.png" :style="{ width: size || '140px' }" class="h-auto dark:hidden" alt="logo">
+        <img src="/images/logo-light-full.png" :style="{ width: size || '140px' }" class="h-auto hidden dark:block" alt="logo">
     </div>
 </template>

@@ -7,6 +7,7 @@ import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
+import AppLogoIcon from './AppLogoIcon.vue';
 
 // ambil data user dari inertia
 const page = usePage();
@@ -49,11 +50,9 @@ const AdminNavItems: NavItem[] = [
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" class="h-20" as-child>
                         <Link :href="route('dashboard')" class="flex w-full items-center group-data-[collapsible=icon]:justify-center">
-                            <img src="/images/logo-full.png" class="w-[140px] h-auto group-data-[collapsible=icon]:hidden">
+                            <AppLogo class="group-data-[collapsible=icon]:hidden"/>
 
-                            <!-- Logo ICON -->
-                            <img src="/images/logo-icon.png"
-                                class="hidden w-[20px] h-auto group-data-[collapsible=icon]:block">
+                            <AppLogoIcon size="20px" class="hidden group-data-[collapsible=icon]:block"/>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
