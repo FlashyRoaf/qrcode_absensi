@@ -29,7 +29,8 @@ class WhatsAppService
         string $name,
         string $type,
         string $time,
-        string $weeklyDurasi = '0 menit'
+        string $weeklyDurasi = '0 menit',
+        string $weeklyTarget = '14 jam 30 menit'
     ): bool {
         try {
             $response = Http::timeout(5)->post("{$this->botUrl}/send-notification", [
@@ -38,6 +39,7 @@ class WhatsAppService
                 'type'         => $type,
                 'time'         => $time,
                 'weeklyDurasi' => $weeklyDurasi,
+                'weeklyTarget' => $weeklyTarget,
             ]);
 
             if ($response->successful()) {

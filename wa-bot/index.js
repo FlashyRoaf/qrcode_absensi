@@ -99,7 +99,7 @@ app.get('/status', (req, res) => {
 //   - time  : waktu absensi (string)
 // ─────────────────────────────────────────────
 app.post('/send-notification', async (req, res) => {
-    const { phone, name, type, time, weeklyDurasi } = req.body;
+    const { phone, name, type, time, weeklyDurasi, weeklyTarget } = req.body;
 
     if (!phone || !name || !type || !time) {
         return res.status(400).json({ success: false, message: 'Parameter tidak lengkap.' });
@@ -124,6 +124,7 @@ app.post('/send-notification', async (req, res) => {
         `Anda berhasil melakukan *${label}* pada:\n` +
         `🕐 ${time}\n\n` +
         `${weeklyLine}\n\n` +
+        `Sisa target kerja minggu ini: ${weeklyTarget}\n\n ` +
         `_Pesan ini dikirim otomatis oleh sistem absensi._`;
 
     try {

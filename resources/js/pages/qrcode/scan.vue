@@ -28,7 +28,7 @@ interface Props {
 
 const form = useForm({
   type: '',
-  expires_in_minutes: 1,
+  expires_in_minutes: 2,
 });
 
 const props = defineProps<Props>();

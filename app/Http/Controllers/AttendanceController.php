@@ -155,6 +155,7 @@ class AttendanceController extends Controller
                 // Kumulatif minggu ini SEBELUM saat ini (sesi saat ini belum selesai)
                 $weeklyMinutes   = $this->getWeeklyMinutes($user->id, $waktuSekarang);
                 $weeklyFormatted = $this->formatMinutes($weeklyMinutes);
+                $weeklyTarget = $this->formatMinutes(870 - $weeklyMinutes);
 
                 $this->whatsapp->sendAttendanceNotification(
                     phone:        $user->phone,
@@ -162,6 +163,7 @@ class AttendanceController extends Controller
                     type:         'check_in',
                     time:         $waktuSekarang->copy()->setTimezone('Asia/Makassar')->format('d/m/Y H:i:s') . ' WITA',
                     weeklyDurasi: $weeklyFormatted,
+                    weeklyTarget: $weeklyTarget,
                 );
             }
 
@@ -197,6 +199,7 @@ class AttendanceController extends Controller
                 // Kumulatif minggu ini TERMASUK sesi yang baru selesai
                 $weeklyMinutes   = $this->getWeeklyMinutes($user->id, $waktuSekarang);
                 $weeklyFormatted = $this->formatMinutes($weeklyMinutes);
+                $weeklyTarget = $this->formatMinutes(870 - $weeklyMinutes);
 
                 $this->whatsapp->sendAttendanceNotification(
                     phone:        $user->phone,
@@ -204,6 +207,7 @@ class AttendanceController extends Controller
                     type:         'check_out',
                     time:         $waktuSekarang->copy()->setTimezone('Asia/Makassar')->format('d/m/Y H:i:s') . " WITA (durasi saat ini: {$durasi})",
                     weeklyDurasi: $weeklyFormatted,
+                    weeklyTarget: $weeklyTarget,
                 );
             }
         }
