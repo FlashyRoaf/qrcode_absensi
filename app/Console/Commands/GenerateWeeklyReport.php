@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use Illuminate\Console\Command;
 use App\Models\User;
 use App\Models\Attendance;
@@ -34,17 +35,42 @@ class GenerateWeeklyReport extends Command
         $this->newLine();
 
         $today = Carbon::now();
-        // $lastSaturday = $today->copy()->subDay();
+        $weekOption = $this->option('week-start');
 
+        $weekStart = null;
+        $weekEnd = null;
+        // $lastSaturday = $today->copy()->subDay();
+        
         // Tentukan minggu yang akan di-generate
-        if ($this->option('week-start')) {
-            // Manual: dari parameter
-            $weekStart = Carbon::parse($this->option('week-start'))->startOfDay();
-            $weekEnd = $weekStart->copy()->endOfWeek(6);
+        if ($weekOption) {
+            try {
+                $dateFormat = Carbon::createFromFormat('j-n-Y', $weekOption);
+                
+                if ($dateFormat->format('j-n-Y') !== $weekOption) {
+                    throw new Exception();
+                }
+    
+                if (!$dateFormat->isMonday()) {
+                    $this->error('--week-start harus hari Senin.');
+                    return self::FAILURE;
+                }
+
+                // Manual: dari parameter
+                $weekStart = Carbon::parse($weekOption)->startOfDay();
+                $weekEnd = $weekStart->copy()->endOfWeek(6);
+            } catch (Exception $e) {
+                $this->error('Format tanggal tidak valid. Gunakan format d-m-Y');
+                return self::FAILURE;
+            }    
         } else {
-            // Auto: minggu lalu (Senin - Minggu)
-            $weekStart = $today->copy()->subWeek()->startOfWeek(1);
-            $weekEnd = $today->copy()->subWeek()->endOfWeek(6);
+            if ($today->isSunday()) {
+                $weekStart = $today->copy()->startOfWeek(1);
+                $weekEnd = $today->copy()->endOfWeek(6);
+            } else {
+                // Auto: minggu lalu (Senin - Sabtu)
+                $weekStart = $today->copy()->subWeek()->startOfWeek(1);
+                $weekEnd = $today->copy()->subWeek()->endOfWeek(6);
+            }
         }
 
 
@@ -65,6 +91,8 @@ class GenerateWeeklyReport extends Command
 
         foreach ($users as $user) {
             try {
+                if ($user->role === 'scan') continue;
+                
                 // Cek apakah report untuk minggu ini sudah ada
                 $existingReport = WeeklyReport::where('user_id', $user->id)
                     ->where('week_start', $weekStart->toDateString())
@@ -84,7 +112,7 @@ class GenerateWeeklyReport extends Command
                     ])
                     ->sum('duration_minutes');
 
-                $this->info("Total menit {$user->name} : {$totalMinutes}");
+                $this->info("\nTotal menit {$user->name} : {$totalMinutes}");
                 // $totalHours = $totalMinutes / 60;
                 $targetMinutes = 14.5 * 60; // 870 menit
                 // $targetHours = 14.5;

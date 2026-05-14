@@ -13,7 +13,7 @@ import AppLogoIcon from './AppLogoIcon.vue';
 const page = usePage();
 
 // sesuaikan dengan struktur backend kamu
-const isAdmin = page.props.auth.user.role === 'admin';
+const isAdmin = page.props.auth.user.role != 'anggota' && page.props.auth.user.is_admin === true;
 
 const mainNavItems: NavItem[] = [
     {
