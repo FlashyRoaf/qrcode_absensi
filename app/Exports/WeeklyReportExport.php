@@ -80,7 +80,7 @@ class WeeklyReportExport implements
         $minutes  = (int) $row['total_minutes'];
         $hours    = floor($minutes / 60);
         $mins     = $minutes % 60;
-        $progress = min(100, round(($minutes / 960) * 100));
+        $progress = min(100, round(($minutes / 870) * 100));
 
         return [
             $no,
