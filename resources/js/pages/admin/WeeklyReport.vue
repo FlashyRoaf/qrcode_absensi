@@ -214,7 +214,7 @@
                                             :class="row.total_minutes >= 870 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
                                             {{ fmtMinutes(row.total_minutes) }}
                                         </span>
-                                        <span class="text-gray-500 dark:text-zinc-600 text-xs ml-1">({{ row.total_minutes }}m)</span>
+                                        <span class="text-gray-500 dark:text-zinc-600 text-xs ml-1">({{ Math.floor(row.total_minutes) }}m)</span>
                                     </td>
                                     <td class="px-4 py-3">
                                         <span
