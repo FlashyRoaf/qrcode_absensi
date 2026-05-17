@@ -230,11 +230,11 @@
                                             <div class="flex-1 h-1.5 bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden w-24">
                                                 <div class="h-full rounded-full"
                                                     :class="row.status === 'memenuhi' ? 'bg-emerald-500' : 'bg-red-500'"
-                                                    :style="{ width: Math.min(100, Math.round((row.total_minutes / 960) * 100)) + '%' }">
+                                                    :style="{ width: Math.min(100, Math.round((row.total_minutes / 870) * 100)) + '%' }">
                                                 </div>
                                             </div>
                                             <span class="text-xs text-gray-500 dark:text-zinc-600">{{ Math.min(100,
-                                                Math.round((row.total_minutes / 960) * 100)) }}%</span>
+                                                Math.round((row.total_minutes / 870) * 100)) }}%</span>
                                         </div>
                                     </td>
                                 </tr>
@@ -409,7 +409,7 @@
 
                 <!-- Footer -->
                 <div class="pt-4 border-t border-gray-200 dark:border-zinc-800 text-center text-xs text-gray-400 dark:text-zinc-700">
-                    Admin Panel · Weekly Work Report · Target 16 jam/minggu (960 menit)
+                    Admin Panel · Weekly Work Report · Target 14.5 jam/minggu (870 menit)
                 </div>
             </main>
         </div>
@@ -564,7 +564,7 @@ const exportUrl = computed(() => {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtMinutes(m) {
     const h = Math.floor(m / 60)
-    const min = m % 60
+    const min = Math.floor(m % 60)
     return `${h}j ${min}m`
 }
 
