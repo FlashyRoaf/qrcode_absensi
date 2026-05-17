@@ -167,7 +167,7 @@
                     </div>
 
                     <!-- Table -->
-                    <div class="rounded-xl border border-gray-200 dark:border-zinc-800 overflow-hidden">
+                    <div class="rounded-xl border border-gray-200 dark:border-zinc-800 overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead>
                                 <tr class="bg-gray-50 dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800">
@@ -198,8 +198,8 @@
                                     <td class="px-4 py-3">
                                         <div class="flex items-center gap-2">
                                             <div
-                                                class="w-7 h-7 rounded-full bg-gray-200 dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-zinc-400">
-                                                {{ String(row.user_name || row.user_id).charAt(0).toUpperCase() }}
+                                                class="w-7 h-7 shrink-0 rounded-full bg-gray-200 dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-zinc-400">
+                                                {{ getInitials(row.user_name) }}
                                             </div>
                                             <div>
                                                 <p class="text-gray-900 dark:text-zinc-200 font-semibold text-xs">{{ row.user_name || `User
@@ -421,6 +421,7 @@
 import { ref, computed } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
+import { useInitials } from '@/composables/useInitials'
 
 const props = defineProps({
     reports: {
@@ -441,6 +442,9 @@ const isExporting = ref(false)
 
 // State filter week
 const selectedWeek = ref('')
+
+// Initial
+const { getInitials } = useInitials()
 
 // Konversi tanggal apapun ke Senin minggu tersebut
 const snapToMonday = (dateStr) => {
