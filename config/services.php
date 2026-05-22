@@ -15,6 +15,7 @@ return [
     */
     'wa_bot' => [
         'url' => env('WA_BOT_URL', 'http://localhost:3000'),
+        'group_id' => env('WA_GROUP_ID'),
     ],
 
     'postmark' => [

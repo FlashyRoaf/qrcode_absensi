@@ -8,6 +8,10 @@ use App\Models\User;
 use App\Models\Attendance;
 use App\Models\WeeklyReport;
 use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\WeeklyReportExport;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class GenerateWeeklyReport extends Command
 {
@@ -16,7 +20,8 @@ class GenerateWeeklyReport extends Command
      *
      * @var string
      */
-    protected $signature = 'app:generate-weekly-report {--week-start= : Tanggal Senin akhir minggu (Y-m-d)}';
+    protected $signature = 'app:generate-weekly-report {--week-start= : Tanggal Senin akhir minggu (Y-m-d)}
+    {--send-wa : Kirim hasil report ke grup WA}';
 
     /**
      * The console command description.
@@ -40,16 +45,16 @@ class GenerateWeeklyReport extends Command
         $weekStart = null;
         $weekEnd = null;
         // $lastSaturday = $today->copy()->subDay();
-        
+
         // Tentukan minggu yang akan di-generate
         if ($weekOption) {
             try {
                 $dateFormat = Carbon::createFromFormat('j-n-Y', $weekOption);
-                
+
                 if ($dateFormat->format('j-n-Y') !== $weekOption) {
                     throw new Exception();
                 }
-    
+
                 if (!$dateFormat->isMonday()) {
                     $this->error('--week-start harus hari Senin.');
                     return self::FAILURE;
@@ -61,7 +66,7 @@ class GenerateWeeklyReport extends Command
             } catch (Exception $e) {
                 $this->error('Format tanggal tidak valid. Gunakan format d-m-Y');
                 return self::FAILURE;
-            }    
+            }
         } else {
             if ($today->isSunday()) {
                 $weekStart = $today->copy()->startOfWeek(1);
@@ -92,7 +97,7 @@ class GenerateWeeklyReport extends Command
         foreach ($users as $user) {
             try {
                 if ($user->role === 'scan') continue;
-                
+
                 // Cek apakah report untuk minggu ini sudah ada
                 $existingReport = WeeklyReport::where('user_id', $user->id)
                     ->where('week_start', $weekStart->toDateString())
@@ -151,5 +156,45 @@ class GenerateWeeklyReport extends Command
                 ['Error', $errorCount],
             ]
         );
+
+        if ($this->option('send-wa')) {
+            // Generate dan kirim Excel ke WA
+            $reports = WeeklyReport::with('user')
+                ->where('week_start', $weekStart->toDateString())
+                ->get()
+                ->map(fn($r) => [
+                    'user_id'       => $r->user_id,
+                    'user_name'     => $r->user->name ?? null,
+                    'week_start'    => $r->week_start,
+                    'total_minutes' => $r->total_minutes,
+                    'status'        => $r->status,
+                ]);
+    
+            $filters = ['week_start' => $weekStart->toDateString()];
+            $filename = 'weekly-report-' . $weekStart->format('Y-m-d') . '.xlsx';
+    
+            // Pastikan folder ada
+            Storage::makeDirectory('reports');
+    
+            // Simpan file
+            Excel::store(new WeeklyReportExport($reports, $filters), 'reports/' . $filename);
+    
+            // Kirim ke WA bot
+            $filePath = env('WA_BOT_STORAGE_PATH') . '/' . $filename;
+            $groupId = config('services.wa_bot.group_id');
+    
+            Http::post(
+                config('services.wa_bot.url') . '/send-file',
+                [
+                    'groupId'  => $groupId,
+                    'filePath' => $filePath,
+                    'filename' => $filename,
+                    'caption'  => '📊 Weekly Report ' . $weekStart->format('d/m/Y') . ' - ' . $weekEnd->format('d/m/Y'),
+                ]
+            );
+    
+            $this->info('📤 Weekly report terkirim ke grup WA!');
+        }
+
     }
 }
