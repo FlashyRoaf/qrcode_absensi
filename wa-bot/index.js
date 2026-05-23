@@ -17,7 +17,6 @@ let isConnected = false;
 function getRandomQuote() {
     return quotesData[Math.floor(Math.random() * quotesData.length)];
 }
-const randomQuote = getRandomQuote();
 
 // ─────────────────────────────────────────────
 // Inisialisasi koneksi WhatsApp
@@ -116,6 +115,8 @@ app.get('/status', (req, res) => {
 app.post('/send-notification', async (req, res) => {
     const { phone, name, type, time, weeklyDurasi, weeklyTarget } = req.body;
 
+    const randomQuote = getRandomQuote();
+    
     const checkInGreetings = [
         `Halo *${name}*! Senang kamu sudah hadir hari ini 😊`,
         `Hai *${name}*! Terima kasih sudah datang, tim jadi lebih lengkap! 🌟`,
