@@ -22,7 +22,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
         <SettingsLayout>
             <div class="space-y-6">
-                <HeadingSmall title="Appearance settings" description="Update your account's appearance settings" />
+                <HeadingSmall title="Tampilan Settings" description="Ubah tampilan akun Anda" />
                 <AppearanceTabs />
             </div>
         </SettingsLayout>

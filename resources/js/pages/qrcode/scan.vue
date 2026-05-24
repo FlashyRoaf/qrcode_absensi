@@ -384,7 +384,7 @@ onMounted(() => {
                 { text: 'Pilih tipe absensi (Check In atau Check Out)' },
                 { text: 'Tekan tombol Buat QR Code' },
                 { text: 'Tampilkan QR Code kepada karyawan untuk di-scan' },
-                { text: 'QR Code otomatis expire dalam 5 menit' },
+                { text: 'QR Code otomatis expire dalam 2 menit' },
               ]" :key="i" class="flex items-start gap-3">
                 <div class="w-5 h-5 rounded-full bg-gray-200 dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 flex items-center justify-center text-xs text-gray-600 dark:text-zinc-500 flex-shrink-0 mt-0.5">
                   {{ i + 1 }}
