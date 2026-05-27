@@ -55,7 +55,7 @@
       </div>
 
       <!-- Create Modal -->
-      <div v-if="showCreateModal" class="modal-overlay" @click="closeCreateModal">
+      <div v-if="showCreateModal" ref="createModalRef" class="modal-overlay" @click="closeCreateModal">
         <div class="modal-content" @click.stop>
           <div class="modal-header">
             <h3>Tambah User Baru</h3>
@@ -84,6 +84,11 @@
               <input v-model="createForm.password_confirmation" type="password" required class="form-control" placeholder="Konfirmasi password" />
             </div>
             <div class="form-group">
+              <label>Nomor HP (Opsional):</label>
+              <input v-model="createForm.phone" type="text" required class="form-control" placeholder="62895xxx" />
+              <span v-if="createErrors.phone" class="error">{{ createErrors.phone }}</span>
+            </div>
+            <div class="form-group">
               <label>Admin:</label>
               <select v-model="createForm.is_admin" required class="form-control">
                 <option :value="true">Iya</option>
@@ -107,7 +112,7 @@
       </div>
 
       <!-- Edit Modal -->
-      <div v-if="showEditModal" class="modal-overlay" @click="closeEditModal">
+      <div v-if="showEditModal" ref="editModalRef" class="modal-overlay" @click="closeEditModal">
         <div class="modal-content" @click.stop>
           <div class="modal-header">
             <h3>Edit User</h3>
@@ -134,6 +139,11 @@
             <div class="form-group" v-if="editForm.password">
               <label>Konfirmasi Password Baru:</label>
               <input v-model="editForm.password_confirmation" type="password" class="form-control" placeholder="Konfirmasi password baru" />
+            </div>
+            <div class="form-group">
+              <label>Nomor HP:</label>
+              <input v-model="editForm.phone" type="text" class="form-control" placeholder="62895xxx" />
+              <span v-if="editErrors.phone" class="error">{{ editErrors.phone }}</span>
             </div>
             <div class="form-group">
               <label>Admin:</label>
@@ -234,7 +244,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, nextTick } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
 import {
   Plus, RefreshCw, Edit, Trash, X,
@@ -258,6 +268,8 @@ const emit = defineEmits<{ refresh: [] }>()
 const { getInitials } = useInitials()
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
+const createModalRef = ref<HTMLElement | null>(null)
+const editModalRef = ref<HTMLElement | null>(null)
 const createProcessing = ref(false)
 const editProcessing = ref(false)
 const createErrors = ref<Record<string, string>>({})
@@ -266,36 +278,53 @@ const editingUserId = ref<number | null>(null)
 
 const createForm = reactive({
   name: '', email: '', password: '', password_confirmation: '',
-  is_admin: false, role: '',
+  phone: '', is_admin: false, role: '',
 })
 
 const editForm = reactive({
   name: '', email: '', password: '', password_confirmation: '',
-  role: '', is_admin: false,
+  phone: '', role: '', is_admin: false,
 })
 
-const openCreateModal = () => { resetCreateForm(); showCreateModal.value = true }
+const openCreateModal = async () => { 
+  resetCreateForm(); showCreateModal.value = true
+
+  await nextTick()
+
+  createModalRef.value?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+    })
+ }
 const closeCreateModal = () => { showCreateModal.value = false; resetCreateForm(); createErrors.value = {} }
 
-const openEditModal = (user: User) => {
+const openEditModal = async (user: User) => {
   props.onCollapsed?.()
   resetEditForm()
   editForm.name = user.name
   editForm.email = user.email
+  editForm.phone = user.phone
   editForm.is_admin = user.is_admin
   editForm.role = user.role
   editingUserId.value = user.id
   showEditModal.value = true
+
+  await nextTick()
+
+  editModalRef.value?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+    })
 }
 const closeEditModal = () => { showEditModal.value = false; resetEditForm(); editErrors.value = {} }
 
 const resetCreateForm = () => {
   createForm.name = ''; createForm.email = ''; createForm.password = ''
-  createForm.password_confirmation = ''; createForm.role = ''; createForm.is_admin = false
+  createForm.password_confirmation = ''; createForm.role = ''; createForm.is_admin = false; createForm.phone = ''
 }
 const resetEditForm = () => {
   editForm.name = ''; editForm.email = ''; editForm.password = ''
-  editForm.password_confirmation = ''; editForm.role = ''; editForm.is_admin = false
+  editForm.password_confirmation = ''; editForm.role = ''; editForm.is_admin = false; editForm.phone = ''
   editingUserId.value = null
 }
 
@@ -311,7 +340,7 @@ const updateUser = () => {
   if (!editingUserId.value) return
   editProcessing.value = true; editErrors.value = {}
   const data: any = {
-    name: editForm.name, email: editForm.email,
+    name: editForm.name, email: editForm.email, phone: editForm.phone,
     is_admin: editForm.is_admin, role: editForm.role,
   }
   if (editForm.password) {

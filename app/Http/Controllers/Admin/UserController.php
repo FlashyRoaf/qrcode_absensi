@@ -17,9 +17,6 @@ class UserController extends Controller
     //
     public function index(): Response
     {
-        // $users = User::select('id', 'username', 'email', 'birthdate', 'newsletter', 'newsletter_consent_at', 'is_admin', 'admin_role', 'admin_assigned_at')
-        //     ->orderBy('created_at', 'desc')
-        //     ->get();
         $users = User::all();
 
         return Inertia::render('admin/Crud', [
@@ -32,39 +29,22 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        // $request->validate([
-        //     'username' => 'required|string|max:255',
-        //     'email' => 'required|string|email|max:255|unique:users',
-        //     'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        //     'role' => 'required|string|in:admin,user',
-        // ]);
-
         $request->validate([
             'name' => 'required|string|max:255|unique:'.User::class,
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            // 'birthdate' => 'required|date|max:255',
-            // 'newsletter' => 'nullable|boolean',
+            'phone' => 'nullable|string|max:255',
             'is_admin' => 'required|boolean',
             'role' => 'nullable|string|max:255',
         ]);
-
-        // User::create([
-        //     'username' => $request->username,
-        //     'email' => $request->email,
-        //     'password' => Hash::make($request->password),
-        //     'role' => $request->role,
-        // ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            // 'birthdate' => $request->birthdate,
-            // 'newsletter' => $request->boolean('newsletter'),
-            // 'newsletter_consent_at' => $request->boolean('newsletter') ? now() : null,
             'is_admin' => $request->boolean('is_admin'),
             'role' => $request->role,
+            'phone' => $request->phone,
             'admin_assigned_at' => $request->boolean('is_admin') ? now() : null
         ]);
 
@@ -77,19 +57,10 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        // $rules = [
-        //     'username' => 'required|string|max:255',
-        //     'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-        //     'role' => 'required|string|in:admin,user',
-        // ];
-
-
         $rules = [
-            // 'username' => 'required|string|max:255|unique:'.User::class,
             'name' => 'required|string|max:255|unique:users,name,'.$user->id,
             'email' => 'required|string|lowercase|email|max:255|unique:users,email,'.$user->id,
-            // 'birthdate' => 'required|date|max:255',
-            // 'newsletter' => 'nullable|boolean',
+            'phone' => 'nullable|string|max:255',
             'is_admin' => 'required|boolean',
             'role' => 'nullable|string|max:255',
         ];
@@ -101,20 +72,12 @@ class UserController extends Controller
 
         $request->validate($rules);
 
-        // $updateData = [
-        //     'username' => $request->username,
-        //     'email' => $request->email,
-        //     'role' => $request->role,
-        // ];
-
         $updateData = [
             'name' => $request->name,
             'email' => $request->email,
-            // 'birthdate' => $request->birthdate,
-            // 'newsletter' => $request->boolean('newsletter'),
-            // 'newsletter_consent_at' => $request->boolean('newsletter') ? now() : null,
             'is_admin' => $request->boolean('is_admin'),
             'role' => $request->role,
+            'phone' => $request->phone,
             'admin_assigned_at' => $request->boolean('is_admin') ? now() : null
         ];
 

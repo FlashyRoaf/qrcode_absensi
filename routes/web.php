@@ -15,16 +15,19 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/admin/users', [UserController::class, 'index'])->middleware('admin')->name('users');
-    Route::post('/admin/users', [UserController::class, 'store'])->name('users.store');
-    Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-    Route::post('/admin/users/{user}/reset-device', [UserController::class, 'resetDevice'])
-        ->name('users.reset-device');
-    
-    Route::get('/admin/attendance', [AttendanceController::class, 'show'])->middleware('admin')->name('attendance');
-    Route::get('/admin/weekly-report', [WeeklyReportController::class, 'show'])->middleware('admin')->name('weekly-reports');
-    Route::get('/admin/weekly-report/export', [WeeklyReportController::class, 'export'])->name('admin.weekly-report.export');
+    Route::middleware('admin')->prefix('admin')->group(function () {
+
+        Route::get('users', [UserController::class, 'index'])->name('users');
+        Route::post('users', [UserController::class, 'store'])->name('users.store');
+        Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::post('users/{user}/reset-device', [UserController::class, 'resetDevice'])
+            ->name('users.reset-device');
+            
+        Route::get('attendance', [AttendanceController::class, 'show'])->name('attendance');
+        Route::get('weekly-report', [WeeklyReportController::class, 'show'])->name('weekly-reports');
+        Route::get('weekly-report/export', [WeeklyReportController::class, 'export'])->name('admin.weekly-report.export');
+    });
 });
 
 require __DIR__.'/settings.php';

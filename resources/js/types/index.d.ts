@@ -29,6 +29,7 @@ export interface User {
     id: number;
     name: string;
     email: string;
+    phone: string;
     is_admin: boolean;
     role: string;
     device_id: string;
