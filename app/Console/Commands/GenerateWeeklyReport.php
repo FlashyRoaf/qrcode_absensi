@@ -70,7 +70,7 @@ class GenerateWeeklyReport extends Command
         } else {
             if ($today->isSunday()) {
                 $weekStart = $today->copy()->startOfWeek(1);
-                $weekEnd = $today->copy()->endOfWeek(6);
+                $weekEnd = $today->copy()->addDays(5);
             } else {
                 // Auto: minggu lalu (Senin - Sabtu)
                 $weekStart = $today->copy()->subWeek()->startOfWeek(1);
