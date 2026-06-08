@@ -175,12 +175,13 @@ class GenerateWeeklyReport extends Command
     
             // Pastikan folder ada
             Storage::makeDirectory('reports');
+            chmod(storage_path('app/private/reports'), 0755);
     
             // Simpan file
             Excel::store(new WeeklyReportExport($reports, $filters), 'reports/' . $filename);
     
             // Kirim ke WA bot
-            $filePath = env('WA_BOT_STORAGE_PATH') . '/' . $filename;
+            $filePath = config('services.wa_bot.storage_path') . '/' . $filename;
             $groupId = config('services.wa_bot.group_id');
     
             Http::post(
