@@ -85,7 +85,7 @@
             </div>
             <div class="form-group">
               <label>Nomor HP (Opsional):</label>
-              <input v-model="createForm.phone" type="text" required class="form-control" placeholder="62895xxx" />
+              <input v-model="createForm.phone" type="text" class="form-control" placeholder="62895xxx" />
               <span v-if="createErrors.phone" class="error">{{ createErrors.phone }}</span>
             </div>
             <div class="form-group">
@@ -204,7 +204,7 @@
                 </td>
                 <td>
                   <span class="badge-admin" :class="user.device_id ? 'badge--yes' : 'badge--no'">
-                    {{ user.device_id ? 'Terhubung' : 'Belum terhubung' }}
+                    {{ user.role !== 'atasan' ? user.device_id ? 'Terhubung' : 'Belum terhubung' : '—'}}
                   </span>
                 </td>
                 <td><span class="date">{{ formatDate(user.created_at) }}</span></td>
@@ -384,12 +384,8 @@ const formatDate = (dateString: string) => {
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  background: #f4f4f5;
+  background: var(--bg-page);
   animation: pageIn 0.45s cubic-bezier(.22, 1, .36, 1) both;
-}
-
-.dark .crud-container {
-  background: #0a0a0a;
 }
 
 @keyframes pageIn {

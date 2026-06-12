@@ -10,6 +10,8 @@ use App\Models\WeeklyReport;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\WeeklyReportExport;
+use App\Models\Penalty;
+use App\Models\PenaltyExemptWeek;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
@@ -96,7 +98,7 @@ class GenerateWeeklyReport extends Command
 
         foreach ($users as $user) {
             try {
-                if ($user->role === 'scan') continue;
+                if ($user->hasRole(['scan', 'atasan'])) continue;
 
                 // Cek apakah report untuk minggu ini sudah ada
                 $existingReport = WeeklyReport::where('user_id', $user->id)
@@ -134,6 +136,34 @@ class GenerateWeeklyReport extends Command
                 ]);
 
                 $successCount++;
+
+                // $penaltyStartDate = Carbon::parse("2026-06-01");
+                // if ($weekStart->lt($penaltyStartDate)) {
+                //     // Penalty belum aktif, skip
+                //     $progressBar->advance();
+                //     continue;
+                // }
+
+                $isExempt = PenaltyExemptWeek::where('week_start', $weekStart->toDateString())->exists();
+                if ($isExempt) {
+                    $progressBar->advance();
+                    continue;
+                }
+
+                // Buat penalty jika status tidak_memenuhi dan belum ada
+                $weeklyReport = WeeklyReport::where('user_id', $user->id)->
+                    where('week_start', $weekStart->toDateString())->first();
+                    
+                if ($status === 'tidak_memenuhi') {
+                    Penalty::firstOrCreate(
+                        [
+                            'user_id'          => $user->id,
+                            'weekly_report_id' => $weeklyReport->id, // simpan hasil WeeklyReport::create()
+                        ],
+                        ['status' => 'pending']
+                    );
+                }
+
             } catch (\Exception $e) {
                 $this->error("Error untuk user {$user->id}: {$e->getMessage()}");
                 $errorCount++;
@@ -169,21 +199,21 @@ class GenerateWeeklyReport extends Command
                     'total_minutes' => $r->total_minutes,
                     'status'        => $r->status,
                 ]);
-    
+
             $filters = ['week_start' => $weekStart->toDateString()];
             $filename = 'weekly-report-' . $weekStart->format('Y-m-d') . '.xlsx';
-    
+
             // Pastikan folder ada
             Storage::makeDirectory('reports');
             chmod(storage_path('app/private/reports'), 0755);
-    
+
             // Simpan file
             Excel::store(new WeeklyReportExport($reports, $filters), 'reports/' . $filename);
-    
+
             // Kirim ke WA bot
             $filePath = config('services.wa_bot.storage_path') . '/' . $filename;
             $groupId = config('services.wa_bot.group_id');
-    
+
             Http::post(
                 config('services.wa_bot.url') . '/send-file',
                 [
@@ -193,9 +223,23 @@ class GenerateWeeklyReport extends Command
                     'caption'  => '📊 Weekly Report ' . $weekStart->format('d/m/Y') . ' - ' . $weekEnd->format('d/m/Y'),
                 ]
             );
-    
-            $this->info('📤 Weekly report terkirim ke grup WA!');
-        }
 
+            // Kirim file ke WA Atasan
+            $atasans = User::where('role', 'atasan')->whereNotNull('phone')->get();
+
+            foreach ($atasans as $atasan) {
+                Http::post(
+                    config('services.wa_bot.url') . '/send-file-user',
+                    [
+                        'phone'  => $atasan->phone,
+                        'filePath' => $filePath,
+                        'filename' => $filename,
+                        'caption'  => '📊 Weekly Report ' . $weekStart->format('d/m/Y') . ' - ' . $weekEnd->format('d/m/Y'),
+                    ]
+                );
+            }
+
+            $this->info('📤 Weekly report terkirim ke grup WA dan WA atasan!');
+        }
     }
 }

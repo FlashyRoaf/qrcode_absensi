@@ -119,6 +119,54 @@
     --sidebar-border: hsl(0 0% 91%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);
     --sidebar: hsl(0 0% 98%);
+
+    /* Page & Surface */
+    --bg-page: #f8f8f9;
+    --penalty-bg-page: #f8f8f9;
+    --penalty-bg-surface: #ffffff;
+    --penalty-bg-elevated: #f4f4f5;
+
+    /* Text */
+    --penalty-text-primary: #0a0a0a;
+    --penalty-text-secondary: #71717a;
+    --penalty-text-muted: #a1a1aa;
+
+    /* Border */
+    --penalty-border: #e4e4e7;
+    --penalty-border-dark: #27272a;
+
+    /* Status - Yellow */
+    --penalty-yellow-bg: #fffbeb;
+    --penalty-yellow-border: #fde68a;
+    --penalty-yellow-text: #edbd7f;
+
+    /* Status - Blue */
+    --penalty-blue-bg: #eef5ff;
+    --penalty-blue-border: #bad5ff;
+    --penalty-blue-text: #3b6ea8;
+
+    /* Status - Green */
+    --penalty-green-bg: #f0fdf4;
+    --penalty-green-border: #bbf7d0;
+    --penalty-green-text: #1ea751;
+
+    /* Status - Red */
+    --penalty-red-bg: #fef2f2;
+    --penalty-red-border: #fecaca;
+    --penalty-red-text: #e03e3e;
+
+    /* Additional (for admin table, buttons, etc) */
+    --penalty-table-header-bg: var(--penalty-blue-bg);
+    --penalty-table-header-text: var(--penalty-blue-text);
+    --penalty-table-row-hover: #f8f8f9;
+    --penalty-avatar-bg: #f0f6ff;
+    --penalty-avatar-border: var(--penalty-blue-border);
+    --penalty-avatar-text: var(--penalty-blue-text);
+    --penalty-action-btn-bg: #f4f4f5; /* latar abu-abu terang */
+    --penalty-action-btn-border: #e4e4e7; /* border abu-abu */
+    --penalty-action-btn-text: #52525b; /* teks abu-abu gelap */
+    /* --penalty-modal-bg: #ffffff;
+    --penalty-modal-border: #e4e4e7; */
 }
 
 .dark {
@@ -155,6 +203,51 @@
     --sidebar-border: hsl(0 0% 15.9%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);
     --sidebar: hsl(240 5.9% 10%);
+
+    --bg-page: #0a0a0a;
+    --penalty-bg-page: #0a0a0a;
+    --penalty-bg-surface: #09090b;
+    --penalty-bg-elevated: #111113;
+
+    --penalty-text-primary: #ffffff;
+    --penalty-text-secondary: #a1a1aa;
+    --penalty-text-muted: #71717a;
+
+    --penalty-border: #27272a;
+    --penalty-border-dark: #3f3f46;
+
+    /* Status - Yellow (dark) */
+    --penalty-yellow-bg: #252110;
+    --penalty-yellow-border: #7a6612;
+    --penalty-yellow-text: #ebc015;
+
+    /* Status - Blue (dark) */
+    --penalty-blue-bg: #0f1929;
+    --penalty-blue-border: #1e3a5f;
+    --penalty-blue-text: #55a0f4;
+
+    /* Status - Green (dark) */
+    --penalty-green-bg: #10231e;
+    --penalty-green-border: #0b513a;
+    --penalty-green-text: #00bc7d;
+
+    /* Status - Red (dark) */
+    --penalty-red-bg: #291417;
+    --penalty-red-border: #671b20;
+    --penalty-red-text: #fb2c36;
+
+    /* Additional dark overrides */
+    --penalty-table-header-bg: #111113;
+    --penalty-table-header-text: #a1a1aa;
+    --penalty-table-row-hover: #0d0d10;
+    --penalty-avatar-bg: #1c1c1f;
+    --penalty-avatar-border: #3f3f46;
+    --penalty-avatar-text: #d4d4d8;
+    --penalty-action-btn-bg: #27272a;       /* latar gelap */
+    --penalty-action-btn-border: #3f3f46;
+    --penalty-action-btn-text: #a1a1aa;
+
+    
 }
 
 @layer base {

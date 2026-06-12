@@ -119,7 +119,7 @@ function getInitial(name: string) {
 }
 
 const columns: { key: SortKey; label: string; hint: string }[] = [
-  { key: 'userName', label: 'Employee', hint: 'A–Z / Z–A' },
+  { key: 'userName', label: 'Anggota', hint: 'A–Z / Z–A' },
   { key: 'date', label: 'Date', hint: 'Terlama / Terbaru' },
   { key: 'checkIn', label: 'Check In', hint: 'Paling awal / Akhir' },
   { key: 'checkOut', label: 'Check Out', hint: 'Paling awal / Akhir' },
@@ -134,7 +134,7 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
       <!-- Header -->
       <div class="header-enter">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Attendance</h1>
-        <p class="text-gray-500 dark:text-neutral-400 mt-2 text-sm">Track daily attendance records</p>
+        <p class="text-gray-500 dark:text-neutral-400 mt-2 text-sm">Melacak catatan kehadiran harian</p>
       </div>
 
       <!-- Stat Cards -->

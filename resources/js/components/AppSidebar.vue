@@ -5,7 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
+import { AlertTriangle, BookOpen, ClipboardCheck, FileSpreadsheet, Folder, LayoutGrid, ShieldAlert, Users } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import AppLogoIcon from './AppLogoIcon.vue';
 
@@ -21,23 +21,33 @@ const mainNavItems: NavItem[] = [
         href: '/dashboard',
         icon: LayoutGrid,
     },
+    {
+        title: 'My Penalties',
+        href: '/penalties',
+        icon: AlertTriangle,
+    },
 ];
 
 const AdminNavItems: NavItem[] = [
     {
         title: 'User Management',
         href: '/admin/users',
-        icon: LayoutGrid,
+        icon: Users,
     },
     {
         title: 'Attendance',
         href: '/admin/attendance',
-        icon: LayoutGrid,
+        icon: ClipboardCheck,
     },
     {
         title: 'Weekly Report',
         href: '/admin/weekly-report',
-        icon: LayoutGrid,
+        icon: FileSpreadsheet,
+    },
+    {
+        title: 'Penalty Management',
+        href: '/admin/penalties',
+        icon: ShieldAlert,
     },
 ];
 

@@ -48,7 +48,7 @@ class UserController extends Controller
             'admin_assigned_at' => $request->boolean('is_admin') ? now() : null
         ]);
 
-        return redirect()->route('dashboard')
+        return redirect()->route('users')
             ->with('success', 'Akun berhasil ditambahkan');
     }
 
@@ -88,7 +88,7 @@ class UserController extends Controller
 
         $user->update($updateData);
 
-        return redirect()->route('dashboard')
+        return redirect()->route('users')
             ->with('success', 'Akun berhasil diperbarui');
     }
 
@@ -105,7 +105,7 @@ class UserController extends Controller
 
         $user->delete();
 
-        return redirect()->route('dashboard')
+        return redirect()->route('users')
             ->with('success', 'Akun berhasil dihapus');
     }
 
@@ -115,7 +115,7 @@ class UserController extends Controller
             'identifier' => null,
         ]);
 
-        return redirect()->route('dashboard')
+        return redirect()->route('users')
             ->with('success', 'Device berhasil direset. Pengguna dapat login kembali dari perangkat baru.');
     }
 

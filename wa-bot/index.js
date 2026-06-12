@@ -206,6 +206,32 @@ app.post('/send-file', async (req, res) => {
     }
 });
 
+app.post('/send-file-user', async (req, res) => {
+    try {
+        const { phone, filePath, filename, caption } = req.body;
+
+        if (!isConnected || !sock) {
+            return res.status(503).json({ success: false, message: 'Bot belum terhubung.' });
+        }
+
+        const jid = phone.replace(/\D/g, '') + '@s.whatsapp.net';
+        
+        const fileBuffer = fs.readFileSync(filePath);
+
+        await sock.sendMessage(jid, {
+            document: fileBuffer,
+            mimetype: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            fileName: filename,
+            caption: caption,
+        });
+
+        console.log(`✅ Weekly report terkirim ke atasan`);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('❌ Gagal kirim file:', err.message);
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
 // ─────────────────────────────────────────────
 // Start server
 // ─────────────────────────────────────────────

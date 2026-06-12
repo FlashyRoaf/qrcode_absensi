@@ -46,6 +46,11 @@ class AuthenticatedSessionController extends Controller
          * @var User $user
          */
         $user = Auth::user();
+
+        if ($user->hasRole('atasan')) {
+            return redirect()->intended(route('dashboard', absolute: false));
+        }
+        
         $cookieToken = $request->cookie('save_settings');
         $deviceToken = $request->cookie('device_token');
 

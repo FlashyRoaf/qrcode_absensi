@@ -28,7 +28,7 @@ class DeleteExpireQrcodes extends Command
     public function handle()
     {
         //
-        $deleted = DB::table('nama_tabel_qrcode')
+        $deleted = DB::table('qrcodes')
             ->where('created_at', '<', Carbon::now()->subDays(3))
             ->delete();
 

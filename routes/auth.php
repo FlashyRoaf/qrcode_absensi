@@ -9,6 +9,8 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\MyPenaltiesController;
+use App\Http\Controllers\PenaltyController;
 use App\Http\Controllers\QrCodeController;
 use Illuminate\Support\Facades\Route;
 
@@ -57,14 +59,14 @@ Route::middleware('auth')->group(function () {
         ->name('logout');
 
     Route::get('scan', [QrCodeController::class, 'index'])
-        ->middleware('admin')->name('qrcode.scan');
+        ->middleware('scanner')->name('qrcode.scan');
         
     Route::post('scan', [QrCodeController::class, 'create'])
-        ->middleware('admin')->name('qrcode.create');
+        ->middleware('scanner')->name('qrcode.create');
 
-    // Route::get('scanned/{token}', [AttendanceController::class, 'index'])
-    //     ->name('qrcode.scanned');
-        
     Route::match(['get', 'post'], 'scanned/{token}', [AttendanceController::class, 'index'])
         ->name('qrcode.scanned');
+    
+    Route::get('penalties', [PenaltyController::class, 'index'])->name('penalties');
+    Route::post('penalties/{penalty}/upload', [PenaltyController::class, 'upload']);
 });

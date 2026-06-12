@@ -267,21 +267,20 @@
       </div>
     </main>
 
-    <!-- ── FOOTER ── -->
-    <footer class="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
-      <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-        <p class="text-xs text-zinc-400 dark:text-zinc-700 font-mono">Absensi Digital · Admin Panel</p>
-        <p class="text-xs text-zinc-400 dark:text-zinc-700 font-mono">{{ currentTimeLong }}</p>
-      </div>
-    </footer>
-
+    <!-- ── FOOTER BUTTON ── -->
+    <Link :href="route('dashboard')" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 md:left-auto md:translate-x-0 md:right-6">
+      <Button class="shadow-lg md:w-auto w-[calc(100vw-3rem)]">
+        Kembali ke Dashboard
+      </Button>
+    </Link>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, ref, onMounted, onUnmounted } from 'vue';
-import { QrCode, LogIn, LogOut, Clock, CheckCircle, MessageSquare, CalendarDays, XCircle, AlertCircle } from 'lucide-vue-next';
+import { QrCode, LogIn, LogOut, Clock, CheckCircle, MessageSquare, CalendarDays, XCircle, AlertCircle} from 'lucide-vue-next';
+import Button from '@/components/ui/button/Button.vue';
 
 interface Props {
   token?: string;

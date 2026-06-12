@@ -65,4 +65,29 @@ export interface Division {
     updated_at: string;
 }
 
+export interface WeeklyReport {
+    id: number;
+    user: User;
+    week_start: string;
+    total_minutes: number;
+    status: 'memenuhi' | 'tidak_memenuhi';
+}
+
+// Hukuman
+export interface Penalty {
+    id: number;
+    user: User;
+    weekly_report: WeeklyReport;
+    status: 'pending' | 'uploaded' | 'approved' | 'rejected' | 'exempted';
+    proof_path: string | null;
+    rejection_reason: string | null;
+    approved_at: string | null;
+}
+
+export interface ExemptWeek {
+    id: number;
+    week_start: string;
+    reason: string | null;
+}
+
 export type BreadcrumbItemType = BreadcrumbItem;

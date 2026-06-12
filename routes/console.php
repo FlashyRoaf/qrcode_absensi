@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('app:generate-weekly-report --send-wa')->weeklyOn(7, '01:00');
 Schedule::command('app:delete-expire-qrcodes')->daily();
+Schedule::command('app:delete-penalty-proof')->weekly();

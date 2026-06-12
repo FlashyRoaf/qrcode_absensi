@@ -20,7 +20,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-	'phone',
+        'phone',
         'password',
         'is_admin',
         'role',
@@ -59,5 +59,9 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function hasRole(array|string $roles): bool {
+        return in_array($this->role, (array) $roles);
     }
 }
