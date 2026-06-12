@@ -40,7 +40,7 @@
         </div>
         <div class="info-banner-text">
           <strong>Panduan Penyelesaian:</strong>
-          Upload screenshot hasil lari 10 km dari aplikasi Strava atau sejenisnya.
+          Upload screenshot hasil lari 10 km dari aplikasi Strava dan pap lari.
           Maksimal ukuran file <strong>1 MB</strong>. Aktivitas akan ditinjau oleh admin sebelum dinyatakan selesai.
         </div>
       </div>
@@ -242,7 +242,7 @@ const formatWeek = (weekStart: string) => {
 
 const formatMinutes = (minutes: number) => {
   const h = Math.floor(minutes / 60)
-  const m = minutes % 60
+  const m = Math.floor(minutes % 60)
   return `${h} jam ${m} menit`
 }
 
