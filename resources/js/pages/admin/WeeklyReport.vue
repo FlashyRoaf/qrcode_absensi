@@ -104,6 +104,19 @@
                         <input v-model="search" type="text" placeholder="Cari user ID atau nama..."
                             class="flex-1 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg px-4 py-2 text-sm text-gray-900 dark:text-zinc-200 placeholder-gray-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition"
                             @input="currentPage = 1" />
+                        <div class="flex items-center gap-2 bg-white dark:bg-zinc-900 border rounded-lg px-3 py-2 transition"
+                            :class="selectedWeek ? 'border-emerald-500/50' : 'border-gray-300 dark:border-zinc-700'">
+                            <svg class="w-3.5 h-3.5 text-gray-400 dark:text-zinc-500 flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <input type="date" :value="selectedWeek" @change="handleWeekInput"
+                                class="bg-transparent text-sm text-gray-900 dark:text-zinc-200 focus:outline-none w-36" />
+                            <button v-if="selectedWeek" @click="selectedWeek = ''" class="clear-btn" title="Hapus Filter Tanggal">
+                                <X />
+                            </button>
+                        </div>
                         <div class="flex gap-2 flex-wrap">
                             <button v-for="f in [
                                 { val: 'all', label: 'Semua' },
@@ -140,30 +153,6 @@
                                 {{ isExporting ? 'Mengekspor...' : 'Export Excel' }}
                             </a>
                         </div>
-                    </div>
-
-                    <!-- Filter Week Start — terpisah dari search & status -->
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <span class="text-xs text-gray-500 dark:text-zinc-500 uppercase tracking-widest font-mono">Minggu:</span>
-
-                        <div class="flex items-center gap-2 bg-white dark:bg-zinc-900 border rounded-lg px-3 py-2 transition"
-                            :class="selectedWeek ? 'border-emerald-500/50' : 'border-gray-300 dark:border-zinc-700'">
-                            <svg class="w-3.5 h-3.5 text-gray-400 dark:text-zinc-500 flex-shrink-0" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <input type="date" :value="selectedWeek" @change="handleWeekInput"
-                                class="bg-transparent text-sm text-gray-900 dark:text-zinc-200 focus:outline-none w-36" />
-                        </div>
-
-                        <!-- Info snap ke Senin -->
-                        <span v-if="selectedWeek" class="text-xs text-gray-500 dark:text-zinc-500 font-mono">
-                            Minggu: <span class="text-emerald-600 dark:text-emerald-400">{{ selectedWeek }}</span>
-                            <button @click="clearWeek"
-                                class="ml-2 text-gray-400 dark:text-zinc-600 hover:text-red-500 dark:hover:text-red-400 transition">✕</button>
-                        </span>
-                        <span v-else class="text-xs text-gray-400 dark:text-zinc-600 italic">Semua minggu</span>
                     </div>
 
                     <!-- Table -->
@@ -422,6 +411,9 @@ import { ref, computed } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useInitials } from '@/composables/useInitials'
+import {
+    X,
+} from 'lucide-vue-next'
 
 const props = defineProps({
     reports: {
@@ -572,9 +564,12 @@ function fmtMinutes(m) {
     return `${h}j ${min}m`
 }
 
-function fmtWeek(dateStr) {
-    const d = new Date(dateStr)
-    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+const fmtWeek = (weekStart) => {
+  const start = new Date(weekStart)
+  const end = new Date(weekStart)
+  end.setDate(end.getDate() + 5)
+  const fmt = (d) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+  return `${fmt(start)} – ${fmt(end)}`
 }
 
 function toggleSort(key) {
@@ -598,3 +593,14 @@ function handleExportClick(e) {
     setTimeout(() => { isExporting.value = false }, 3000);
 }
 </script>
+
+<style scoped>
+.clear-btn {
+  background: none; border: none; color: var(--penalty-text-secondary);
+  cursor: pointer; padding: 0.2rem; display: flex; align-items: center;
+  border-radius: 4px; transition: color 0.2s;
+}
+.clear-btn:hover { color: var(--penalty-red-text); }
+.clear-btn svg { width: 14px; height: 14px; }
+
+</style>

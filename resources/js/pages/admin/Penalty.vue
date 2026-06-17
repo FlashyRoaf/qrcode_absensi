@@ -3,7 +3,6 @@
   <AppLayout>
     <div class="page-container px-6 py-8">
 
-      <!-- Header -->
       <div class="page-header">
         <div class="header-info">
           <h2>Penalty Management</h2>
@@ -21,7 +20,6 @@
         </div>
       </div>
 
-      <!-- Stats -->
       <div class="stats-mini">
         <div class="stat-card-mini" style="--i:0">
           <div class="stat-icon-mini stat-icon-mini--neutral">
@@ -70,17 +68,31 @@
         </div>
       </div>
 
-      <!-- Filter -->
       <div class="filter-bar">
-        <div class="filter-group">
-          <Search class="filter-icon" />
-          <input
-            v-model="search"
-            type="text"
-            placeholder="Cari nama user..."
-            class="filter-input"
-          />
+        <div class="filter-group-container">
+          <div class="filter-group">
+            <Search class="filter-icon" />
+            <input
+              v-model="search"
+              type="text"
+              placeholder="Cari nama user..."
+              class="filter-input"
+            />
+          </div>
+          <div class="filter-group">
+            <Calendar class="filter-icon" />
+            <input
+              v-model="filterDate"
+              type="date"
+              class="filter-input"
+              placeholder="Pilih Tanggal..."
+            />
+            <button v-if="filterDate" @click="filterDate = ''" class="clear-btn" title="Hapus Filter Tanggal">
+              <X />
+            </button>
+          </div>
         </div>
+
         <div class="filter-tabs">
           <button
             v-for="tab in statusTabs"
@@ -95,16 +107,41 @@
         </div>
       </div>
 
-      <!-- Table -->
       <div class="table-container">
         <div class="table-wrapper">
           <table class="data-table">
             <thead>
               <tr>
-                <th><div class="th-content"><Hash class="th-icon" />ID</div></th>
-                <th><div class="th-content"><UserIcon class="th-icon" />User</div></th>
-                <th><div class="th-content"><Calendar class="th-icon" />Minggu</div></th>
-                <!-- <th><div class="th-content"><Clock class="th-icon" />Total Menit</div></th> -->
+                <th @click="toggleSort('id')" class="sortable-th">
+                  <div class="th-content">
+                    <Hash class="th-icon" />ID
+                    <span class="sort-icon-wrapper">
+                      <ChevronUp v-if="sortColumn === 'id' && sortOrder === 'asc'" class="sort-icon active" />
+                      <ChevronDown v-else-if="sortColumn === 'id' && sortOrder === 'desc'" class="sort-icon active" />
+                      <ChevronsUpDown v-else class="sort-icon inactive" />
+                    </span>
+                  </div>
+                </th>
+                <th @click="toggleSort('name')" class="sortable-th">
+                  <div class="th-content">
+                    <UserIcon class="th-icon" />User
+                    <span class="sort-icon-wrapper">
+                      <ChevronUp v-if="sortColumn === 'name' && sortOrder === 'asc'" class="sort-icon active" />
+                      <ChevronDown v-else-if="sortColumn === 'name' && sortOrder === 'desc'" class="sort-icon active" />
+                      <ChevronsUpDown v-else class="sort-icon inactive" />
+                    </span>
+                  </div>
+                </th>
+                <th @click="toggleSort('week')" class="sortable-th">
+                  <div class="th-content">
+                    <Calendar class="th-icon" />Minggu
+                    <span class="sort-icon-wrapper">
+                      <ChevronUp v-if="sortColumn === 'week' && sortOrder === 'asc'" class="sort-icon active" />
+                      <ChevronDown v-else-if="sortColumn === 'week' && sortOrder === 'desc'" class="sort-icon active" />
+                      <ChevronsUpDown v-else class="sort-icon inactive" />
+                    </span>
+                  </div>
+                </th>
                 <th><div class="th-content"><AlertTriangle class="th-icon" />Status</div></th>
                 <th><div class="th-content"><ImageIcon class="th-icon" />Bukti</div></th>
                 <th><div class="th-content"><Settings class="th-icon" />Aksi</div></th>
@@ -129,11 +166,6 @@
                     {{ formatWeek(penalty.weekly_report.week_start) }}
                   </span>
                 </td>
-                <!-- <td>
-                  <span class="minutes-text">
-                    {{ formatMinutes(penalty.weekly_report.total_minutes) }}
-                  </span>
-                </td> -->
                 <td>
                   <span class="status-badge" :class="statusClass(penalty.status)">
                     {{ statusLabel(penalty.status) }}
@@ -185,7 +217,6 @@
         </div>
       </div>
 
-      <!-- Modal: Lihat Bukti -->
       <div v-if="showProofModal" ref="proofModalRef" class="modal-overlay" @click="closeProofModal">
         <div class="modal-content modal-content--wide" @click.stop>
           <div class="modal-header">
@@ -227,7 +258,6 @@
         </div>
       </div>
 
-      <!-- Modal: Tolak Bukti -->
       <div v-if="showRejectModal" ref="rejectModalRef" class="modal-overlay" @click="closeRejectModal">
         <div class="modal-content" @click.stop>
           <div class="modal-header modal-header--red">
@@ -259,7 +289,6 @@
         </div>
       </div>
 
-      <!-- Modal: Minggu Libur -->
       <div v-if="showExemptModal" ref="exemptModalRef" class="modal-overlay" @click="closeExemptModal">
         <div class="modal-content" @click.stop>
           <div class="modal-header">
@@ -272,7 +301,6 @@
               meskipun tidak memenuhi jam kerja pada minggu tersebut.
             </p>
 
-            <!-- Form tambah minggu libur -->
             <div class="exempt-form">
               <div class="form-group">
                 <label>Tanggal Senin (awal minggu):</label>
@@ -294,7 +322,6 @@
               </button>
             </div>
 
-            <!-- List minggu libur -->
             <div class="exempt-list">
               <h4 class="exempt-list-title">Minggu yang Dikecualikan</h4>
               <div v-if="exemptWeeks.length === 0" class="exempt-empty">
@@ -333,6 +360,7 @@ import {
   AlertTriangle, Clock, Upload, CheckCircle, XCircle,
   Hash, Calendar, Settings, Search, CalendarOff,
   User as UserIcon, Image as ImageIcon,
+  ChevronUp, ChevronDown, ChevronsUpDown // <-- Import icon tambahan untuk Sort
 } from 'lucide-vue-next'
 import { useInitials } from '@/composables/useInitials'
 import AppLayout from '@/layouts/AppLayout.vue'
@@ -348,7 +376,13 @@ const { getInitials } = useInitials()
 
 // ── State ────────────────────────────────────────────────────────────────────
 const search = ref('')
+const filterDate = ref('') // <-- State baru untuk filter tanggal
 const activeTab = ref('all')
+
+// State Sorting
+const sortColumn = ref<'id' | 'name' | 'week'>('id')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+
 const showProofModal = ref(false)
 const showRejectModal = ref(false)
 const showExemptModal = ref(false)
@@ -383,13 +417,55 @@ const statusTabs = computed(() => [
 
 const filteredPenalties = computed(() => {
   let result = props.penalties.filter(p => p.status !== 'exempted')
+
+  // Filter Tab (Status)
   if (activeTab.value !== 'all') {
     result = result.filter(p => p.status === activeTab.value)
   }
+
+  // Filter Search Nama
   if (search.value.trim()) {
     const q = search.value.toLowerCase()
     result = result.filter(p => p.user.name.toLowerCase().includes(q))
   }
+
+  // Filter Tanggal (Senin - Sabtu)
+  if (filterDate.value) {
+    const selectedTime = new Date(filterDate.value)
+    selectedTime.setHours(0, 0, 0, 0) // Normalisasi jam ke 00:00
+
+    result = result.filter(p => {
+      const start = new Date(p.weekly_report.week_start)
+      start.setHours(0, 0, 0, 0)
+      
+      const end = new Date(start)
+      end.setDate(end.getDate() + 5) // +5 hari dari Senin = Sabtu
+
+      // Mengecek apakah filterDate ada di antara Senin sampai Sabtu (inklusif)
+      return selectedTime.getTime() >= start.getTime() && selectedTime.getTime() <= end.getTime()
+    })
+  }
+
+  // Logic Sorting
+  result = result.sort((a, b) => {
+    let valA: any, valB: any
+
+    if (sortColumn.value === 'id') {
+      valA = a.id
+      valB = b.id
+    } else if (sortColumn.value === 'name') {
+      valA = a.user.name.toLowerCase()
+      valB = b.user.name.toLowerCase()
+    } else if (sortColumn.value === 'week') {
+      valA = new Date(a.weekly_report.week_start).getTime()
+      valB = new Date(b.weekly_report.week_start).getTime()
+    }
+
+    if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1
+    if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1
+    return 0
+  })
+
   return result
 })
 
@@ -400,12 +476,6 @@ const formatWeek = (weekStart: string) => {
   end.setDate(end.getDate() + 5)
   const fmt = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
   return `${fmt(start)} – ${fmt(end)}`
-}
-
-const formatMinutes = (minutes: number) => {
-  const h = Math.floor(minutes / 60)
-  const m = minutes % 60
-  return `${h}j ${m}m`
 }
 
 const statusLabel = (status: string) => ({
@@ -422,11 +492,22 @@ const statusClass = (status: string) => ({
   rejected: 'status--red',
 }[status] ?? '')
 
+// Toggle Sorting Column
+const toggleSort = (column: 'id' | 'name' | 'week') => {
+  if (sortColumn.value === column) {
+    // Jika kolom yang sama diklik, balik urutannya
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    // Jika kolom berbeda, set default ke asc
+    sortColumn.value = column
+    sortOrder.value = 'asc'
+  }
+}
+
 // ── Actions ───────────────────────────────────────────────────────────────────
 const manualRefresh = () => router.reload()
 const scrollIntoView = async (elRef: Ref<HTMLElement | null>) => {
   await nextTick()
-
   elRef.value?.scrollIntoView({
     behavior: 'smooth',
     block: 'center',
@@ -436,7 +517,6 @@ const scrollIntoView = async (elRef: Ref<HTMLElement | null>) => {
 const openProofModal = (penalty: Penalty) => {
   selectedPenalty.value = penalty
   showProofModal.value = true
-
   scrollIntoView(proofModalRef)
 }
 const closeProofModal = () => {
@@ -450,7 +530,6 @@ const openRejectModal = (penalty: Penalty) => {
   rejectError.value = ''
   showRejectModal.value = true
   showProofModal.value = false
-
   scrollIntoView(rejectModalRef)
 }
 const closeRejectModal = () => {
@@ -460,7 +539,6 @@ const closeRejectModal = () => {
 
 const openExemptModal =  () => { 
   showExemptModal.value = true 
-
   scrollIntoView(exemptModalRef)
 }
 const closeExemptModal = () => { showExemptModal.value = false }
@@ -639,11 +717,18 @@ const deleteExemptWeek = (id: number) => {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
   background: var(--penalty-bg-surface);
   border: 1px solid var(--penalty-border);
   border-radius: 12px;
   padding: 0.85rem 1.25rem;
+}
+.filter-group-container {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  flex: 1;
 }
 .filter-group {
   display: flex;
@@ -651,6 +736,14 @@ const deleteExemptWeek = (id: number) => {
   gap: 0.5rem;
   flex: 1;
   min-width: 200px;
+  max-width: 300px;
+  background: var(--penalty-bg-page);
+  border: 1px solid var(--penalty-border);
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+}
+.filter-group:focus-within {
+  border-color: var(--penalty-text-muted);
 }
 .filter-icon { width: 16px; height: 16px; color: var(--penalty-text-secondary); flex-shrink: 0; }
 .filter-input {
@@ -661,7 +754,18 @@ const deleteExemptWeek = (id: number) => {
   font-size: 0.875rem;
   width: 100%;
 }
+.filter-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
 .filter-input::placeholder { color: var(--penalty-text-secondary); }
+.clear-btn {
+  background: none; border: none; color: var(--penalty-text-secondary);
+  cursor: pointer; padding: 0.2rem; display: flex; align-items: center;
+  border-radius: 4px; transition: color 0.2s;
+}
+.clear-btn:hover { color: var(--penalty-red-text); }
+.clear-btn svg { width: 14px; height: 14px; }
+
 .filter-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 .filter-tab {
   display: inline-flex;
@@ -679,13 +783,13 @@ const deleteExemptWeek = (id: number) => {
 }
 .filter-tab:hover { border-color: var(--penalty-text-muted); color: var(--penalty-text-primary); }
 .filter-tab--active { 
-    background: var(--penalty-blue-text);      /* menggunakan biru dari status */
+    background: var(--penalty-blue-text);
     color: white; 
     border-color: var(--penalty-blue-text); 
 }
 .dark .filter-tab--active { 
     background: var(--penalty-blue-text); 
-    color: #0a0a0a;       /* teks gelap di dark mode agar kontras */
+    color: #0a0a0a;
     border-color: var(--penalty-blue-text); 
 }
 .tab-count {
@@ -708,11 +812,37 @@ const deleteExemptWeek = (id: number) => {
 .data-table { width: 100%; min-width: 820px; border-collapse: collapse; }
 .data-table thead tr { background: var(--penalty-table-header-bg); border-bottom: 1px solid var(--penalty-border); }
 .data-table th { padding: 0.9rem 1.25rem; text-align: left; }
+
+/* CSS Untuk Header yang dapat disortir */
+.sortable-th {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+.sortable-th:hover {
+  background: rgba(0,0,0,0.03);
+}
+.dark .sortable-th:hover {
+  background: rgba(255,255,255,0.03);
+}
 .th-content {
   display: flex; align-items: center; gap: 0.4rem;
   color: var(--penalty-table-header-text); font-size: 0.8rem; font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.04em;
+  width: 100%;
 }
+.sort-icon-wrapper {
+  margin-left: auto; /* Memaksa ikon sort ke tepi kanan */
+  display: flex;
+  align-items: center;
+}
+.sort-icon {
+  width: 14px;
+  height: 14px;
+}
+.sort-icon.active { color: var(--penalty-text-primary); }
+.sort-icon.inactive { color: var(--penalty-text-muted); opacity: 0.6; }
+
 .th-icon { width: 14px; height: 14px; color: var(--penalty-blue-border); }
 .dark .th-icon { color: #52525b; }
 .data-table td { padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--penalty-bg-page); vertical-align: middle; }
@@ -736,7 +866,6 @@ const deleteExemptWeek = (id: number) => {
 }
 .username { color: var(--penalty-text-primary); font-size: 0.875rem; font-weight: 500; }
 .week-text { color: var(--penalty-text-secondary); font-size: 0.85rem; }
-.minutes-text { color: var(--penalty-text-primary); font-size: 0.875rem; font-weight: 500; }
 
 /* ── Status Badge ── */
 .status-badge {
@@ -792,6 +921,7 @@ const deleteExemptWeek = (id: number) => {
     border-color: var(--penalty-red-border); 
     transform: translateY(-1px); 
 }
+
 /* ── Empty state ── */
 .empty-state {
   display: flex; flex-direction: column; align-items: center;
@@ -909,6 +1039,8 @@ const deleteExemptWeek = (id: number) => {
   .header-actions { width: 100%; }
   .stats-mini { grid-template-columns: repeat(2, 1fr); }
   .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-group-container { flex-direction: column; }
+  .filter-group { max-width: 100%; }
   .modal-content { min-width: 90vw; margin: 1rem; }
   .modal-content--wide { min-width: 90vw; }
 }

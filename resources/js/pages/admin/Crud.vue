@@ -1,11 +1,9 @@
 <template>
-
   <Head title="User Management" />
 
   <AppLayout>
     <div class="crud-container px-6 py-8">
 
-      <!-- Header -->
       <div class="crud-header">
         <div class="header-info">
           <h2>Daftar User</h2>
@@ -23,7 +21,6 @@
         </div>
       </div>
 
-      <!-- Stats Cards -->
       <div class="stats-mini">
         <div class="stat-card-mini" style="--i:0">
           <div class="stat-icon-mini">
@@ -54,7 +51,6 @@
         </div>
       </div>
 
-      <!-- Create Modal -->
       <div v-if="showCreateModal" ref="createModalRef" class="modal-overlay" @click="closeCreateModal">
         <div class="modal-content" @click.stop>
           <div class="modal-header">
@@ -111,7 +107,6 @@
         </div>
       </div>
 
-      <!-- Edit Modal -->
       <div v-if="showEditModal" ref="editModalRef" class="modal-overlay" @click="closeEditModal">
         <div class="modal-content" @click.stop>
           <div class="modal-header">
@@ -168,7 +163,18 @@
         </div>
       </div>
 
-      <!-- Table -->
+      <div class="table-toolbar">
+        <div class="search-wrapper">
+          <Search class="search-icon" />
+          <input 
+            v-model="searchQuery" 
+            type="text" 
+            class="search-input" 
+            placeholder="Cari berdasarkan nama..." 
+          />
+        </div>
+      </div>
+
       <div class="table-container">
         <div class="table-wrapper">
           <table class="data-table">
@@ -185,7 +191,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(user, index) in users" :key="user.id" class="table-row" :style="{ '--row-i': index }">
+              <tr v-for="(user, index) in filteredUsers" :key="user.id" class="table-row" :style="{ '--row-i': index }">
                 <td><span class="user-id">#{{ user.id }}</span></td>
                 <td>
                   <div class="user-info">
@@ -225,15 +231,20 @@
             </tbody>
           </table>
 
-          <div v-if="users.length === 0" class="empty-state">
+          <div v-if="filteredUsers.length === 0" class="empty-state">
             <div class="empty-icon">
-              <Users />
+              <Users v-if="users.length === 0" />
+              <Search v-else />
             </div>
-            <h3>Tidak ada user</h3>
-            <p>Belum ada user yang terdaftar dalam sistem.</p>
-            <button class="btn btn-primary" @click="openCreateModal">
+            <h3>{{ users.length === 0 ? 'Tidak ada user' : 'User tidak ditemukan' }}</h3>
+            <p>{{ users.length === 0 ? 'Belum ada user yang terdaftar dalam sistem.' : 'Tidak ada user yang cocok dengan pencarian Anda.' }}</p>
+            
+            <button v-if="users.length === 0" class="btn btn-primary" @click="openCreateModal">
               <Plus class="icon" />
               Tambah User Pertama
+            </button>
+            <button v-else class="btn btn-secondary" @click="searchQuery = ''">
+              Reset Pencarian
             </button>
           </div>
         </div>
@@ -244,10 +255,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, nextTick } from 'vue'
+import { ref, reactive, nextTick, computed } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
 import {
-  Plus, RefreshCw, Edit, Trash, X,
+  Plus, RefreshCw, Edit, Trash, X, Search,
   Users, UserCheck, User as UserIcon,
   Hash, Mail, Shield, Calendar, Settings,
   RotateCcw, Smartphone
@@ -266,6 +277,20 @@ const props = defineProps<Props>()
 const emit = defineEmits<{ refresh: [] }>()
 
 const { getInitials } = useInitials()
+
+// --- State Pencarian ---
+const searchQuery = ref('')
+
+// --- Computed untuk Filter User ---
+const filteredUsers = computed(() => {
+  if (!searchQuery.value) return props.users
+  
+  const query = searchQuery.value.toLowerCase()
+  return props.users.filter(user => 
+    user.name.toLowerCase().includes(query)
+  )
+})
+
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const createModalRef = ref<HTMLElement | null>(null)
@@ -378,7 +403,6 @@ const formatDate = (dateString: string) => {
 </script>
 
 <style scoped>
-
 /* ── Page load ── */
 .crud-container {
   display: flex;
@@ -785,6 +809,66 @@ const formatDate = (dateString: string) => {
   border-top: 1px solid #1c1c1f;
 }
 
+/* ── Filter / Toolbar ── */
+.table-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: -0.5rem;
+}
+
+.search-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: #a1a1aa;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.65rem 1rem 0.65rem 2.5rem;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 10px;
+  color: #0a0a0a;
+  font-size: 0.875rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.dark .search-input {
+  background: #09090b;
+  border: 1px solid #27272a;
+  color: #ffffff;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #BAD5FF;
+  box-shadow: 0 0 0 3px rgba(186, 213, 255, 0.35);
+}
+
+.dark .search-input:focus {
+  border-color: #52525b;
+  box-shadow: 0 0 0 3px rgba(82, 82, 91, 0.2);
+}
+
+.search-input::placeholder {
+  color: #a1a1aa;
+}
+
+.dark .search-input::placeholder {
+  color: #52525b;
+}
+
 /* ── Table ── */
 .table-container {
   background: #ffffff;
@@ -1180,6 +1264,7 @@ const formatDate = (dateString: string) => {
   color: #71717a;
   font-size: 0.9rem;
   max-width: 360px;
+  margin-bottom: 0.5rem;
 }
 
 /* ── Responsive ── */
@@ -1188,5 +1273,7 @@ const formatDate = (dateString: string) => {
   .crud-actions { width: 100%; }
   .stats-mini { grid-template-columns: 1fr; }
   .modal-content { min-width: 90vw; margin: 1rem; }
+  .table-toolbar { justify-content: flex-start; }
+  .search-wrapper { max-width: 100%; }
 }
 </style>
