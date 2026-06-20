@@ -24,6 +24,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::post('users/{user}/reset-device', [UserController::class, 'resetDevice'])
             ->name('users.reset-device');
+        Route::post('users/{user}/leave', [UserController::class, 'setLeave'])->name('users.leave.set');
+        Route::delete('users/{user}/leave', [UserController::class, 'removeLeave'])->name('users.leave.remove');
 
         Route::get('attendance', [AttendanceController::class, 'show'])->name('attendance');
         Route::get('weekly-report', [WeeklyReportController::class, 'show'])->name('weekly-reports');
@@ -34,6 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('penalties/{penalty}/reject', [PenaltyController::class, 'reject']);
         Route::post('penalty-exempt-weeks', [PenaltyController::class, 'addExemptWeek']);
         Route::delete('penalty-exempt-weeks/{week}', [PenaltyController::class, 'deleteExemptWeek']);
+
     });
 });
 

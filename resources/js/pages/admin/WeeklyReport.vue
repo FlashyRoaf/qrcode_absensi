@@ -122,6 +122,7 @@
                                 { val: 'all', label: 'Semua' },
                                 { val: 'memenuhi', label: '✅ Memenuhi' },
                                 { val: 'tidak_memenuhi', label: '❌ Tidak Memenuhi' },
+                                { val: 'izin', label: '🗓️ Izin' },
                             ]" :key="f.val" @click="setFilter(f.val)"
                                 class="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition"
                                 :class="filterStatus === f.val
@@ -198,32 +199,45 @@
                                         </div>
                                     </td>
                                     <td class="px-4 py-3 text-gray-500 dark:text-zinc-400 text-xs">{{ fmtWeek(row.week_start) }}</td>
+                                    
                                     <td class="px-4 py-3">
                                         <span class="font-bold"
-                                            :class="row.total_minutes >= 870 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
+                                            :class="row.is_on_leave 
+                                                ? 'text-amber-600 dark:text-amber-400' 
+                                                : (row.total_minutes >= 870 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400')">
                                             {{ fmtMinutes(row.total_minutes) }}
                                         </span>
                                         <span class="text-gray-500 dark:text-zinc-600 text-xs ml-1">({{ Math.floor(row.total_minutes) }}m)</span>
                                     </td>
+
                                     <td class="px-4 py-3">
                                         <span
                                             class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider"
-                                            :class="row.status === 'memenuhi'
-                                                ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30'
-                                                : 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/30'">
-                                            {{ row.status === 'memenuhi' ? '✅ Memenuhi' : '❌ Tidak Memenuhi' }}
+                                            :class="row.is_on_leave 
+                                                ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30'
+                                                : (row.status === 'memenuhi'
+                                                    ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30'
+                                                    : 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/30')">
+                                            
+                                            {{ row.is_on_leave 
+                                                ? '🗓️ Izin' 
+                                                : (row.status === 'memenuhi' ? '✅ Memenuhi' : '❌ Tidak Memenuhi') }}
                                         </span>
                                     </td>
+
                                     <td class="px-4 py-3">
                                         <div class="flex items-center gap-2">
                                             <div class="flex-1 h-1.5 bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden w-24">
                                                 <div class="h-full rounded-full"
-                                                    :class="row.status === 'memenuhi' ? 'bg-emerald-500' : 'bg-red-500'"
+                                                    :class="row.is_on_leave 
+                                                        ? 'bg-amber-500' 
+                                                        : (row.status === 'memenuhi' ? 'bg-emerald-500' : 'bg-red-500')"
                                                     :style="{ width: Math.min(100, Math.round((row.total_minutes / 870) * 100)) + '%' }">
                                                 </div>
                                             </div>
-                                            <span class="text-xs text-gray-500 dark:text-zinc-600">{{ Math.min(100,
-                                                Math.round((row.total_minutes / 870) * 100)) }}%</span>
+                                            <span class="text-xs text-gray-500 dark:text-zinc-600">
+                                                {{ Math.min(100, Math.round((row.total_minutes / 870) * 100)) }}%
+                                            </span>
                                         </div>
                                     </td>
                                 </tr>
@@ -292,6 +306,10 @@
                                 <p class="text-xs text-gray-500 dark:text-zinc-600">Tidak</p>
                             </div>
                             <div class="text-center">
+                                <p class="text-2xl font-bold text-amber-600 dark:text-amber-400">{{ u.is_on_leave }}</p>
+                                <p class="text-xs text-gray-500 dark:text-zinc-600">Izin</p>
+                            </div>
+                            <div class="text-center">
                                 <p class="text-2xl font-bold text-gray-700 dark:text-zinc-400">{{ fmtMinutes(Math.round(u.total_minutes /
                                     u.total)) }}</p>
                                 <p class="text-xs text-gray-500 dark:text-zinc-600">Rata-rata/minggu</p>
@@ -329,14 +347,18 @@
                         <div class="flex items-end gap-2 h-48">
                             <div v-for="w in weeklyTrend" :key="w.week" class="flex-1 flex flex-col items-center gap-1">
                                 <div class="relative w-full flex flex-col-reverse gap-0.5" :style="{ height: '160px' }">
-                                    <!-- Tidak Memenuhi -->
-                                    <div class="w-full bg-red-500/70 rounded-sm transition-all duration-500"
-                                        :style="{ height: (w.tidak / maxTrendTotal * 160) + 'px' }"
-                                        :title="`Tidak: ${w.tidak}`"></div>
                                     <!-- Memenuhi -->
                                     <div class="w-full bg-emerald-500/80 rounded-sm transition-all duration-500"
                                         :style="{ height: (w.memenuhi / maxTrendTotal * 160) + 'px' }"
                                         :title="`Memenuhi: ${w.memenuhi}`"></div>
+                                    <!-- Izin -->
+                                    <div class="w-full bg-amber-500/80 rounded-sm transition-all duration-500"
+                                        :style="{ height: (w.izin / maxTrendTotal * 160) + 'px' }"
+                                        :title="`izin: ${w.izin}`"></div>
+                                    <!-- Tidak Memenuhi -->
+                                    <div class="w-full bg-red-500/70 rounded-sm transition-all duration-500"
+                                        :style="{ height: (w.tidak / maxTrendTotal * 160) + 'px' }"
+                                        :title="`Tidak: ${w.tidak}`"></div>
                                 </div>
                                 <p class="text-gray-500 dark:text-zinc-600 text-xs text-center leading-tight">
                                     {{ w.week.slice(5) }}
@@ -349,6 +371,8 @@
                                     class="w-3 h-3 rounded-sm bg-emerald-500/80 inline-block"></span> Memenuhi</span>
                             <span class="flex items-center gap-1.5"><span
                                     class="w-3 h-3 rounded-sm bg-red-500/70 inline-block"></span> Tidak Memenuhi</span>
+                            <span class="flex items-center gap-1.5"><span
+                                    class="w-3 h-3 rounded-sm bg-amber-500/70 inline-block"></span> Izin</span>
                         </div>
                     </div>
 
@@ -365,6 +389,8 @@
                                         Memenuhi</th>
                                     <th class="px-4 py-3 text-left text-xs text-red-600 dark:text-red-500 uppercase tracking-widest">Tidak
                                         Memenuhi</th>
+                                    <th class="px-4 py-3 text-left text-xs text-amber-600 dark:text-amber-500 uppercase tracking-widest">
+                                        Izin</th>
                                     <th class="px-4 py-3 text-left text-xs text-gray-500 dark:text-zinc-400 uppercase tracking-widest">
                                         Kepatuhan</th>
                                 </tr>
@@ -376,6 +402,7 @@
                                     <td class="px-4 py-3 text-gray-900 dark:text-zinc-300 font-bold">{{ w.total }}</td>
                                     <td class="px-4 py-3 text-emerald-600 dark:text-emerald-400 font-bold">{{ w.memenuhi }}</td>
                                     <td class="px-4 py-3 text-red-600 dark:text-red-400 font-bold">{{ w.tidak }}</td>
+                                    <td class="px-4 py-3 text-amber-600 dark:text-amber-400 font-bold">{{ w.izin }}</td>
                                     <td class="px-4 py-3">
                                         <div class="flex items-center gap-2">
                                             <div class="w-20 h-1.5 bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden">
@@ -475,7 +502,11 @@ const filtered = computed(() => {
     }
 
     if (filterStatus.value !== 'all') {
-        data = data.filter(r => r.status === filterStatus.value)
+        if (filterStatus.value != 'izin') {
+            data = data.filter(r => r.status === filterStatus.value && r.is_on_leave === false)
+        } else {
+            data = data.filter(r => r.is_on_leave === true)
+        }
     }
 
     if (selectedWeek.value) {
@@ -523,11 +554,13 @@ const userStats = computed(() => {
                 memenuhi: 0,
                 tidak_memenuhi: 0,
                 total_minutes: 0,
+                is_on_leave: 0,
             }
         }
         map[r.user_id].total++
         map[r.user_id].total_minutes += Number(r.total_minutes)
         if (r.status === 'memenuhi') map[r.user_id].memenuhi++
+        else if (r.is_on_leave === true) map[r.user_id].is_on_leave++
         else map[r.user_id].tidak_memenuhi++
     }
     return Object.values(map).sort((a, b) => b.memenuhi - a.memenuhi)
@@ -537,9 +570,10 @@ const userStats = computed(() => {
 const weeklyTrend = computed(() => {
     const map = {}
     for (const r of props.reports) {
-        if (!map[r.week_start]) map[r.week_start] = { week: r.week_start, memenuhi: 0, tidak: 0, total: 0 }
+        if (!map[r.week_start]) map[r.week_start] = { week: r.week_start, memenuhi: 0, tidak: 0, izin: 0, total: 0 }
         map[r.week_start].total++
         if (r.status === 'memenuhi') map[r.week_start].memenuhi++
+        else if (r.is_on_leave === true) map[r.week_start].izin++
         else map[r.week_start].tidak++
     }
     return Object.values(map).sort((a, b) => a.week.localeCompare(b.week)).slice(-8)

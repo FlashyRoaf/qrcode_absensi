@@ -155,13 +155,20 @@ class GenerateWeeklyReport extends Command
                     where('week_start', $weekStart->toDateString())->first();
                     
                 if ($status === 'tidak_memenuhi') {
-                    Penalty::firstOrCreate(
-                        [
-                            'user_id'          => $user->id,
-                            'weekly_report_id' => $weeklyReport->id, // simpan hasil WeeklyReport::create()
-                        ],
-                        ['status' => 'pending']
-                    );
+                    $isOnLeave = $user->leaves()
+                        ->where('start_date', '<=', $weekStart)
+                        ->where('end_date', '>=', $weekEnd)
+                        ->exists();
+
+                    if (!$isOnLeave) {
+                        Penalty::firstOrCreate(
+                            [
+                                'user_id'          => $user->id,
+                                'weekly_report_id' => $weeklyReport->id, // simpan hasil WeeklyReport::create()
+                            ],
+                            ['status' => 'pending']
+                        );
+                    }
                 }
 
             } catch (\Exception $e) {
@@ -189,16 +196,31 @@ class GenerateWeeklyReport extends Command
 
         if ($this->option('send-wa')) {
             // Generate dan kirim Excel ke WA
-            $reports = WeeklyReport::with('user')
+            $reports = WeeklyReport::with('user.leaves') // <- 1. Tambahkan .leaves di sini
                 ->where('week_start', $weekStart->toDateString())
                 ->get()
-                ->map(fn($r) => [
-                    'user_id'       => $r->user_id,
-                    'user_name'     => $r->user->name ?? null,
-                    'week_start'    => $r->week_start,
-                    'total_minutes' => $r->total_minutes,
-                    'status'        => $r->status,
-                ]);
+                ->map(function ($r) { // <- 2. Ubah menjadi function biasa
+                    
+                    // Default: dianggap tidak izin
+                    $isOnLeave = false;
+
+                    // Pastikan user memiliki relasi leaves sebelum mengecek
+                    if ($r->user && $r->user->leaves) {
+                        $isOnLeave = $r->user->leaves->contains(function ($leave) use ($r) {
+                            $weekStartString = \Carbon\Carbon::parse($r->week_start)->format('Y-m-d');
+                            return $weekStartString >= $leave->start_date && $weekStartString <= $leave->end_date;
+                        });
+                    }
+
+                    return [
+                        'user_id'       => $r->user_id,
+                        'user_name'     => $r->user->name ?? null,
+                        'week_start'    => $r->week_start,
+                        'total_minutes' => $r->total_minutes,
+                        'status'        => $r->status,
+                        'is_on_leave'   => $isOnLeave, // <- 3. Parameter baru disisipkan di sini
+                    ];
+                });
 
             $filters = ['week_start' => $weekStart->toDateString()];
             $filename = 'weekly-report-' . $weekStart->format('Y-m-d') . '.xlsx';

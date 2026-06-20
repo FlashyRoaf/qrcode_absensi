@@ -82,6 +82,12 @@ class WeeklyReportExport implements
         $mins     = $minutes % 60;
         $progress = min(100, round(($minutes / 870) * 100));
 
+        if ($row['is_on_leave'] ?? false) {
+            $statusText = 'Izin';
+        } else {
+            $statusText = $row['status'] === 'memenuhi' ? 'Memenuhi' : 'Tidak Memenuhi';
+        }
+        
         return [
             $no,
             $row['user_id'],
@@ -89,7 +95,7 @@ class WeeklyReportExport implements
             $this->formatWeek($row['week_start']),
             $minutes,
             "{$hours}j {$mins}m",
-            $row['status'] === 'memenuhi' ? 'Memenuhi' : 'Tidak Memenuhi',
+            $statusText,
             $progress,
         ];
     }
@@ -136,6 +142,7 @@ class WeeklyReportExport implements
         
         // Filter array data
         $memenuhi     = $reports->where('status', 'memenuhi')->count();
+        $izin         = $reports->where('is_on_leave', true)->count();
         $total        = $reports->count();
         $compliance   = $total ? round(($memenuhi / $total) * 100) : 0;
         $totalUsers   = $reports->pluck('user_id')->unique()->count();
@@ -175,13 +182,24 @@ class WeeklyReportExport implements
                 if ($lastRow >= 4) {
                     for ($row = 4; $row <= $lastRow; $row++) {
                         $statusCell = $sheet->getCell("G{$row}")->getValue();
+
+                        $isIzin = $statusCell === 'Izin';
                         $isMemenuhi = $statusCell === 'Memenuhi';
+
+                        // Menentukan warna berdasarkan status
+                        if ($isIzin) {
+                            $textColor = 'FFF59E0B'; // Amber / Kuning 
+                        } elseif ($isMemenuhi) {
+                            $textColor = 'FF10B981'; // Emerald / Hijau
+                        } else {
+                            $textColor = 'FFEF4444'; // Red / Merah
+                        }
 
                         // Warna kolom Status
                         $sheet->getStyle("G{$row}")->applyFromArray([
                             'font' => [
                                 'bold'  => true,
-                                'color' => ['argb' => $isMemenuhi ? 'FF10B981' : 'FFEF4444'],
+                                'color' => ['argb' => $textColor],
                             ],
                         ]);
 
@@ -189,7 +207,7 @@ class WeeklyReportExport implements
                         $sheet->getStyle("F{$row}")->applyFromArray([
                             'font' => [
                                 'bold'  => true,
-                                'color' => ['argb' => $isMemenuhi ? 'FF10B981' : 'FFEF4444'],
+                                'color' => ['argb' => $textColor],
                             ],
                         ]);
 

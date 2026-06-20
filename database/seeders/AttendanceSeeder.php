@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Attendance;
+use App\Models\Leave;
 use App\Models\User;
 
 class AttendanceSeeder extends Seeder
@@ -16,6 +17,7 @@ class AttendanceSeeder extends Seeder
     {
         //
         Attendance::factory()->count(150)->create();
+        Leave::factory(5)->create();
         // $users = User::all();
 
         // foreach ($users as $user) {

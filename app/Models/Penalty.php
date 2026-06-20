@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Penalty extends Model
 {
@@ -20,11 +21,11 @@ class Penalty extends Model
         'approved_at' => 'datetime',
     ];
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
-    public function weeklyReport()
+    public function weeklyReport(): BelongsTo
     {
         return $this->belongsTo(WeeklyReport::class);
     }

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Exports\WeeklyReportExport;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 
 class WeeklyReportController extends Controller
@@ -16,13 +17,27 @@ class WeeklyReportController extends Controller
         $reports = WeeklyReport::with('user')
         ->select('user_id', 'week_start', 'total_minutes', 'status')
         ->get()
-        ->map(fn($r) => [
-            'user_id'       => $r->user_id,
-            'user_name'     => $r->user->name ?? null,
-            'week_start'    => $r->week_start,
-            'total_minutes' => $r->total_minutes,
-            'status'        => $r->status,
-        ]);
+        ->map(function($r) {
+            $isOnLeave = false;
+
+            if ($r->user && $r->user->leaves) {
+                // Cek apakah ada izin yang menaungi minggu ini
+                $isOnLeave = $r->user->leaves->contains(function ($leave) use ($r) {
+                    $weekStart = Carbon::parse($r->week_start)->format('Y-m-d');
+                    return $weekStart >= $leave->start_date && $weekStart <= $leave->end_date;
+                });
+            }
+            
+            return [
+                'user_id'       => $r->user_id,
+                'user_name'     => $r->user->name ?? null,
+                'week_start'    => $r->week_start,
+                'total_minutes' => $r->total_minutes,
+                'status'        => $r->status,
+                'is_on_leave' => $isOnLeave,
+            ];
+        }
+        );
 
         return Inertia::render('admin/WeeklyReport', compact('reports'));
         
@@ -34,16 +49,30 @@ class WeeklyReportController extends Controller
     public function export(Request $request): \Symfony\Component\HttpFoundation\BinaryFileResponse
 {
     // Ambil data
-    $reports = WeeklyReport::with('user')
+    $reports = WeeklyReport::with('user.leaves')
         ->get()
-        ->map(fn($r) => [
-            'user_id'       => $r->user_id,
-            'user_name'     => $r->user->name ?? null,
-            'week_start'    => $r->week_start,
-            'total_minutes' => $r->total_minutes,
-            'status'        => $r->status,
-        ]);
+        ->map(function($r) {
+            
+            $isOnLeave = false;
 
+            if ($r->user && $r->user->leaves) {
+                $isOnLeave = $r->user->leaves->contains(function ($leave) use ($r) {
+                    $weekStart = Carbon::parse($r->week_start)->format('Y-m-d');
+                    return $weekStart >= $leave->start_date && $weekStart <= $leave->end_date;
+                });
+            }
+
+            return [
+                'user_id'       => $r->user_id,
+                'user_name'     => $r->user->name ?? null,
+                'week_start'    => $r->week_start,
+                'total_minutes' => $r->total_minutes,
+                'status'        => $r->status,
+                'is_on_leave'   => $isOnLeave, // Atribut dinamis baru untuk file Excel
+            ];
+        }
+    );
+    
     // Terima filter dari request
     $filters = $request->only(['search', 'status', 'week_start']);
 

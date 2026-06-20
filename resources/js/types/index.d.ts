@@ -35,6 +35,7 @@ export interface User {
     device_id: string;
     avatar?: string;
     email_verified_at: string | null;
+    leaves?: Array<{ start_date: string, end_date: string }>;
     created_at: string;
     updated_at: string;
 }

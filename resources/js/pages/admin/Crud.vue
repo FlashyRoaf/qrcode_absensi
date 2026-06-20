@@ -163,6 +163,48 @@
         </div>
       </div>
 
+      <div v-if="showLeaveModal" class="modal-overlay" @click="closeLeaveModal">
+        <div class="modal-content" @click.stop>
+          <div class="modal-header">
+            <h3>Kelola Izin - {{ selectedUserForLeave?.name }}</h3>
+            <button class="modal-close" @click="closeLeaveModal"><X /></button>
+          </div>
+          
+          <div class="modal-form">
+            <div v-if="hasActiveLeave" class="leave-status-card">
+              <div class="status-icon"><CalendarDays /></div>
+              <div class="status-text">
+                <h4>Status: Sedang Izin</h4>
+                <p>Dari: <strong>{{ formatDate(selectedUserForLeave?.leaves?.[0].start_date) }}</strong></p>
+                <p>Sampai: <strong>{{ formatDate(selectedUserForLeave?.leaves?.[0].end_date) }}</strong></p>
+              </div>
+              <div class="form-actions" style="margin-top: 1rem; border: none; padding: 0;">
+                <button type="button" @click="closeLeaveModal" class="btn btn-secondary">Tutup</button>
+                <button type="button" @click="deleteLeave" :disabled="leaveProcessing" class="btn btn-delete-leave">
+                  {{ leaveProcessing ? 'Memproses...' : 'Batalkan Izin' }}
+                </button>
+              </div>
+            </div>
+
+            <form v-else @submit.prevent="submitLeave">
+              <div class="form-group">
+                <label>Jumlah Minggu Izin:</label>
+                <input v-model="leaveForm.weeks" type="number" min="1" max="12" required class="form-control" />
+                <p style="font-size: 0.75rem; color: #71717a; margin-top: 0.4rem;">
+                  Sistem otomatis menghitung dari hari Senin minggu ini hingga hari Sabtu di minggu ke-{{ leaveForm.weeks }}.
+                </p>
+              </div>
+              <div class="form-actions">
+                <button type="button" @click="closeLeaveModal" class="btn btn-secondary">Batal</button>
+                <button type="submit" :disabled="leaveProcessing" class="btn btn-primary">
+                  {{ leaveProcessing ? 'Menyimpan...' : 'Simpan Izin' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
       <div class="table-toolbar">
         <div class="search-wrapper">
           <Search class="search-icon" />
@@ -225,6 +267,9 @@
                     <button @click="deleteUser(user)" class="btn-action btn-delete" title="Hapus user">
                       <Trash class="icon" />
                     </button>
+                    <button @click="openLeaveModal(user)" class="btn-action btn-leave" :class="{'active-leave': user.leaves?.length}" title="Kelola Izin">
+                      <CalendarDays class="icon" />
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -261,7 +306,7 @@ import {
   Plus, RefreshCw, Edit, Trash, X, Search,
   Users, UserCheck, User as UserIcon,
   Hash, Mail, Shield, Calendar, Settings,
-  RotateCcw, Smartphone
+  RotateCcw, Smartphone, CalendarDays
 } from 'lucide-vue-next'
 import type { User } from '@/types'
 import { useInitials } from '@/composables/useInitials'
@@ -301,6 +346,11 @@ const createErrors = ref<Record<string, string>>({})
 const editErrors = ref<Record<string, string>>({})
 const editingUserId = ref<number | null>(null)
 
+const showLeaveModal = ref(false)
+const leaveProcessing = ref(false)
+const selectedUserForLeave = ref<User | null>(null)
+const leaveForm = reactive({ weeks: 1 })
+  
 const createForm = reactive({
   name: '', email: '', password: '', password_confirmation: '',
   phone: '', is_admin: false, role: '',
@@ -396,10 +446,48 @@ const deleteUser = (user: User) => {
 
 const manualRefresh = () => emit('refresh')
 
-const formatDate = (dateString: string) => {
+const formatDate = (dateString: string | undefined) => {
+  if (!dateString) return '-';
+
   const date = new Date(dateString)
   return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
 }
+
+const hasActiveLeave = computed(() => {
+  return selectedUserForLeave.value?.leaves && selectedUserForLeave.value.leaves.length > 0
+})
+
+const openLeaveModal = (user: User) => {
+  selectedUserForLeave.value = user
+  leaveForm.weeks = 1 // default 1 minggu
+  showLeaveModal.value = true
+}
+
+const closeLeaveModal = () => {
+  showLeaveModal.value = false
+  setTimeout(() => selectedUserForLeave.value = null, 200)
+}
+
+const submitLeave = () => {
+  if (!selectedUserForLeave.value) return
+  leaveProcessing.value = true
+  router.post(`/admin/users/${selectedUserForLeave.value.id}/leave`, leaveForm, {
+    onSuccess: () => { closeLeaveModal(); emit('refresh') },
+    onFinish: () => leaveProcessing.value = false
+  })
+}
+
+const deleteLeave = () => {
+  if (!selectedUserForLeave.value) return
+  if (!confirm('Apakah Anda yakin ingin membatalkan izin user ini?')) return
+  
+  leaveProcessing.value = true
+  router.delete(`/admin/users/${selectedUserForLeave.value.id}/leave`, {
+    onSuccess: () => { closeLeaveModal(); emit('refresh') },
+    onFinish: () => leaveProcessing.value = false
+  })
+}
+
 </script>
 
 <style scoped>
@@ -1266,6 +1354,80 @@ const formatDate = (dateString: string) => {
   max-width: 360px;
   margin-bottom: 0.5rem;
 }
+
+/* Styling Tombol Kelola Izin */
+.btn-leave {
+  background: #f4f4f5;
+  color: #71717a;
+  border-color: #e4e4e7;
+}
+
+.dark .btn-leave {
+  background: #1c1c1f;
+  color: #a1a1aa;
+  border-color: #27272a;
+}
+
+.btn-leave:hover {
+  background: #fdf2f8;
+  color: #db2777;
+  border-color: #fbcfe8;
+  transform: translateY(-1px);
+}
+
+.dark .btn-leave:hover {
+  background: rgba(219, 39, 119, 0.1);
+  color: #f472b6;
+  border-color: rgba(219, 39, 119, 0.4);
+}
+
+/* Indikator jika ada izin aktif di tabel */
+.btn-leave.active-leave {
+  background: #fdf2f8;
+  color: #db2777;
+  border-color: #fbcfe8;
+}
+
+.dark .btn-leave.active-leave {
+  background: rgba(219, 39, 119, 0.2);
+  color: #f472b6;
+  border-color: rgba(219, 39, 119, 0.5);
+}
+
+/* Card Status Izin Aktif di dalam Modal */
+.leave-status-card {
+  background: #fefce8;
+  border: 1px solid #fef08a;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.dark .leave-status-card {
+  background: rgba(250, 204, 21, 0.05);
+  border: 1px solid rgba(250, 204, 21, 0.2);
+}
+
+.leave-status-card .status-icon {
+  color: #ca8a04;
+  margin-bottom: 0.5rem;
+}
+
+.dark .leave-status-card .status-icon {
+  color: #facc15;
+}
+
+.leave-status-card h4 { margin-bottom: 0.5rem; color: #0a0a0a; }
+.dark .leave-status-card h4 { color: #ffffff; }
+
+.leave-status-card p { font-size: 0.9rem; color: #3f3f46; margin: 0.2rem 0; }
+.dark .leave-status-card p { color: #d4d4d8; }
+
+.btn-delete-leave {
+  background: #ef4444;
+  color: white;
+}
+.btn-delete-leave:hover { background: #dc2626; }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
