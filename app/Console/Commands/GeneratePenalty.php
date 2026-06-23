@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Leave;
 use App\Models\Penalty;
 use App\Models\WeeklyReport;
 use Illuminate\Console\Command;
@@ -41,6 +42,16 @@ class GeneratePenalty extends Command
         foreach ($reports as $report) {
             try {
                 if ($report->status !== "tidak_memenuhi") {
+                    $skipped++;
+                    continue;
+                }
+
+                $onLeave = Leave::where('user_id', $report->user_id)
+                    ->where('start_date', '<=', $report->week_start)
+                    ->where('end_date', '>=', $report->week_start)
+                    ->exists();
+
+                if ($onLeave) {
                     $skipped++;
                     continue;
                 }
