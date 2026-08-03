@@ -98,6 +98,13 @@ class GenerateWeeklyReport extends Command
 
         foreach ($users as $user) {
             try {
+                $isExempt = PenaltyExemptWeek::where('week_start', $weekStart->toDateTime())->exists();
+                if ($isExempt) {
+                    $progressBar->finish();
+                    $this->info("\nMinggu ini termasuk minggu exempt, tidak melakukan generate weekly report.");
+                    break;
+                }
+
                 if ($user->hasRole(['scan', 'atasan'])) continue;
 
                 // Cek apakah report untuk minggu ini sudah ada
@@ -110,6 +117,7 @@ class GenerateWeeklyReport extends Command
                     $progressBar->advance();
                     continue;
                 }
+
 
                 // Hitung total menit kerja user untuk minggu ini
                 $totalMinutes = Attendance::where('user_id', $user->id)
@@ -127,6 +135,7 @@ class GenerateWeeklyReport extends Command
                 // $percentage = min(100, ($totalMinutes / $targetMinutes) * 100);
                 $status = $isTargetMet ? 'memenuhi' : 'tidak_memenuhi';
 
+
                 // Buat weekly report
                 WeeklyReport::create([
                     'user_id' => $user->id,
@@ -143,12 +152,6 @@ class GenerateWeeklyReport extends Command
                 //     $progressBar->advance();
                 //     continue;
                 // }
-
-                $isExempt = PenaltyExemptWeek::where('week_start', $weekStart->toDateString())->exists();
-                if ($isExempt) {
-                    $progressBar->advance();
-                    continue;
-                }
 
                 // Buat penalty jika status tidak_memenuhi dan belum ada
                 $weeklyReport = WeeklyReport::where('user_id', $user->id)->
@@ -195,6 +198,11 @@ class GenerateWeeklyReport extends Command
         );
 
         if ($this->option('send-wa')) {
+            $isExempt = PenaltyExemptWeek::where('week_start', $weekStart->toDateTime())->exists();
+            if ($isExempt) {
+                return $this->info('Minggu ini termasuk minggu exempt, tidak mengirim report ke WA.');
+            }
+
             // Generate dan kirim Excel ke WA
             $reports = WeeklyReport::with('user.leaves') // <- 1. Tambahkan .leaves di sini
                 ->where('week_start', $weekStart->toDateString())
