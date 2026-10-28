@@ -148,6 +148,9 @@ class AttendanceController extends Controller
                 'qrcode'   => $qrCode->token,
                 'date'     => now()->toDateString(),
                 'check_in' => $waktuSekarang,
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'distance' => $distance,
             ]);
 
             // ── Kirim Notifikasi WA Check In ──────────────────────────────
