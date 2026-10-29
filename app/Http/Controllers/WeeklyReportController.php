@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Leave;
 use App\Models\WeeklyReport;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,22 +28,31 @@ class WeeklyReportController extends Controller
         $sortDir = $request->input('dir', 'desc') === 'asc' ? 'asc' : 'desc';
 
         // All reports, mapped once, for stats / per-user / trend.
-        $all = WeeklyReport::with('user')
+        // Leaves are loaded once and checked in memory, instead of
+        // one database query per report row.
+        $reportRows = WeeklyReport::with('user')
             ->select('user_id', 'week_start', 'total_minutes', 'status')
-            ->get()
-            ->map(function ($r) {
-                $weekStart = Carbon::parse($r->week_start)->startOfDay();
-                $weekEnd = $weekStart->copy()->addDays(5)->endOfDay();
+            ->get();
 
-                return [
-                    'user_id' => $r->user_id,
-                    'user_name' => $r->user->name ?? null,
-                    'week_start' => $r->week_start,
-                    'total_minutes' => $r->total_minutes,
-                    'status' => $r->status,
-                    'is_on_leave' => Leave::coversFullWeek($r->user_id, $weekStart, $weekEnd),
-                ];
-            });
+        $leavesByUser = Leave::whereIn('user_id', $reportRows->pluck('user_id')->unique())
+            ->get()
+            ->groupBy('user_id');
+
+        $all = $reportRows->map(function ($r) use ($leavesByUser) {
+            $weekStart = Carbon::parse($r->week_start)->startOfDay();
+            $weekEnd = $weekStart->copy()->addDays(5)->endOfDay();
+
+            return [
+                'user_id' => $r->user_id,
+                'user_name' => $r->user->name ?? null,
+                'week_start' => $r->week_start,
+                'total_minutes' => $r->total_minutes,
+                'status' => $r->status,
+                'is_on_leave' => Leave::coversFullWeekFromCollection(
+                    $leavesByUser->get($r->user_id, collect()), $weekStart, $weekEnd
+                ),
+            ];
+        });
 
         $memenuhi = $all->where('status', 'memenuhi')->count();
         $tidakMemenuhi = $all->where('status', 'tidak_memenuhi')->count();
@@ -145,7 +155,16 @@ class WeeklyReportController extends Controller
             ],
         ];
 
+        // Scheduler warning: scheduled jobs record their last run in
+        // cache. If nothing has run in the last 8 days (weekly reports
+        // are weekly), the page warns that the cron job may be missing.
+        $lastScheduleRun = Cache::get('schedule_last_run_at');
+        $scheduleWarning = !$lastScheduleRun
+            || Carbon::parse($lastScheduleRun)->lt(now()->subDays(8));
+
         return Inertia::render('admin/WeeklyReport', [
+            'schedule_warning' => $scheduleWarning,
+            'schedule_last_run_at' => $lastScheduleRun,
             'reports' => $reportsPage,
             'report_stats' => $reportStats,
             'user_stats' => $userStats,
@@ -176,7 +195,7 @@ class WeeklyReportController extends Controller
                 'week_start'    => $r->week_start,
                 'total_minutes' => $r->total_minutes,
                 'status'        => $r->status,
-                'is_on_leave'   => Leave::coversFullWeek($r->user_id, $weekStart, $weekEnd),
+                'is_on_leave'   => Leave::coversFullWeekFromCollection($r->user->leaves ?? collect(), $weekStart, $weekEnd),
             ];
         });
     

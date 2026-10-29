@@ -175,7 +175,7 @@ const filteredRecords = computed(() =>
           </div>
 
           <!-- Present Today -->
-          <div class="stat-card dark:[#09090b]" style="--i: 0">
+          <div class="admin-stat-card dark:[#09090b]" style="--i: 0">
             <div class="stat-icon" :class="present_today ? 'bg-[#baffe5] dark:bg-[#052e16]' : 'bg-[#1c1c1f]'">
               <CheckCircle class="stat-svg" :class="present_today ? 'icon--green' : 'icon--muted'" />
             </div>
@@ -186,7 +186,7 @@ const filteredRecords = computed(() =>
           </div>
 
           <!-- Avg Hours -->
-          <div class="stat-card dark:[#09090b]" style="--i: 1">
+          <div class="admin-stat-card dark:[#09090b]" style="--i: 1">
             <div class="stat-icon bg-[#bad5ff] dark:bg-[#0c1a2e]">
               <Clock class="stat-svg icon--blue" />
             </div>
@@ -197,7 +197,7 @@ const filteredRecords = computed(() =>
           </div>
 
           <!-- Hours This Week -->
-          <div class="stat-card dark:[#09090b]" style="--i: 2">
+          <div class="admin-stat-card dark:[#09090b]" style="--i: 2">
             <div class="stat-icon bg-[#fff0ba] dark:bg-[#1c1206]">
               <Clock class="stat-svg icon--amber" />
             </div>
@@ -381,19 +381,6 @@ color: #f87171; border-color: #7f1d1d; }
 .chart-meta-label { font-size: 0.75rem; color: #71717a; margin-top: 2px; }
 
 /* Stat cards */
-.stat-card {
-  /* background: #09090b; */
-  border: 1px solid #27272a;
-  border-radius: 12px;
-  padding: 1rem 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  transition: border-color 0.25s, transform 0.25s;
-  animation: cardIn 0.45s cubic-bezier(.22,1,.36,1) calc(var(--i, 0) * 60ms + 0.12s) both;
-  cursor: default;
-}
-.stat-card:hover { border-color: #3f3f46; transform: translateY(-1px); }
 @keyframes cardIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }

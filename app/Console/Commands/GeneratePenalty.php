@@ -2,33 +2,25 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Leave;
-use App\Models\Penalty;
 use App\Models\WeeklyReport;
+use App\Services\PenaltyService;
 use Illuminate\Console\Command;
 
+// Manual backfill only. Weekly reports already create penalties
+// through PenaltyService when they are generated, so this command
+// is deliberately NOT in the scheduler. Run it by hand only when a
+// penalty was missed (for example, a report created before the
+// penalty rule existed).
 class GeneratePenalty extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'app:generate-penalty';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Generate hukuman untuk semua weeklreport user yang tidak memenuhi';
+    protected $description = 'Manual only: backfill hukuman untuk weekly report yang tidak memenuhi (tidak dijadwalkan; generator laporan mingguan sudah membuat hukuman sendiri)';
 
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
-        //
+        $this->warn('Perintah manual: generator laporan mingguan sudah membuat hukuman sendiri. Perintah ini hanya untuk backfill yang terlewat.');
+        $this->newLine();
         $this->info('Memulai generate hukuman...');
         $this->newLine();
 
@@ -38,44 +30,15 @@ class GeneratePenalty extends Command
 
         $created = 0;
         $skipped = 0;
-        
+
         foreach ($reports as $report) {
             try {
-                if ($report->status !== "tidak_memenuhi") {
+                if (PenaltyService::createIfNeeded($report)) {
+                    $created++;
+                    $this->line("✓ Penalty dibuat untuk User #{$report->user_id} (Report #{$report->id})");
+                } else {
                     $skipped++;
-                    continue;
                 }
-
-                // Same rule as weekly reports: only a leave covering
-                // the whole Monday-Saturday week excuses the penalty.
-                $weekStart = \Carbon\Carbon::parse($report->week_start)->startOfDay();
-                $weekEnd = $weekStart->copy()->addDays(5)->endOfDay();
-                $onLeave = Leave::coversFullWeek($report->user_id, $weekStart, $weekEnd);
-
-                if ($onLeave) {
-                    $skipped++;
-                    continue;
-                }
-
-                $exists = Penalty::where('user_id', $report->user_id)
-                    ->where('weekly_report_id', $report->id)
-                    ->exists();
-
-                if ($exists) {
-                    $skipped++;
-                    continue;
-                }
-
-                Penalty::firstOrcreate(
-                    [
-                        'user_id'          => $report->user_id,
-                        'weekly_report_id' => $report->id,
-                    ],
-                    ['status' => 'pending']
-                );
-
-                $created++;
-                $this->line("✓ Penalty dibuat untuk User #{$report->user_id} (Report #{$report->id})");
             } catch (\Exception $e) {
                 $this->error(
                     "✗ Gagal memproses Report #{$report->id}: {$e->getMessage()}"
@@ -83,9 +46,8 @@ class GeneratePenalty extends Command
             }
         }
 
-
         $this->newLine();
-        $this->info("Selesai.");
+        $this->info('Selesai.');
         $this->info("Penalty dibuat : {$created}");
         $this->info("Dilewati       : {$skipped}");
     }

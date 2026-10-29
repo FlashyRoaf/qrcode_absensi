@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DeleteExpireQrcodes extends Command
@@ -20,16 +21,17 @@ class DeleteExpireQrcodes extends Command
      *
      * @var string
      */
-    protected $description = 'Hapus QR code yang sudah lebih dari 3 hari';
+    protected $description = 'Hapus QR code yang sudah lebih dari batas hari di config staks (default 3 hari)';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        //
+        Cache::put('schedule_last_run_at', now()->toIso8601String());
+
         $deleted = DB::table('qrcodes')
-            ->where('created_at', '<', Carbon::now()->subDays(3))
+            ->where('created_at', '<', Carbon::now()->subDays((int) config('staks.qr_cleanup_days', 3)))
             ->delete();
 
         $this->info("Berhasil hapus {$deleted} QR code kadaluarsa.");

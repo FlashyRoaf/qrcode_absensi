@@ -21,7 +21,7 @@
       </div>
 
       <div class="stats-mini">
-        <div class="stat-card-mini" style="--i:0">
+        <div class="admin-stat-card" style="--i:0">
           <div class="stat-icon-mini stat-icon-mini--neutral">
             <AlertTriangle />
           </div>
@@ -30,7 +30,7 @@
             <p>Total Hukuman</p>
           </div>
         </div>
-        <div class="stat-card-mini" style="--i:1">
+        <div class="admin-stat-card" style="--i:1">
           <div class="stat-icon-mini stat-icon-mini--yellow">
             <Clock />
           </div>
@@ -39,7 +39,7 @@
             <p>Menunggu</p>
           </div>
         </div>
-        <div class="stat-card-mini" style="--i:2">
+        <div class="admin-stat-card" style="--i:2">
           <div class="stat-icon-mini stat-icon-mini--blue">
             <Upload />
           </div>
@@ -48,7 +48,7 @@
             <p>Perlu Review</p>
           </div>
         </div>
-        <div class="stat-card-mini" style="--i:3">
+        <div class="admin-stat-card" style="--i:3">
           <div class="stat-icon-mini stat-icon-mini--green">
             <CheckCircle />
           </div>
@@ -57,7 +57,7 @@
             <p>Disetujui</p>
           </div>
         </div>
-        <div class="stat-card-mini" style="--i:4">
+        <div class="admin-stat-card" style="--i:4">
           <div class="stat-icon-mini stat-icon-mini--red">
             <XCircle />
           </div>
@@ -231,7 +231,7 @@
       </div>
 
       <div v-if="showProofModal" ref="proofModalRef" class="modal-overlay" @click="closeProofModal">
-        <div class="modal-content modal-content--wide" @click.stop>
+        <div class="modal-content modal-content--wide" role="dialog" aria-modal="true" aria-label="Bukti Hukuman" @click.stop>
           <div class="modal-header">
             <h3>Bukti Lari — {{ selectedPenalty?.user?.name }}</h3>
             <button class="modal-close" @click="closeProofModal"><X /></button>
@@ -272,7 +272,7 @@
       </div>
 
       <div v-if="showRejectModal" ref="rejectModalRef" class="modal-overlay" @click="closeRejectModal">
-        <div class="modal-content" @click.stop>
+        <div class="modal-content" role="dialog" aria-modal="true" aria-label="Tolak Bukti Hukuman" @click.stop>
           <div class="modal-header modal-header--red">
             <h3>Tolak Bukti</h3>
             <button class="modal-close" @click="closeRejectModal"><X /></button>
@@ -303,7 +303,7 @@
       </div>
 
       <div v-if="showExemptModal" ref="exemptModalRef" class="modal-overlay" @click="closeExemptModal">
-        <div class="modal-content" @click.stop>
+        <div class="modal-content" role="dialog" aria-modal="true" aria-label="Tambah Minggu Libur" @click.stop>
           <div class="modal-header">
             <h3>Pengaturan Minggu Libur</h3>
             <button class="modal-close" @click="closeExemptModal"><X /></button>
@@ -376,6 +376,7 @@ import {
   ChevronUp, ChevronDown, ChevronsUpDown // <-- Import icon tambahan untuk Sort
 } from 'lucide-vue-next'
 import { useInitials } from '@/composables/useInitials'
+import { useModalFocus } from '@/composables/useModalFocus'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { Penalty, ExemptWeek } from '@/types'
 
@@ -533,6 +534,12 @@ const openExemptModal =  () => {
 }
 const closeExemptModal = () => { showExemptModal.value = false }
 
+// Escape closes each modal, Tab stays inside it, and focus returns
+// to the button that opened it.
+useModalFocus(proofModalRef, showProofModal, closeProofModal)
+useModalFocus(rejectModalRef, showRejectModal, closeRejectModal)
+useModalFocus(exemptModalRef, showExemptModal, closeExemptModal)
+
 const approvePenalty = (penalty: Penalty) => {
   if (!confirm(`Setujui bukti lari dari ${penalty.user.name}?`)) return
   router.post(`/admin/penalties/${penalty.id}/approve`, {}, {
@@ -666,18 +673,6 @@ const deleteExemptWeek = (id: number) => {
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1rem;
 }
-.stat-card-mini {
-  background: var(--penalty-bg-surface);
-  border: 1px solid var(--penalty-border);
-  border-radius: 12px;
-  padding: 1.1rem 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  animation: cardIn 0.45s cubic-bezier(.22, 1, .36, 1) calc(var(--i, 0) * 60ms) both;
-  transition: border-color 0.25s, transform 0.25s;
-}
-.stat-card-mini:hover { border-color: var(--penalty-text-muted); transform: translateY(-2px); }
 @keyframes cardIn {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }

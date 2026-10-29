@@ -96,6 +96,41 @@ cd wa-bot
 node index.js
 ```
 
+### Jadwal otomatis (cron) — wajib di server
+
+Laporan mingguan (Minggu 01:00), pembersihan QR kadaluarsa (harian),
+penghapusan bukti hukuman lama (mingguan), dan penghapusan koordinat
+GPS lama (mingguan) hanya berjalan jika server menjalankan scheduler
+Laravel setiap menit. Tanpa baris ini, semua jadwal di atas diam-diam
+tidak pernah berjalan:
+
+```
+* * * * * cd /path/to/qrcode_absensi && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Ganti `/path/to/qrcode_absensi` dengan folder proyek di server.
+Di Windows (server lokal), jalankan `php artisan schedule:work` atau
+buat Task Scheduler yang menjalankan `php artisan schedule:run` tiap menit.
+Jika jadwal berhenti berjalan, halaman Laporan Mingguan admin akan
+menampilkan peringatan.
+
+Perintah `app:generate-penalty` sengaja TIDAK dijadwalkan: generator
+laporan mingguan sudah membuat hukuman sendiri lewat PenaltyService.
+Jalankan `app:generate-penalty` secara manual hanya untuk backfill
+hukuman yang terlewat.
+
+### Checklist deploy produksi
+
+- `APP_ENV=production` dan `APP_DEBUG=false` di `.env` (file
+  `.env.example` sudah mengirim `APP_DEBUG=false`; jangan pernah
+  menyalinnya ke produksi tanpa memeriksa nilai ini — dengan debug
+  aktif, halaman error menampilkan stack trace, cookie, dan token).
+- `WA_BOT_SECRET` yang sama di `.env` Laravel dan `.env` `wa-bot`.
+- Jalankan sekali setelah deploy: `php artisan penalties:move-proofs-to-private --dry-run`,
+  lalu tanpa `--dry-run`.
+- Pasang baris cron di atas, lalu tunggu Minggu berikutnya untuk
+  memastikan laporan mingguan terbuat otomatis.
+
 Scan qrcode menggunakan WhatsApp
 
 ### Menyambungkan laravel dengan smtp email

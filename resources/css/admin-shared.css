@@ -1,0 +1,38 @@
+/* Shared admin look: one card / stat-card style used by the admin
+   pages (Attendance, Dashboard, User Management, Penalty). Change
+   the look here once and every page using these classes changes
+   together — instead of the same card CSS copied into each page's
+   scoped styles. Page-specific layouts (filters, tables, charts)
+   stay in their own pages. */
+.admin-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.admin-stat-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.admin-stat-card:hover {
+    border-color: #d4d4d8;
+    transform: translateY(-1px);
+}
+
+.dark .admin-card,
+.dark .admin-stat-card {
+    background: #09090b;
+    border-color: #27272a;
+}
+
+.dark .admin-stat-card:hover {
+    border-color: #3f3f46;
+}

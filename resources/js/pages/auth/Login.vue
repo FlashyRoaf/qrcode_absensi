@@ -36,6 +36,21 @@ const submit = () => {
 
         <form @submit.prevent="submit" class="flex flex-col gap-6">
             <div class="grid gap-6">
+                <div
+                    v-if="form.errors.email && form.errors.email.includes('perangkat')"
+                    class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+                >
+                    <p class="font-semibold">Perangkat Anda belum terdaftar</p>
+                    <ol class="mt-2 list-decimal space-y-1 pl-5">
+                        <li>Catat email yang Anda pakai untuk login ini.</li>
+                        <li>
+                            Hubungi admin dan minta reset perangkat: admin membuka Kelola Pengguna,
+                            lalu menekan tombol Reset Device untuk akun Anda.
+                        </li>
+                        <li>Setelah direset, login lagi dari perangkat baru — perangkat baru akan terdaftar otomatis.</li>
+                    </ol>
+                </div>
+
                 <div class="grid gap-2">
                     <Label for="email">Alamat email</Label>
                     <Input

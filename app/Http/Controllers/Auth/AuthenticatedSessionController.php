@@ -12,7 +12,6 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\User;
-use Illuminate\Support\Facades\Cookie;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -21,12 +20,8 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(Request $request): Response
     {
-        $cookieToken = $request->cookie('save_settings');
-
-        if (!$cookieToken) {
-            Cookie::queue('save_settings', 12309, 1);
-        }
-        
+        // No device cookie is set here. The device token is only
+        // registered on a successful first login (see store()).
         return Inertia::render('auth/Login', [
             'canResetPassword' => Route::has('password.request'),
             'status' => $request->session()->get('status'),
@@ -71,7 +66,7 @@ class AuthenticatedSessionController extends Controller
 
             return redirect()->route('login')
                 ->withErrors([
-                    'email' => 'Akun ini hanya bisa diakses dari perangkat yang terdaftar. Hubungi admin untuk reset perangkat.',
+                    'email' => 'Akun ini hanya bisa diakses dari perangkat yang terdaftar. Minta admin mereset perangkat Anda dari Kelola Pengguna (tombol Reset Device untuk akun Anda), lalu login lagi dari perangkat baru.',
                 ]);
         }
 

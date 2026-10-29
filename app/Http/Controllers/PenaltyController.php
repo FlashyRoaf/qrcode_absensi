@@ -65,7 +65,7 @@ class PenaltyController extends Controller
                 'required',
                 'image',
                 'mimes:jpg,jpeg,png',
-                'max:1024', // 1 MB
+                'max:' . (int) config('staks.proof_upload_max_kb', 1024),
             ],
         ], [
             'proof.required' => 'Bukti wajib diupload.',

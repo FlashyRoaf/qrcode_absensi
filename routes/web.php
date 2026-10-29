@@ -28,6 +28,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('users/{user}/leave', [UserController::class, 'removeLeave'])->name('users.leave.remove');
 
         Route::get('attendance', [AttendanceController::class, 'show'])->name('attendance');
+        Route::get('attendance/latest', [AttendanceController::class, 'latest'])->name('attendance.latest');
         Route::get('weekly-report', [WeeklyReportController::class, 'show'])->name('weekly-reports');
         Route::get('weekly-report/export', [WeeklyReportController::class, 'export'])->name('admin.weekly-report.export');
 

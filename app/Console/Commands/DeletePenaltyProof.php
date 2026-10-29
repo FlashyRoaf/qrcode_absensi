@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Penalty;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Console\Command;
 
@@ -28,11 +29,13 @@ class DeletePenaltyProof extends Command
      */
     public function handle()
     {
+        Cache::put('schedule_last_run_at', now()->toIso8601String());
+
         $this->info('🗑️  Memulai hapus bukti hukuman lama...');
 
-        $oneMonthAgo = Carbon::now()->subMonth();
+        $oneMonthAgo = Carbon::now()->subMonths((int) config('staks.proof_retention_months', 1));
 
-        // Ambil penalty yang approved/rejected lebih dari 1 bulan
+        // Ambil penalty yang approved/rejected lebih lama dari batas di config staks
         $penalties = Penalty::whereIn('status', ['approved', 'rejected'])
             ->whereNotNull('proof_path')
             ->where('updated_at', '<', $oneMonthAgo)

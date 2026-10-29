@@ -22,16 +22,16 @@
       </div>
 
       <div class="stats-mini">
-        <div class="stat-card-mini" style="--i:0">
+        <div class="admin-stat-card" style="--i:0">
           <div class="stat-icon-mini">
             <Users />
           </div>
           <div class="stat-content-mini">
             <h4>{{ counts.total }}</h4>
-            <p>Total Users</p>
+            <p>Total Pengguna</p>
           </div>
         </div>
-        <div class="stat-card-mini" style="--i:1">
+        <div class="admin-stat-card" style="--i:1">
           <div class="stat-icon-mini stat-icon-mini--blue">
             <UserCheck />
           </div>
@@ -40,7 +40,7 @@
             <p>Admin</p>
           </div>
         </div>
-        <div class="stat-card-mini" style="--i:2">
+        <div class="admin-stat-card" style="--i:2">
           <div class="stat-icon-mini stat-icon-mini--mint">
             <UserIcon />
           </div>
@@ -52,7 +52,7 @@
       </div>
 
       <div v-if="showCreateModal" ref="createModalRef" class="modal-overlay" @click="closeCreateModal">
-        <div class="modal-content" @click.stop>
+        <div class="modal-content" role="dialog" aria-modal="true" aria-label="Tambah User Baru" @click.stop>
           <div class="modal-header">
             <h3>Tambah User Baru</h3>
             <button class="modal-close" @click="closeCreateModal">
@@ -108,7 +108,7 @@
       </div>
 
       <div v-if="showEditModal" ref="editModalRef" class="modal-overlay" @click="closeEditModal">
-        <div class="modal-content" @click.stop>
+        <div class="modal-content" role="dialog" aria-modal="true" aria-label="Edit User" @click.stop>
           <div class="modal-header">
             <h3>Edit User</h3>
             <button class="modal-close" @click="closeEditModal">
@@ -163,8 +163,8 @@
         </div>
       </div>
 
-      <div v-if="showLeaveModal" class="modal-overlay" @click="closeLeaveModal">
-        <div class="modal-content" @click.stop>
+      <div v-if="showLeaveModal" ref="leaveModalRef" class="modal-overlay" @click="closeLeaveModal">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-label="Kelola Izin" @click.stop>
           <div class="modal-header">
             <h3>Kelola Izin - {{ selectedUserForLeave?.name }}</h3>
             <button class="modal-close" @click="closeLeaveModal"><X /></button>
@@ -322,6 +322,7 @@ import {
 } from 'lucide-vue-next'
 import type { User } from '@/types'
 import { useInitials } from '@/composables/useInitials'
+import { useModalFocus } from '@/composables/useModalFocus'
 import AppLayout from '@/layouts/AppLayout.vue'
 
 interface PaginatedUsers {
@@ -378,6 +379,7 @@ const editErrors = ref<Record<string, string>>({})
 const editingUserId = ref<number | null>(null)
 
 const showLeaveModal = ref(false)
+const leaveModalRef = ref<HTMLElement | null>(null)
 const leaveProcessing = ref(false)
 const selectedUserForLeave = ref<User | null>(null)
 const leaveForm = reactive({ weeks: 1 })
@@ -498,6 +500,12 @@ const closeLeaveModal = () => {
   showLeaveModal.value = false
   setTimeout(() => selectedUserForLeave.value = null, 200)
 }
+
+// Escape closes each modal, Tab stays inside it, and focus returns
+// to the button that opened it.
+useModalFocus(createModalRef, showCreateModal, closeCreateModal)
+useModalFocus(editModalRef, showEditModal, closeEditModal)
+useModalFocus(leaveModalRef, showLeaveModal, closeLeaveModal)
 
 const submitLeave = () => {
   if (!selectedUserForLeave.value) return
@@ -639,32 +647,9 @@ const deleteLeave = () => {
   gap: 1rem;
 }
 
-.stat-card-mini {
-  background: #ffffff;
-  border: 1px solid #e4e4e7;
-  border-radius: 12px;
-  padding: 1.1rem 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  animation: cardIn 0.45s cubic-bezier(.22, 1, .36, 1) calc(var(--i, 0) * 60ms) both;
-  transition: border-color 0.25s, transform 0.25s;
-  cursor: default;
-}
 
-.dark .stat-card-mini {
-  background: #09090b;
-  border: 1px solid #27272a;
-}
 
-.stat-card-mini:hover {
-  border-color: #a1a1aa;
-  transform: translateY(-2px);
-}
 
-.dark .stat-card-mini:hover {
-  border-color: #52525b;
-}
 
 @keyframes cardIn {
   from { opacity: 0; transform: translateY(14px); }
