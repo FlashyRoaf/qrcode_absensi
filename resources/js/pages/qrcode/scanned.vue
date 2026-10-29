@@ -35,6 +35,14 @@
         <p class="text-sm text-zinc-500 dark:text-zinc-400 font-mono">
           {{ !success ? 'Gagal' : isCheckIn ? 'Check In' : 'Check Out' }} · {{ currentTimeLong }}
         </p>
+
+        <!-- Motivational boost: success only, one line, different
+             for check-in vs check-out, rotating by day of month so
+             it is not the same sentence every single day. -->
+        <div v-if="motivation" class="w-full bg-gray-50 dark:bg-zinc-800/60 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 flex items-start gap-3 text-left">
+          <Sparkles class="w-4 h-4 mt-0.5 flex-shrink-0 text-emerald-500 dark:text-emerald-400" />
+          <p class="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{{ motivation }}</p>
+        </div>
       </div>
     </main>
 
@@ -92,7 +100,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, ref, onMounted, onUnmounted } from 'vue';
-import { QrCode, LogIn, LogOut, XCircle } from 'lucide-vue-next';
+import { QrCode, LogIn, LogOut, XCircle, Sparkles } from 'lucide-vue-next';
 import Button from '@/components/ui/button/Button.vue';
 
 interface Props {
@@ -111,6 +119,24 @@ const form = useForm({
 
 const isCheckIn = computed(() => (props.type ?? 'check_in') === 'check_in');
 const success = computed(() => props.success ?? false);
+
+// Motivational boost, success only. Rotates by day of month, so the
+// sentence changes daily instead of repeating identically every day.
+const checkInMotivation = [
+  'Semangat bekerja hari ini — mulai dari satu tugas terpenting, selesaikan dengan baik.',
+  'Hari baru, kesempatan baru. Kerja pelan tapi konsisten, hasilnya akan terasa.',
+  'Kehadiran tepat waktu adalah awal yang baik. Fokus, dan buat hari ini berarti.',
+];
+const checkOutMotivation = [
+  'Kerja hari ini sudah selesai. Istirahat yang cukup, besok kita lanjut lagi.',
+  'Terima kasih atas kerja hari ini. Pulanglah dengan tenang — besok mulai lagi dengan segar.',
+  'Satu hari kerja tuntas. Luangkan waktu untuk istirahat dan orang-orang terdekat.',
+];
+const motivation = computed(() => {
+  if (!success.value) return null;
+  const list = isCheckIn.value ? checkInMotivation : checkOutMotivation;
+  return list[new Date().getDate() % list.length];
+});
 
 const getLocation = (): Promise<{ latitude: number; longitude: number }> => {
     return new Promise((resolve, reject) => {
