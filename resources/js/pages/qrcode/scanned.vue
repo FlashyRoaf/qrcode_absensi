@@ -129,7 +129,7 @@ const checkInMotivation = [
 ];
 const checkOutMotivation = [
   'Kerja hari ini sudah selesai. Istirahat yang cukup, besok kita lanjut lagi.',
-  'Terima kasih atas kerja hari ini. Pulanglah dengan tenang — besok mulai lagi dengan segar.',
+  'Terima kasih atas kerja hari ini. Selamat beristirahat — besok mulai lagi dengan segar.',
   'Satu hari kerja tuntas. Luangkan waktu untuk istirahat dan orang-orang terdekat.',
 ];
 const motivation = computed(() => {
