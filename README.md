@@ -46,9 +46,48 @@ APP_URL=http://localhost:8000
 
 STAKS_LATITUDE=lokasi_latitude
 STAKS_LONGITUDE=lokasi_longitude
+STAKS_TARGET_MINUTES=870
+STAKS_RADIUS_METERS=50
 
 WA_BOT_URL=http://localhost:3000
+WA_BOT_SECRET=isi-dengan-rahasia-yang-sama-di-wa-bot
+WA_BOT_STORAGE_PATH=/path/to/storage/app/private/reports
 ```
+
+Buka .env di folder `wa-bot` dan isi dengan nilai yang sama:
+```
+WA_BOT_SECRET=isi-dengan-rahasia-yang-sama-di-wa-bot
+WA_BOT_STORAGE_PATH=/path/to/storage/app/private/reports
+```
+
+Penting: bot WhatsApp hanya menerima permintaan dari Laravel yang membawa
+`WA_BOT_SECRET` yang sama, dan hanya boleh mengirim file laporan `.xlsx`
+dari folder `WA_BOT_STORAGE_PATH`. Tanpa secret yang sama, notifikasi
+WhatsApp akan gagal (absensi sendiri tetap tercatat).
+
+Akun: tidak ada pendaftaran publik. Akun baru hanya dibuat admin lewat
+Admin > Kelola Pengguna.
+
+Bukti hukuman lama: bukti yang dulu tersimpan di disk publik harus
+dipindahkan sekali setelah deploy, supaya tautan `/storage/` lama tidak
+lagi bisa dibuka tanpa login:
+```
+php artisan penalties:move-proofs-to-private --dry-run
+php artisan penalties:move-proofs-to-private
+```
+Perintah ini memindahkan file ke disk privat (jalur file di database
+tidak berubah, karena route bukti memeriksa disk privat dulu) dan baru
+menghapus salinan publik setelah salinannya terverifikasi.
+
+Cara pakai QR: satu QR Code hanya untuk satu karyawan. Setelah satu
+karyawan berhasil scan, operator membuat QR Code baru untuk karyawan
+berikutnya (halaman scan akan memberi tahu saat kode sudah dipakai).
+
+Catatan lokasi: jarak yang tercatat berasal dari GPS ponsel karyawan,
+bukan bukti mutlak kehadiran. Admin bisa meninjau jarak tersebut di
+halaman Absensi, dan hari yang check-in tanpa check-out ditandai
+"Check-out hilang" di dasbor.
+
 Jalankan website dan bot wa:
 ```
 composer run dev

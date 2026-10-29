@@ -20,11 +20,11 @@
             <QrCode class="w-4 h-4 text-black" />
           </div>
           <div>
-            <p class="text-xs text-zinc-500 uppercase tracking-widest">Admin Panel</p>
+            <p class="text-sm text-zinc-600 uppercase tracking-widest">Panel Absensi</p>
             <h1 class="text-sm font-bold text-zinc-800 dark:text-zinc-100 leading-tight">Absensi Digital</h1>
           </div>
         </div>
-        <p class="text-xs text-zinc-500 dark:text-zinc-600 font-mono">{{ currentTime }}</p>
+        <p class="text-sm text-zinc-600 dark:text-zinc-400 font-mono">{{ currentTime }}</p>
       </div>
     </header>
 
@@ -91,7 +91,7 @@
                 <h2 class="text-3xl font-bold leading-tight text-zinc-900 dark:text-zinc-100">
                   Absensi <span class="text-emerald-600 dark:text-emerald-400">Berhasil</span><br />Dicatat
                 </h2>
-                <p class="text-xs text-zinc-500 dark:text-zinc-600 font-mono mt-2 tracking-widest uppercase">— Selamat Bekerja —</p>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400 font-mono mt-2 tracking-widest uppercase">— Selamat Bekerja —</p>
               </template>
 
               <!-- SUKSES CHECK OUT -->
@@ -99,7 +99,7 @@
                 <h2 class="text-3xl font-bold leading-tight text-zinc-800 dark:text-zinc-300">
                   Sampai <span class="text-zinc-600 dark:text-zinc-400">Jumpa</span><br />Lagi
                 </h2>
-                <p class="text-xs text-zinc-500 dark:text-zinc-600 font-mono mt-2 tracking-widest uppercase">— Terima Kasih —</p>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400 font-mono mt-2 tracking-widest uppercase">— Terima Kasih —</p>
               </template>
 
               <!-- GAGAL -->
@@ -107,7 +107,7 @@
                 <h2 class="text-3xl font-bold leading-tight text-zinc-900 dark:text-zinc-100">
                   Absensi <span class="text-red-600 dark:text-red-400">Gagal</span><br />Dicatat
                 </h2>
-                <p class="text-xs text-zinc-500 dark:text-zinc-600 font-mono mt-2 tracking-widest uppercase">— Harap Perhatikan Pesan —</p>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400 font-mono mt-2 tracking-widest uppercase">— Harap Perhatikan Pesan —</p>
               </template>
             </div>
 
@@ -117,40 +117,31 @@
               <component :is="success ? CheckCircle : AlertCircle" class="w-4 h-4 flex-shrink-0"
                 :class="success ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'" />
               <div class="flex-1 min-w-0">
-                <p class="text-xs text-zinc-500 dark:text-zinc-500">Status</p>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400">Status</p>
                 <p class="text-sm font-semibold truncate" :class="success ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
                   {{ success ? 'QR Code valid & terverifikasi' : 'Absensi tidak dapat diproses' }}
                 </p>
               </div>
               <div class="text-right flex-shrink-0">
-                <p class="text-xs text-zinc-400 dark:text-zinc-600 font-mono">{{ currentDate }}</p>
+                <p class="text-xs text-zinc-400 dark:text-zinc-400 font-mono">{{ currentDate }}</p>
               </div>
             </div>
 
-            <!-- Barcode dekoratif -->
-            <div class="flex items-end gap-[2px] h-8 w-full justify-center opacity-25">
-              <div v-for="(w, i) in bars" :key="i" class="rounded-sm" :class="{
-                'bg-emerald-500 dark:bg-emerald-400': success && isCheckIn,
-                'bg-zinc-400 dark:bg-zinc-500': success && !isCheckIn,
-                'bg-red-500 dark:bg-red-400': !success,
-              }" :style="`width: ${w}px; height: ${barHeights[i]}%`">
-              </div>
-            </div>
           </div>
 
           <!-- Mini info cards -->
           <div class="grid grid-cols-2 gap-3">
             <div class="bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3 dark:bg-zinc-900 dark:border-zinc-800">
-              <Clock class="w-4 h-4 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
+              <Clock class="w-4 h-4 text-zinc-400 dark:text-zinc-400 flex-shrink-0" />
               <div>
-                <p class="text-xs text-zinc-500 dark:text-zinc-600">Waktu</p>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400">Waktu</p>
                 <p class="text-sm font-mono text-zinc-700 dark:text-zinc-300">{{ currentTimeShort }}</p>
               </div>
             </div>
             <div class="bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3 dark:bg-zinc-900 dark:border-zinc-800">
-              <CalendarDays class="w-4 h-4 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
+              <CalendarDays class="w-4 h-4 text-zinc-400 dark:text-zinc-400 flex-shrink-0" />
               <div>
-                <p class="text-xs text-zinc-500 dark:text-zinc-600">Tanggal</p>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400">Tanggal</p>
                 <p class="text-sm font-mono text-zinc-700 dark:text-zinc-300">{{ currentDate }}</p>
               </div>
             </div>
@@ -165,7 +156,7 @@
             <h2 class="text-2xl font-bold" :class="success ? 'text-zinc-900 dark:text-zinc-100' : 'text-red-600 dark:text-red-400'">
               {{ success ? (isCheckIn ? 'Check In Berhasil' : 'Check Out Berhasil') : 'Absensi Tidak Berhasil' }}
             </h2>
-            <p class="text-sm text-zinc-500 dark:text-zinc-500 mt-1">
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
               {{ success ? (isCheckIn ? 'Kehadiran Anda telah tercatat dalam sistem absensi digital' : 'Waktu keluar Anda telah tercatat. Istirahat yang baik!') : 'Terdapat kendala dalam memproses absensi Anda. Baca pesan di bawah.' }}
             </p>
           </div>
@@ -181,7 +172,7 @@
                   :class="success ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'" />
               </div>
               <p class="text-xs uppercase tracking-widest font-mono"
-                :class="success ? 'text-zinc-500 dark:text-zinc-500' : 'text-red-600 dark:text-red-400'">
+                :class="success ? 'text-zinc-500 dark:text-zinc-400' : 'text-red-600 dark:text-red-400'">
                 {{ success ? 'Pesan Sistem' : '⚠ Perhatian' }}
               </p>
             </div>
@@ -198,10 +189,10 @@
 
           <!-- Ringkasan -->
           <div class="bg-white border border-gray-200 rounded-2xl p-5 space-y-4 dark:bg-zinc-900 dark:border-zinc-800">
-            <p class="text-xs text-zinc-500 uppercase tracking-widest font-mono">Ringkasan Absensi</p>
+            <p class="text-sm text-zinc-600 uppercase tracking-widest font-mono">Ringkasan Absensi</p>
             <div class="space-y-3">
               <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-zinc-800/60">
-                <span class="text-xs text-zinc-500 dark:text-zinc-600">Tipe</span>
+                <span class="text-sm text-zinc-600 dark:text-zinc-400">Tipe</span>
                 <span class="text-xs font-semibold font-mono px-2 py-0.5 rounded-md" :class="{
                   'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400': success && isCheckIn,
                   'bg-gray-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400': success && !isCheckIn,
@@ -211,11 +202,11 @@
                 </span>
               </div>
               <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-zinc-800/60">
-                <span class="text-xs text-zinc-500 dark:text-zinc-600">Waktu Scan</span>
+                <span class="text-sm text-zinc-600 dark:text-zinc-400">Waktu Scan</span>
                 <span class="text-xs font-mono text-zinc-600 dark:text-zinc-400">{{ currentTimeLong }}</span>
               </div>
               <div class="flex items-center justify-between py-2">
-                <span class="text-xs text-zinc-500 dark:text-zinc-600">Status</span>
+                <span class="text-sm text-zinc-600 dark:text-zinc-400">Status</span>
                 <span class="text-xs font-mono flex items-center gap-1.5"
                   :class="success ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
                   <span class="w-1.5 h-1.5 rounded-full" :class="success ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-red-500 dark:bg-red-400'"></span>
@@ -227,11 +218,11 @@
 
           <!-- Langkah selanjutnya -->
           <div class="bg-white border border-gray-200 rounded-2xl p-5 space-y-4 dark:bg-zinc-900 dark:border-zinc-800">
-            <p class="text-xs text-zinc-500 uppercase tracking-widest font-mono">Langkah Selanjutnya</p>
+            <p class="text-sm text-zinc-600 uppercase tracking-widest font-mono">Langkah Selanjutnya</p>
             <div class="space-y-3">
               <div v-for="(step, i) in nextSteps" :key="i" class="flex items-start gap-3">
                 <div
-                  class="w-5 h-5 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center text-xs text-zinc-500 flex-shrink-0 mt-0.5 dark:bg-zinc-800 dark:border-zinc-700">
+                  class="w-5 h-5 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center text-sm text-zinc-600 flex-shrink-0 mt-0.5 dark:bg-zinc-800 dark:border-zinc-700">
                   {{ i + 1 }}
                 </div>
                 <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">{{ step }}</p>
@@ -246,22 +237,45 @@
     <main v-else>
       <div class="relative z-10 min-h-screen flex items-center justify-center">
 
-        <div class="bg-gray-50 px-8 py-10 rounded-2xl shadow-lg text-center w-full max-w-sm dark:bg-zinc-900">
-
-          <!-- Spinner -->
+        <!-- Locating / submitting: spinner only, nothing is sent yet -->
+        <div v-if="stage === 'locating' || stage === 'submitting'" class="bg-gray-50 px-8 py-10 rounded-2xl shadow-lg text-center w-full max-w-sm dark:bg-zinc-900">
           <div class="flex justify-center mb-6">
             <div class="w-10 h-10 border-4 border-gray-200 border-t-zinc-800 rounded-full animate-spin dark:border-zinc-700 dark:border-t-white"></div>
           </div>
-
-          <!-- Title -->
           <h1 class="text-lg font-semibold mb-2">
-            Mengambil Lokasi
+            {{ stage === 'locating' ? 'Mengambil Lokasi' : 'Mengirim Absensi' }}
           </h1>
-
-          <!-- Subtitle -->
-          <p class="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-            Mohon tunggu, kami sedang mendeteksi lokasi Anda...
+          <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+            {{ stage === 'locating' ? 'Mohon tunggu, kami sedang mendeteksi lokasi Anda...' : 'Mohon tunggu, absensi Anda sedang dicatat...' }}
           </p>
+        </div>
+
+        <!-- Confirm: nothing is sent until the employee taps this button.
+             If GPS failed, they can retry here instead of burning the
+             one-use QR code on a guaranteed failure. -->
+        <div v-else class="bg-gray-50 px-8 py-10 rounded-2xl shadow-lg text-center w-full max-w-sm dark:bg-zinc-900">
+          <h1 class="text-lg font-semibold mb-2">
+            Konfirmasi Absensi
+          </h1>
+          <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+            Absensi akan dicatat untuk akun yang sedang login, dengan lokasi dari GPS ponsel Anda.
+          </p>
+          <div class="text-left bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 mb-4 space-y-1">
+            <p class="text-sm font-semibold" :class="hasLocation ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
+              {{ hasLocation ? 'Lokasi terdeteksi' : 'Lokasi belum terdeteksi' }}
+            </p>
+            <p v-if="locationError" class="text-sm text-zinc-600 dark:text-zinc-400">{{ locationError }}</p>
+            <p v-if="!hasLocation" class="text-sm text-zinc-600 dark:text-zinc-400">Aktifkan GPS / izin lokasi, lalu coba lagi. Absensi belum dicatat.</p>
+            <p v-else class="text-sm text-zinc-600 dark:text-zinc-400">Lokasi ini dipakai untuk memeriksa jarak Anda dari kantor. Lokasi dari ponsel bukan bukti mutlak kehadiran.</p>
+          </div>
+          <div class="flex flex-col gap-2">
+            <Button @click="submitAttendance" :disabled="!hasLocation || form.processing" class="w-full">
+              {{ form.processing ? 'Mengirim...' : 'Ya, catat absensi saya' }}
+            </Button>
+            <Button variant="outline" @click="retryLocation" :disabled="locating" class="w-full">
+              {{ locating ? 'Mengambil lokasi...' : 'Coba lagi ambil lokasi' }}
+            </Button>
+          </div>
         </div>
 
       </div>
@@ -428,13 +442,6 @@ const nextSteps = computed(() => {
   ]
 })
 
-// Barcode dekorasi
-const bars = Array.from({ length: 42 }, () => [1, 2, 3, 4][Math.floor(Math.random() * 4)]);
-const barHeights = Array.from({ length: 42 }, () => {
-  const pool = [40, 55, 65, 80, 100];
-  return pool[Math.floor(Math.random() * pool.length)];
-});
-
 // Clock
 const now = ref(new Date());
 let timer: ReturnType<typeof setInterval>;
@@ -461,21 +468,58 @@ const currentDate = computed(() =>
   now.value.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
 );
 
-onMounted(async () => {
-  try {
-        const coords = await getLocation()
-        form.latitude  = coords.latitude
-        form.longitude = coords.longitude
-    } catch (e) {
-        form.latitude  = null
-        form.longitude = null
-    }
+// Confirm-before-send flow: the page must NOT post on mount, or a
+// failed GPS read burns the one-use QR code. It locates first, shows
+// a confirm screen, and only posts when the employee taps the button.
+// If the page already has a result (props.message), stay on it.
+const stage = ref<'locating' | 'confirm' | 'submitting'>(props.message ? 'confirm' : 'locating')
+const locating = ref(false)
+const locationError = ref<string | null>(null)
+const hasLocation = computed(() => form.latitude !== null && form.longitude !== null)
 
-    form.post(route('qrcode.scanned', { token: props.token }), {
-        onSuccess: () => form.reset(),
-        onError:   (errors) => console.error(errors),
-    })
-  
+const locate = async () => {
+  locating.value = true
+  locationError.value = null
+  try {
+    const coords = await getLocation()
+    form.latitude = coords.latitude
+    form.longitude = coords.longitude
+  } catch (e) {
+    form.latitude = null
+    form.longitude = null
+    locationError.value = typeof e === 'string' ? e : 'Lokasi tidak dapat dideteksi.'
+  } finally {
+    locating.value = false
+    if (stage.value === 'locating') stage.value = 'confirm'
+  }
+}
+
+const retryLocation = () => {
+  stage.value = 'locating'
+  locate()
+}
+
+const submitAttendance = () => {
+  if (!hasLocation.value) return
+  stage.value = 'submitting'
+  form.post(route('qrcode.scanned', { token: props.token }), {
+    onSuccess: () => form.reset(),
+    onError: (errors) => {
+      console.error(errors)
+      // Back to the confirm screen so the employee can retry
+      // instead of being stuck on a spinner.
+      stage.value = 'confirm'
+    },
+  })
+}
+
+onMounted(async () => {
+  // A result page (after a post, or a refreshed result) must not
+  // re-locate and re-post on its own.
+  if (props.message === null || props.message === undefined) {
+    await locate()
+  }
+
   timer = setInterval(() => { now.value = new Date(); }, 1000);
 });
 

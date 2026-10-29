@@ -21,7 +21,7 @@
       <!-- Stats -->
       <div class="stats-mini">
         <div v-for="(stat, index) in statCards" :key="stat.value" class="stat-card-mini" :style="{ '--i': index }"
-          :class="{ 'filter-tab--active': activeTab === stat.value }" @click="activeTab = stat.value">
+          :class="{ 'filter-tab--active': activeTab === stat.value }" @click="setTab(stat.value)">
           <div class="stat-icon-mini" :class="stat.iconClass">
             <component :is="stat.icon" />
           </div>
@@ -46,8 +46,8 @@
       </div>
 
       <!-- Penalty Cards -->
-      <div v-if="filteredPenalties.length !== 0" class="penalty-list">
-        <div v-for="(penalty, index) in filteredPenalties" :key="penalty.id" class="penalty-card"
+      <div v-if="meta.total !== 0" class="penalty-list">
+        <div v-for="(penalty, index) in pagedPenalties" :key="penalty.id" class="penalty-card"
           :style="{ '--card-i': index }" :class="cardClass(penalty.status)">
           <!-- Card Header -->
           <div class="card-header">
@@ -76,7 +76,7 @@
 
           <!-- Uploaded proof preview -->
           <div v-if="penalty.proof_path && penalty.status !== 'rejected'" class="proof-preview">
-            <img :src="`/storage/${penalty.proof_path}`" alt="Bukti lari" class="proof-thumb" />
+            <img :src="`/penalties/${penalty.id}/proof`" alt="Bukti lari" class="proof-thumb" />
             <div class="proof-preview-info">
               <CheckCircle v-if="penalty.status === 'approved'" class="proof-check proof-check--green" />
               <Clock v-else class="proof-check proof-check--blue" />
@@ -127,6 +127,17 @@
         </div>
       </div>
 
+      <div v-if="meta.total > 0" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 1rem 0;">
+        <span style="font-size: 0.875rem; color: #71717a;">
+          Menampilkan {{ meta.from }}–{{ meta.to }} dari {{ meta.total }} hukuman
+        </span>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <button @click="navigate(meta.current_page - 1)" :disabled="meta.current_page === 1" class="btn btn-secondary">Sebelumnya</button>
+          <span style="font-size: 0.875rem; color: #71717a;">Halaman {{ meta.current_page }} / {{ meta.last_page }}</span>
+          <button @click="navigate(meta.current_page + 1)" :disabled="meta.current_page === meta.last_page" class="btn btn-secondary">Berikutnya</button>
+        </div>
+      </div>
+
       <!-- Empty state -->
       <div v-else-if="counts.total > 0" class="empty-state">
         <div class="empty-icon">
@@ -160,8 +171,15 @@ import AppLayout from '@/layouts/AppLayout.vue'
 import { Penalty } from '@/types'
 
 
+interface PaginatedPenalties {
+  data: Penalty[]
+  meta: { current_page: number; last_page: number; total: number; per_page: number; from: number | null; to: number | null }
+}
+
 interface Props {
-  penalties: Penalty[]
+  penalties: PaginatedPenalties
+  counts: { pending: number; uploaded: number; approved: number; rejected: number; total: number }
+  filters: { tab: string }
 }
 
 const props = defineProps<Props>()
@@ -173,16 +191,22 @@ const fileErrors = reactive<Record<number, string>>({})
 const isDragging = reactive<Record<number, boolean>>({})
 const fileInputs = reactive<Record<number, HTMLInputElement | null>>({})
 const uploadingId = ref<number | null>(null)
-const activeTab = ref('pending')
+const activeTab = ref(props.filters?.tab ?? 'pending')
 
-// ── Computed ──────────────────────────────────────────────────────────────────
-const counts = computed(() => ({
-  pending: props.penalties.filter(p => p.status === 'pending').length,
-  uploaded: props.penalties.filter(p => p.status === 'uploaded').length,
-  approved: props.penalties.filter(p => p.status === 'approved').length,
-  rejected: props.penalties.filter(p => p.status === 'rejected').length,
-  total: props.penalties.filter(p => p.status !== 'exempted').length,
-}))
+// ── Computed (server data: already filtered and paged) ────────────────────
+const counts = computed(() => props.counts ?? { pending: 0, uploaded: 0, approved: 0, rejected: 0, total: 0 })
+
+function navigate(page = 1) {
+  router.get(route('penalties'), {
+    tab: activeTab.value !== 'all' ? activeTab.value : undefined,
+    page: page > 1 ? page : undefined,
+  }, { preserveState: true, preserveScroll: true, replace: true })
+}
+
+function setTab(val: string) {
+  activeTab.value = val
+  navigate(1)
+}
 
 const statCards = computed(() => [
   {
@@ -222,14 +246,8 @@ const statCards = computed(() => [
   },
 ])
 
-const filteredPenalties = computed(() => {
-  let result = props.penalties.filter(p => p.status !== 'exempted')
-  if (activeTab.value !== 'all') {
-    result = result.filter(p => p.status === activeTab.value)
-  }
-
-  return result
-})
+const pagedPenalties = computed(() => props.penalties?.data ?? [])
+const meta = computed(() => props.penalties?.meta ?? { current_page: 1, last_page: 1, total: 0, per_page: 20, from: null, to: null })
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const formatWeek = (weekStart: string) => {

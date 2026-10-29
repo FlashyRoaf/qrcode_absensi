@@ -1,11 +1,11 @@
 <template>
-  <Head title="Penalty Management" />
+  <Head title="Kelola Hukuman" />
   <AppLayout>
     <div class="page-container px-6 py-8">
 
       <div class="page-header">
         <div class="header-info">
-          <h2>Penalty Management</h2>
+          <h2>Kelola Hukuman</h2>
           <p class="header-subtitle">{{ counts.total }} hukuman ditemukan</p>
         </div>
         <div class="header-actions">
@@ -77,6 +77,7 @@
               type="text"
               placeholder="Cari nama user..."
               class="filter-input"
+              @input="onSearchInput"
             />
           </div>
           <div class="filter-group">
@@ -86,8 +87,9 @@
               type="date"
               class="filter-input"
               placeholder="Pilih Tanggal..."
+              @change="navigate(1)"
             />
-            <button v-if="filterDate" @click="filterDate = ''" class="clear-btn" title="Hapus Filter Tanggal">
+            <button v-if="filterDate" @click="clearDate" class="clear-btn" title="Hapus Filter Tanggal">
               <X />
             </button>
           </div>
@@ -99,7 +101,7 @@
             :key="tab.value"
             class="filter-tab"
             :class="{ 'filter-tab--active': activeTab === tab.value }"
-            @click="activeTab = tab.value"
+            @click="setTab(tab.value)"
           >
             {{ tab.label }}
             <span class="tab-count">{{ tab.count }}</span>
@@ -149,7 +151,7 @@
             </thead>
             <tbody>
               <tr
-                v-for="(penalty, index) in filteredPenalties"
+                v-for="(penalty, index) in pagedPenalties"
                 :key="penalty.id"
                 class="table-row"
                 :style="{ '--row-i': index }"
@@ -207,7 +209,18 @@
             </tbody>
           </table>
 
-          <div v-if="filteredPenalties.length === 0" class="empty-state">
+          <div v-if="meta.total > 0" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 1rem;">
+            <span style="font-size: 0.875rem; color: #71717a;">
+              Menampilkan {{ meta.from }}–{{ meta.to }} dari {{ meta.total }} hukuman
+            </span>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <button @click="navigate(meta.current_page - 1)" :disabled="meta.current_page === 1" class="btn btn-secondary">Sebelumnya</button>
+              <span style="font-size: 0.875rem; color: #71717a;">Halaman {{ meta.current_page }} / {{ meta.last_page }}</span>
+              <button @click="navigate(meta.current_page + 1)" :disabled="meta.current_page === meta.last_page" class="btn btn-secondary">Berikutnya</button>
+            </div>
+          </div>
+
+          <div v-if="meta.total === 0" class="empty-state">
             <div class="empty-icon">
               <AlertTriangle />
             </div>
@@ -235,7 +248,7 @@
             </div>
             <div class="proof-image-wrapper">
               <img
-                :src="`/storage/${selectedPenalty?.proof_path}`"
+                :src="`/penalties/${selectedPenalty?.id}/proof`"
                 alt="Bukti lari"
                 class="proof-image"
               />
@@ -366,22 +379,57 @@ import { useInitials } from '@/composables/useInitials'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { Penalty, ExemptWeek } from '@/types'
 
+interface PaginatedPenalties {
+  data: Penalty[]
+  meta: { current_page: number; last_page: number; total: number; per_page: number; from: number | null; to: number | null }
+}
+
 interface Props {
-  penalties: Penalty[]
+  penalties: PaginatedPenalties
+  counts: { pending: number; uploaded: number; approved: number; rejected: number; total: number }
   exemptWeeks: ExemptWeek[]
+  filters: { tab: string; search: string; date: string; sort: string; dir: string }
 }
 
 const props = defineProps<Props>()
 const { getInitials } = useInitials()
 
-// ── State ────────────────────────────────────────────────────────────────────
-const search = ref('')
-const filterDate = ref('') // <-- State baru untuk filter tanggal
-const activeTab = ref('all')
+// ── State (from server filters; changes ask the server for a new page) ──
+const search = ref(props.filters?.search ?? '')
+const filterDate = ref(props.filters?.date ?? '')
+const activeTab = ref(props.filters?.tab ?? 'all')
 
 // State Sorting
-const sortColumn = ref<'id' | 'name' | 'week'>('id')
-const sortOrder = ref<'asc' | 'desc'>('desc')
+const sortColumn = ref<'id' | 'name' | 'week'>((props.filters?.sort as 'id' | 'name' | 'week') ?? 'id')
+const sortOrder = ref<'asc' | 'desc'>((props.filters?.dir as 'asc' | 'desc') ?? 'desc')
+
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
+function navigate(page = 1) {
+  router.get(route('admin.penalties'), {
+    tab: activeTab.value !== 'all' ? activeTab.value : undefined,
+    search: search.value || undefined,
+    date: filterDate.value || undefined,
+    sort: sortColumn.value,
+    dir: sortOrder.value,
+    page: page > 1 ? page : undefined,
+  }, { preserveState: true, preserveScroll: true, replace: true })
+}
+
+function onSearchInput() {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => navigate(1), 400)
+}
+
+function setTab(val: string) {
+  activeTab.value = val
+  navigate(1)
+}
+
+function clearDate() {
+  filterDate.value = ''
+  navigate(1)
+}
 
 const showProofModal = ref(false)
 const showRejectModal = ref(false)
@@ -398,14 +446,8 @@ const exemptErrors = ref<Record<string, string>>({})
 
 const exemptForm = reactive({ week_start: '', reason: '' })
 
-// ── Computed ──────────────────────────────────────────────────────────────────
-const counts = computed(() => ({
-  pending:  props.penalties.filter(p => p.status === 'pending').length,
-  uploaded: props.penalties.filter(p => p.status === 'uploaded').length,
-  approved: props.penalties.filter(p => p.status === 'approved').length,
-  rejected: props.penalties.filter(p => p.status === 'rejected').length,
-  total: props.penalties.filter(p => p.status !== 'exempted').length,
-}))
+// ── Computed (server data: already filtered, sorted and paged) ──────────
+const counts = computed(() => props.counts ?? { pending: 0, uploaded: 0, approved: 0, rejected: 0, total: 0 })
 
 const statusTabs = computed(() => [
   { value: 'all',      label: 'Semua',       count: counts.value.total },
@@ -415,59 +457,8 @@ const statusTabs = computed(() => [
   { value: 'rejected', label: 'Ditolak',     count: counts.value.rejected },
 ])
 
-const filteredPenalties = computed(() => {
-  let result = props.penalties.filter(p => p.status !== 'exempted')
-
-  // Filter Tab (Status)
-  if (activeTab.value !== 'all') {
-    result = result.filter(p => p.status === activeTab.value)
-  }
-
-  // Filter Search Nama
-  if (search.value.trim()) {
-    const q = search.value.toLowerCase()
-    result = result.filter(p => p.user.name.toLowerCase().includes(q))
-  }
-
-  // Filter Tanggal (Senin - Sabtu)
-  if (filterDate.value) {
-    const selectedTime = new Date(filterDate.value)
-    selectedTime.setHours(0, 0, 0, 0) // Normalisasi jam ke 00:00
-
-    result = result.filter(p => {
-      const start = new Date(p.weekly_report.week_start)
-      start.setHours(0, 0, 0, 0)
-      
-      const end = new Date(start)
-      end.setDate(end.getDate() + 5) // +5 hari dari Senin = Sabtu
-
-      // Mengecek apakah filterDate ada di antara Senin sampai Sabtu (inklusif)
-      return selectedTime.getTime() >= start.getTime() && selectedTime.getTime() <= end.getTime()
-    })
-  }
-
-  // Logic Sorting
-  result = result.sort((a, b) => {
-    let valA: any, valB: any
-
-    if (sortColumn.value === 'id') {
-      valA = a.id
-      valB = b.id
-    } else if (sortColumn.value === 'name') {
-      valA = a.user.name.toLowerCase()
-      valB = b.user.name.toLowerCase()
-    } else if (sortColumn.value === 'week') {
-      valA = new Date(a.weekly_report.week_start).getTime()
-      valB = new Date(b.weekly_report.week_start).getTime()
-    }
-
-    if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1
-    if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1
-    return 0
-  })
-
-  return result
-})
+const pagedPenalties = computed(() => props.penalties?.data ?? [])
+const meta = computed(() => props.penalties?.meta ?? { current_page: 1, last_page: 1, total: 0, per_page: 20, from: null, to: null })
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const formatWeek = (weekStart: string) => {
@@ -492,16 +483,15 @@ const statusClass = (status: string) => ({
   rejected: 'status--red',
 }[status] ?? '')
 
-// Toggle Sorting Column
+// Toggle Sorting Column (server-side)
 const toggleSort = (column: 'id' | 'name' | 'week') => {
   if (sortColumn.value === column) {
-    // Jika kolom yang sama diklik, balik urutannya
     sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
   } else {
-    // Jika kolom berbeda, set default ke asc
     sortColumn.value = column
     sortOrder.value = 'asc'
   }
+  navigate(1)
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────

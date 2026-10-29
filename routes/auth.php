@@ -7,19 +7,16 @@ use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
-use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
-use App\Http\Controllers\MyPenaltiesController;
 use App\Http\Controllers\PenaltyController;
 use App\Http\Controllers\QrCodeController;
 use Illuminate\Support\Facades\Route;
 
+// No public registration: only admins create accounts, from
+// Admin > User Management. The old /register routes and controller
+// were removed on purpose, so a stranger cannot self-register and
+// start recording attendance.
 Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])
-        ->name('register');
-
-    Route::post('register', [RegisteredUserController::class, 'store']);
-
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
@@ -64,9 +61,13 @@ Route::middleware('auth')->group(function () {
     Route::post('scan', [QrCodeController::class, 'create'])
         ->middleware('scanner')->name('qrcode.create');
 
+    Route::get('scan/status/{token}', [QrCodeController::class, 'status'])
+        ->middleware('scanner')->name('qrcode.status');
+
     Route::match(['get', 'post'], 'scanned/{token}', [AttendanceController::class, 'index'])
         ->name('qrcode.scanned');
     
     Route::get('penalties', [PenaltyController::class, 'index'])->name('penalties');
     Route::post('penalties/{penalty}/upload', [PenaltyController::class, 'upload']);
+    Route::get('penalties/{penalty}/proof', [PenaltyController::class, 'proof'])->name('penalties.proof');
 });

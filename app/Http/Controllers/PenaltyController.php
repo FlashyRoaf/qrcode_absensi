@@ -13,15 +13,37 @@ use Inertia\Response;
 
 class PenaltyController extends Controller
 {
-    //
-    public function index(): Response
+    // Server-side tab filter and pagination. Counts cover all of
+    // the user's non-exempt penalties, not just the current page.
+    public function index(Request $request): Response
     {
-        $penalties = Penalty::where('user_id', Auth::id())->with([
-            'weeklyReport:id,week_start,total_minutes'
-        ])->get();
+        $tab = (string) $request->input('tab', 'pending');
+
+        $base = Penalty::where('user_id', Auth::id())
+            ->where('status', '!=', 'exempted');
+
+        $counts = [
+            'pending' => (int) (clone $base)->where('status', 'pending')->count(),
+            'uploaded' => (int) (clone $base)->where('status', 'uploaded')->count(),
+            'approved' => (int) (clone $base)->where('status', 'approved')->count(),
+            'rejected' => (int) (clone $base)->where('status', 'rejected')->count(),
+            'total' => (int) (clone $base)->count(),
+        ];
+
+        $query = Penalty::where('user_id', Auth::id())
+            ->where('status', '!=', 'exempted')
+            ->with(['weeklyReport:id,week_start,total_minutes']);
+
+        if ($tab !== 'all') {
+            $query->where('status', $tab);
+        }
+
+        $penalties = $query->orderByDesc('id')->paginate(20)->withQueryString();
 
         return Inertia::render('Penalty', [
             'penalties' => $penalties,
+            'counts' => $counts,
+            'filters' => ['tab' => $tab],
         ]);
     }
 
@@ -52,13 +74,18 @@ class PenaltyController extends Controller
             'proof.max'      => 'Ukuran file maksimal 1 MB.',
         ]);
 
-        // Hapus bukti lama kalau ada
+        // Hapus bukti lama kalau ada (baru di disk private, lama mungkin
+        // masih di disk public dari sebelum perubahan ini).
         if ($penalty->proof_path) {
+            Storage::disk('local')->delete($penalty->proof_path);
             Storage::disk('public')->delete($penalty->proof_path);
         }
 
-        // Simpan bukti baru
-        $path = $request->file('proof')->store('penalties', 'public');
+        // Simpan bukti baru di disk private, BUKAN public: bukti tidak
+        // boleh bisa dibuka lewat URL /storage/... tanpa login.
+        // Bukti dilihat lewat route penalties.proof di bawah, yang
+        // memeriksa pemilik/admin terlebih dahulu.
+        $path = $request->file('proof')->store('penalties', 'local');
 
         $penalty->update([
             'proof_path'       => $path,
@@ -69,19 +96,111 @@ class PenaltyController extends Controller
         return back()->with('success', 'Bukti berhasil diupload. Menunggu review admin.');
     }
 
-    public function adminIndex(): Response
+    // Server-side tab, search, date and sort filters + pagination.
+    // Counts cover all non-exempt penalties, not just the page.
+    public function adminIndex(Request $request): Response
     {
-        $penalties = Penalty::with([
-            'user:id,name',
-            'weeklyReport:id,week_start'
-        ])->get();
+        $tab = (string) $request->input('tab', 'all');
+        $search = (string) $request->input('search', '');
+        $filterDate = (string) $request->input('date', '');
+        $sortColumn = (string) $request->input('sort', 'id');
+        $sortOrder = $request->input('dir', 'desc') === 'asc' ? 'asc' : 'desc';
 
+        $base = Penalty::where('status', '!=', 'exempted');
+
+        $counts = [
+            'pending' => (int) (clone $base)->where('status', 'pending')->count(),
+            'uploaded' => (int) (clone $base)->where('status', 'uploaded')->count(),
+            'approved' => (int) (clone $base)->where('status', 'approved')->count(),
+            'rejected' => (int) (clone $base)->where('status', 'rejected')->count(),
+            'total' => (int) (clone $base)->count(),
+        ];
+
+        $query = Penalty::where('status', '!=', 'exempted')
+            ->with(['user:id,name', 'weeklyReport:id,week_start']);
+
+        if ($tab !== 'all') {
+            $query->where('status', $tab);
+        }
+
+        if ($search !== '') {
+            $query->whereHas('user', fn ($q) => $q->where('name', 'like', '%' . $search . '%'));
+        }
+
+        if ($filterDate !== '') {
+            // A penalty's week runs Monday-Saturday; include it if the
+            // chosen date falls in that week.
+            $date = Carbon::parse($filterDate);
+            $query->whereHas('weeklyReport', function ($q) use ($date) {
+                $q->whereDate('week_start', '<=', $date->toDateString())
+                    ->whereDate('week_start', '>=', $date->copy()->subDays(5)->toDateString());
+            });
+        }
+
+        $sortMap = [
+            'id' => 'penalties.id',
+            'week' => 'weekly_reports.week_start',
+        ];
+
+        if ($sortColumn === 'name') {
+            $query->leftJoin('users', 'users.id', '=', 'penalties.user_id')
+                ->select('penalties.*')
+                ->orderBy('users.name', $sortOrder);
+        } else {
+            $sortCol = $sortMap[$sortColumn] ?? 'penalties.id';
+            if ($sortColumn === 'week') {
+                $query->leftJoin('weekly_reports', 'weekly_reports.id', '=', 'penalties.weekly_report_id')
+                    ->select('penalties.*')
+                    ->orderBy($sortCol, $sortOrder);
+            } else {
+                $query->orderBy($sortCol, $sortOrder);
+            }
+        }
+
+        $penalties = $query->paginate(20)->withQueryString();
         $exemptWeeks = PenaltyExemptWeek::all();
 
         return Inertia::render('admin/Penalty', [
             'penalties' => $penalties,
+            'counts' => $counts,
             'exemptWeeks' => $exemptWeeks,
+            'filters' => [
+                'tab' => $tab,
+                'search' => $search,
+                'date' => $filterDate,
+                'sort' => $sortColumn,
+                'dir' => $sortOrder,
+            ],
         ]);
+    }
+
+    // ── Lihat bukti (hanya pemilik atau admin) ─────────────────────────────
+    // Proof files are NOT on the public disk, so this is the only way to
+    // view one. A direct /storage/... link must not work for new uploads.
+    public function proof(Penalty $penalty)
+    {
+        $user = Auth::user();
+
+        if ($penalty->user_id !== $user->id && !$user->is_admin) {
+            abort(403);
+        }
+
+        if (!$penalty->proof_path) {
+            abort(404);
+        }
+
+        // New uploads live on the private disk; older uploads may still
+        // be on the public disk, but they are still served only here,
+        // after the check above.
+        if (Storage::disk('local')->exists($penalty->proof_path)) {
+            return Storage::disk('local')->response($penalty->proof_path);
+        }
+
+        if (Storage::disk('public')->exists($penalty->proof_path)) {
+            return Storage::disk('public')->response($penalty->proof_path);
+        }
+
+        abort(404);
     }
 
     // ── Admin: setujui bukti ──────────────────────────────────────────────────
@@ -113,8 +232,10 @@ class PenaltyController extends Controller
             'reason.max'      => 'Alasan maksimal 500 karakter.',
         ]);
 
-        // Hapus bukti yang ditolak
+        // Hapus bukti yang ditolak (cek kedua disk: baru di private,
+        // lama mungkin masih di public).
         if ($penalty->proof_path) {
+            Storage::disk('local')->delete($penalty->proof_path);
             Storage::disk('public')->delete($penalty->proof_path);
         }
 

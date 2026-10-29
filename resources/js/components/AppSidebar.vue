@@ -17,12 +17,12 @@ const isAdmin = page.props.auth.user.role != 'anggota' && page.props.auth.user.i
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
+        title: 'Dasbor',
         href: '/dashboard',
         icon: LayoutGrid,
     },
     {
-        title: 'My Penalties',
+        title: 'Hukuman Saya',
         href: '/penalties',
         icon: AlertTriangle,
     },
@@ -30,22 +30,22 @@ const mainNavItems: NavItem[] = [
 
 const AdminNavItems: NavItem[] = [
     {
-        title: 'User Management',
+        title: 'Kelola Pengguna',
         href: '/admin/users',
         icon: Users,
     },
     {
-        title: 'Attendance',
+        title: 'Absensi',
         href: '/admin/attendance',
         icon: ClipboardCheck,
     },
     {
-        title: 'Weekly Report',
+        title: 'Laporan Mingguan',
         href: '/admin/weekly-report',
         icon: FileSpreadsheet,
     },
     {
-        title: 'Penalty Management',
+        title: 'Kelola Hukuman',
         href: '/admin/penalties',
         icon: ShieldAlert,
     },

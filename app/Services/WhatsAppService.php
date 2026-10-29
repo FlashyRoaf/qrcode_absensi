@@ -8,10 +8,24 @@ use Illuminate\Support\Facades\Log;
 class WhatsAppService
 {
     protected string $botUrl;
+    protected string $botSecret;
 
     public function __construct()
     {
         $this->botUrl = rtrim(config('services.wa_bot.url', 'http://localhost:3000'), '/');
+        $this->botSecret = (string) config('services.wa_bot.secret', '');
+    }
+
+    // Never log a full phone number: keep only the last 4 digits, so
+    // the logs cannot be used to harvest employee numbers.
+    private static function maskPhone(string $phone): string
+    {
+        $digits = preg_replace('/\D/', '', $phone) ?? '';
+        if (strlen($digits) <= 4) {
+            return '****';
+        }
+
+        return '****' . substr($digits, -4);
     }
 
     /**
@@ -33,7 +47,13 @@ class WhatsAppService
         string $weeklyTarget = '14 jam 30 menit'
     ): bool {
         try {
-            $response = Http::timeout(5)->post("{$this->botUrl}/send-notification", [
+            // The bot rejects requests without this shared secret, so
+            // anyone else who finds the bot's port cannot send messages
+            // as the company. Set the same WA_BOT_SECRET in Laravel's
+            // .env and in wa-bot/.env.
+            $response = Http::timeout(5)
+                ->withHeaders(['X-WA-Secret' => $this->botSecret])
+                ->post("{$this->botUrl}/send-notification", [
                 'phone'        => $phone,
                 'name'         => $name,
                 'type'         => $type,
@@ -43,11 +63,11 @@ class WhatsAppService
             ]);
 
             if ($response->successful()) {
-                Log::info("WA notifikasi terkirim ke {$phone} ({$type})");
+                Log::info("WA notifikasi terkirim ke " . self::maskPhone($phone) . " ({$type})");
                 return true;
             }
 
-            Log::warning("WA notifikasi gagal ke {$phone}: " . $response->body());
+            Log::warning("WA notifikasi gagal ke " . self::maskPhone($phone) . ": " . $response->body());
             return false;
 
         } catch (\Exception $e) {

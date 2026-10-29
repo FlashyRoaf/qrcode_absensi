@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { router } from '@inertiajs/vue3'
 import { CalendarDays, Clock, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
 
@@ -12,23 +13,55 @@ interface Attendance {
   check_in?: string | null
   check_out?: string | null
   duration_minutes?: number | null
+  distance?: number | null
+  missing_checkout?: boolean
+}
+
+interface PaginatedAttendances {
+  data: Attendance[]
+  meta: { current_page: number; last_page: number; total: number; per_page: number; from: number | null; to: number | null }
 }
 
 interface Props {
-  attendances?: Attendance[]
+  attendances: PaginatedAttendances
+  filters: { search: string; date: string; sort: string; dir: string }
+  stats: { totalHours: number; count: number }
 }
 
 const props = defineProps<Props>()
 
-const selectedDate = ref('')
-
 type SortKey = 'userName' | 'date' | 'checkIn' | 'checkOut' | 'hoursWorked'
 type SortDir = 'asc' | 'desc'
 
-const search = ref('')
-const sortKey = ref<SortKey>('date')
-const sortDir = ref<SortDir>('desc')
+// Inputs start from the server filters (so a refreshed/bookmarked
+// URL with ?search=... shows the same filter), then every change
+// asks the server for a new page instead of filtering in the browser.
+const selectedDate = ref(props.filters?.date ?? '')
+const search = ref(props.filters?.search ?? '')
+const sortKey = ref<SortKey>((props.filters?.sort as SortKey) ?? 'date')
+const sortDir = ref<SortDir>((props.filters?.dir as SortDir) ?? 'desc')
 const sortChanging = ref(false)
+
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
+function navigate(page = 1) {
+  router.get(route('attendance'), {
+    search: search.value || undefined,
+    date: selectedDate.value || undefined,
+    sort: sortKey.value,
+    dir: sortDir.value,
+    page: page > 1 ? page : undefined,
+  }, { preserveState: true, preserveScroll: true, replace: true })
+}
+
+function onSearchInput() {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => navigate(1), 400)
+}
+
+function onDateChange() {
+  navigate(1)
+}
 
 function toggleSort(key: SortKey) {
   sortChanging.value = true
@@ -40,6 +73,7 @@ function toggleSort(key: SortKey) {
     sortKey.value = key
     sortDir.value = 'asc'
   }
+  navigate(1)
 }
 
 function getSortIcon(key: SortKey) {
@@ -47,10 +81,10 @@ function getSortIcon(key: SortKey) {
   return sortDir.value === 'asc' ? 'asc' : 'desc'
 }
 
-const safeRecords = computed(() => props.attendances ?? [])
-
-const normalizedRecords = computed(() =>
-  safeRecords.value.map(r => {
+// Server data is already filtered, sorted and paged. Stats come from
+// the server too (all matching rows, not just this page).
+const pagedRecords = computed(() =>
+  (props.attendances?.data ?? []).map(r => {
     const hours = (r.duration_minutes ?? 0) / 60
     return {
       id: r.id,
@@ -59,59 +93,18 @@ const normalizedRecords = computed(() =>
       checkIn: r.check_in ?? '-',
       checkOut: r.check_out ?? '-',
       hoursWorked: hours,
+      distance: r.distance ?? null,
+      missingCheckout: r.missing_checkout ?? false,
     }
   })
 )
 
-const filteredRecords = computed(() => {
-  let records = normalizedRecords.value
-
-  if (search.value) {
-    const q = search.value.toLowerCase()
-    records = records.filter(r =>
-      r.userName.toLowerCase().includes(q) 
-    )
-  }
-
-  if (selectedDate.value) {
-    records = records.filter(r => r.date === selectedDate.value)
-  }
-
-  records.sort((a, b) => {
-    const valA = a[sortKey.value]
-    const valB = b[sortKey.value]
-
-    if (typeof valA === 'number' && typeof valB === 'number') {
-      return sortDir.value === 'asc' ? valA - valB : valB - valA
-    }
-
-    const strA = String(valA ?? '').toLowerCase()
-    const strB = String(valB ?? '').toLowerCase()
-
-    if (strA === '-' && strB !== '-') return 1
-    if (strB === '-' && strA !== '-') return -1
-
-    if (strA < strB) return sortDir.value === 'asc' ? -1 : 1
-    if (strA > strB) return sortDir.value === 'asc' ? 1 : -1
-    return 0
-  })
-
-  return records
-})
-
-const stats = computed(() =>
-  filteredRecords.value.reduce(
-    (acc, r) => {
-      acc.totalHours += r.hoursWorked
-      acc.count++
-      return acc
-    },
-    { totalHours: 0, count: 0 }
-  )
-)
+const meta = computed(() => props.attendances?.meta ?? { current_page: 1, last_page: 1, total: 0, per_page: 50, from: null, to: null })
+const stats = computed(() => props.stats ?? { totalHours: 0, count: 0 })
 
 function clearDate() {
   selectedDate.value = ''
+  navigate(1)
 }
 
 function getInitial(name: string) {
@@ -133,8 +126,9 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
 
       <!-- Header -->
       <div class="header-enter">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Attendance</h1>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Absensi</h1>
         <p class="text-gray-500 dark:text-neutral-400 mt-2 text-sm">Melacak catatan kehadiran harian</p>
+        <p class="text-gray-500 dark:text-neutral-400 mt-1 text-sm">Jarak di bawah adalah jarak GPS yang dilaporkan ponsel saat check-in — angka ini bisa ditinjau admin, tetapi bukan bukti mutlak bahwa karyawan ada di kantor.</p>
       </div>
 
       <!-- Stat Cards -->
@@ -167,13 +161,13 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
 
       <!-- Filter Bar -->
       <div class="filter-enter flex flex-wrap items-center gap-4">
-        <input v-model="search" type="text" placeholder="Cari nama user..."
+        <input v-model="search" type="text" placeholder="Cari nama user..." @input="onSearchInput"
           class="bg-transparent border border-gray-300 dark:border-zinc-700 rounded-lg px-4 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-900 dark:placeholder-white focus:outline-none focus:border-emerald-500 transition"
            />
 
         <div class="filter-pill" :class="{ 'filter-pill--active': selectedDate }">
           <CalendarDays class="w-4 h-4 text-gray-400 dark:text-neutral-400 flex-shrink-0" />
-          <input v-model="selectedDate" type="date"
+          <input v-model="selectedDate" type="date" @change="onDateChange"
             class="bg-transparent text-gray-900 dark:text-white focus:outline-none text-sm" />
           <button v-if="selectedDate" @click="clearDate"
             class="ml-1 text-gray-400 hover:text-gray-600 dark:text-neutral-500 dark:hover:text-white transition-colors"
@@ -185,7 +179,7 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
         <div class="ml-auto flex items-center gap-2 text-sm">
           <span class="text-gray-500 dark:text-neutral-500">
             Menampilkan
-            <span class="text-gray-900 dark:text-white font-medium tabular-nums">{{ filteredRecords.length }}</span>
+            <span class="text-gray-900 dark:text-white font-medium tabular-nums">{{ meta.total }}</span>
             record
           </span>
           <span class="text-gray-300 dark:text-neutral-700">·</span>
@@ -227,11 +221,13 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
                     </span>
                   </button>
                 </th>
+                <th class="text-left py-4 px-6 text-sm font-medium">Jarak (m)</th>
+                <th class="text-left py-4 px-6 text-sm font-medium">Status</th>
               </tr>
             </thead>
 
             <tbody :class="{ 'tbody--sorting': sortChanging }">
-              <tr v-for="(record, index) in filteredRecords" :key="record.id" class="table-row"
+              <tr v-for="(record, index) in pagedRecords" :key="record.id" class="table-row"
                 :style="{ '--row-delay': `${index * 35}ms` }">
                 <!-- Employee -->
                 <td class="py-4 px-6">
@@ -265,11 +261,23 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
                     <div class="hours-bar" :style="{ '--w': Math.min(record.hoursWorked / 12, 1) }" />
                   </div>
                 </td>
+
+                <!-- GPS distance reported by the phone -->
+                <td class="py-4 px-6 tabular-nums">
+                  <span v-if="record.distance !== null && record.distance !== undefined">{{ Math.round(record.distance) }}</span>
+                  <span v-else class="text-gray-400 dark:text-neutral-600">—</span>
+                </td>
+
+                <!-- Missing check-out flag -->
+                <td class="py-4 px-6">
+                  <span v-if="record.missingCheckout" class="text-red-600 dark:text-red-400 text-sm font-medium">Check-out hilang</span>
+                  <span v-else class="text-gray-400 dark:text-neutral-600">—</span>
+                </td>
               </tr>
 
               <!-- Empty state -->
-              <tr v-if="filteredRecords.length === 0">
-                <td colspan="5" class="py-16 text-center">
+              <tr v-if="pagedRecords.length === 0">
+                <td colspan="7" class="py-16 text-center">
                   <div class="flex flex-col items-center gap-3 empty-state">
                     <CalendarDays class="w-10 h-10 text-gray-300 dark:text-neutral-700" />
                     <p class="text-gray-500 dark:text-neutral-500 font-medium">Tidak ada data attendance ditemukan.</p>
@@ -286,6 +294,18 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
             </tbody>
 
           </table>
+        </div>
+
+        <!-- Server pagination: 50 rows per page -->
+        <div v-if="meta.total > 0" class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+          <span class="text-sm text-gray-500 dark:text-neutral-400">
+            Menampilkan {{ meta.from }}–{{ meta.to }} dari {{ meta.total }} record
+          </span>
+          <div class="flex items-center gap-2">
+            <button @click="navigate(meta.current_page - 1)" :disabled="meta.current_page === 1" class="px-3 py-1.5 rounded-md border border-gray-300 dark:border-zinc-700 text-sm disabled:opacity-50">Sebelumnya</button>
+            <span class="text-sm text-gray-500 dark:text-neutral-400">Halaman {{ meta.current_page }} / {{ meta.last_page }}</span>
+            <button @click="navigate(meta.current_page + 1)" :disabled="meta.current_page === meta.last_page" class="px-3 py-1.5 rounded-md border border-gray-300 dark:border-zinc-700 text-sm disabled:opacity-50">Berikutnya</button>
+          </div>
         </div>
       </div>
 

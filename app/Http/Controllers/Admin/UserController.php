@@ -15,16 +15,34 @@ use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
-    //
-    public function index(): Response
+    // Server-side search and pagination: the user list used to load
+    // every user and filter in the browser.
+    public function index(Request $request): Response
     {
-        // $users = User::all();
-        $users = User::with(['leaves' => function ($query) {
+        $search = (string) $request->input('search', '');
+
+        $query = User::with(['leaves' => function ($query) {
             $query->where('end_date', '>=', now()->format('Y-m-d'));
-        }])->get();
+        }]);
+
+        if ($search !== '') {
+            $query->where('name', 'like', '%' . $search . '%');
+        }
+
+        // Header counts cover all users, not just the current page.
+        $countsQuery = clone $query;
+        $counts = [
+            'total' => (int) $countsQuery->count(),
+            'admins' => (int) (clone $query)->where('is_admin', true)->count(),
+            'non_admins' => (int) (clone $query)->where('is_admin', false)->count(),
+        ];
+
+        $users = $query->orderBy('name')->paginate(50)->withQueryString();
 
         return Inertia::render('admin/Crud', [
             'users' => $users,
+            'filters' => ['search' => $search],
+            'counts' => $counts,
         ]);
     }
 

@@ -15,6 +15,9 @@ return [
     */
     'wa_bot' => [
         'url' => env('WA_BOT_URL', 'http://localhost:3000'),
+        // Shared secret checked by the bot on every /send-* request.
+        // Must match WA_BOT_SECRET in wa-bot/.env.
+        'secret' => env('WA_BOT_SECRET'),
         'group_id' => env('WA_GROUP_ID'),
         'storage_path' => env('WA_BOT_STORAGE_PATH'),
     ],

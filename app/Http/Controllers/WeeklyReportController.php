@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Leave;
 use App\Models\WeeklyReport;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,38 +13,152 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class WeeklyReportController extends Controller
 {
-    //
-    public function show(): Response {        
-        $reports = WeeklyReport::with('user')
-        ->select('user_id', 'week_start', 'total_minutes', 'status')
-        ->get()
-        ->map(function($r) {
-            $isOnLeave = false;
+    // Server-side search, filter, sort and pagination for the table
+    // tab. The stat cards, per-user tab and trend tab used to be
+    // computed in the browser from the full list, so those aggregates
+    // are now computed here from all reports and sent separately —
+    // they must not be based on just the current page.
+    public function show(Request $request): Response
+    {
+        $search = (string) $request->input('search', '');
+        $statusFilter = (string) $request->input('status', 'all');
+        $weekFilter = (string) $request->input('week_start', '');
+        $sortKey = (string) $request->input('sort', 'week_start');
+        $sortDir = $request->input('dir', 'desc') === 'asc' ? 'asc' : 'desc';
 
-            if ($r->user && $r->user->leaves) {
-                // Cek apakah ada izin yang menaungi minggu ini
-                $isOnLeave = $r->user->leaves->contains(function ($leave) use ($r) {
-                    $weekStart = Carbon::parse($r->week_start)->format('Y-m-d');
-                    return $weekStart >= $leave->start_date && $weekStart <= $leave->end_date;
-                });
-            }
-            
+        // All reports, mapped once, for stats / per-user / trend.
+        $all = WeeklyReport::with('user')
+            ->select('user_id', 'week_start', 'total_minutes', 'status')
+            ->get()
+            ->map(function ($r) {
+                $weekStart = Carbon::parse($r->week_start)->startOfDay();
+                $weekEnd = $weekStart->copy()->addDays(5)->endOfDay();
+
+                return [
+                    'user_id' => $r->user_id,
+                    'user_name' => $r->user->name ?? null,
+                    'week_start' => $r->week_start,
+                    'total_minutes' => $r->total_minutes,
+                    'status' => $r->status,
+                    'is_on_leave' => Leave::coversFullWeek($r->user_id, $weekStart, $weekEnd),
+                ];
+            });
+
+        $memenuhi = $all->where('status', 'memenuhi')->count();
+        $tidakMemenuhi = $all->where('status', 'tidak_memenuhi')->count();
+
+        $reportStats = [
+            'totalUsers' => $all->unique('user_id')->count(),
+            'totalReports' => $all->count(),
+            'totalWeeks' => $all->unique('week_start')->count(),
+            'memenuhi' => $memenuhi,
+            'tidakMemenuhi' => $tidakMemenuhi,
+            'complianceRate' => $all->count()
+                ? round($memenuhi / $all->count() * 100)
+                : 0,
+        ];
+
+        $userStats = $all->groupBy('user_id')->map(function ($rows, $userId) {
+            $first = $rows->first();
+
             return [
-                'user_id'       => $r->user_id,
-                'user_name'     => $r->user->name ?? null,
-                'week_start'    => $r->week_start,
-                'total_minutes' => $r->total_minutes,
-                'status'        => $r->status,
-                'is_on_leave' => $isOnLeave,
+                'user_id' => (int) $userId,
+                'user_name' => $first['user_name'] ?? "User #{$userId}",
+                'total' => $rows->count(),
+                'memenuhi' => $rows->where('status', 'memenuhi')->count(),
+                'tidak_memenuhi' => $rows->filter(fn ($r) => $r['status'] !== 'memenuhi' && !$r['is_on_leave'])->count(),
+                'is_on_leave' => $rows->where('is_on_leave', true)->count(),
+                'total_minutes' => (int) $rows->sum('total_minutes'),
             ];
-        }
-        );
+        })->values()->sortByDesc('memenuhi')->values();
 
-        return Inertia::render('admin/WeeklyReport', compact('reports'));
-        
-        // return Inertia::render('admin/WeeklyReport', [
-        //     'reports' => WeeklyReport::all(),
-        // ]);
+        $weeklyTrend = $all->groupBy('week_start')->map(function ($rows, $week) {
+            return [
+                'week' => $week,
+                'total' => $rows->count(),
+                'memenuhi' => $rows->where('status', 'memenuhi')->count(),
+                'tidak' => $rows->filter(fn ($r) => $r['status'] !== 'memenuhi' && !$r['is_on_leave'])->count(),
+                'izin' => $rows->where('is_on_leave', true)->count(),
+            ];
+        })->values()->sortBy('week')->values()->slice(-8)->values();
+
+        // Table data: apply the UI filters, then sort, then paginate.
+        // Filtering a paginated collection in memory is acceptable
+        // here because weekly reports grow by one row per user per
+        // week; the table itself is paged at 10 rows, and the
+        // aggregates above are already separate.
+        $filtered = $all;
+
+        if ($search !== '') {
+            $q = strtolower($search);
+            $filtered = $filtered->filter(fn ($r) =>
+                str_contains((string) $r['user_id'], $q)
+                || str_contains(strtolower($r['user_name'] ?? ''), $q)
+                || str_contains((string) $r['week_start'], $q)
+            );
+        }
+
+        if ($statusFilter !== 'all') {
+            if ($statusFilter === 'izin') {
+                $filtered = $filtered->where('is_on_leave', true);
+            } else {
+                $filtered = $filtered->filter(fn ($r) =>
+                    $r['status'] === $statusFilter && !$r['is_on_leave']
+                );
+            }
+        }
+
+        if ($weekFilter !== '') {
+            $filtered = $filtered->where('week_start', $weekFilter);
+        }
+
+        $filtered = $filtered->sort(function ($a, $b) use ($sortKey, $sortDir) {
+            $va = $a[$sortKey] ?? null;
+            $vb = $b[$sortKey] ?? null;
+            if ($sortKey === 'total_minutes') {
+                $va = (float) $va;
+                $vb = (float) $vb;
+            }
+            $cmp = $va <=> $vb;
+
+            return $sortDir === 'asc' ? $cmp : -$cmp;
+        })->values();
+
+        $perPage = 10;
+        $page = max(1, (int) $request->input('page', 1));
+        $total = $filtered->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = min($page, $lastPage);
+        $pageRows = $filtered->slice(($page - 1) * $perPage, $perPage)->values();
+
+        // Shape the table page like a Laravel paginator, so the page
+        // renders it the same way as the other admin lists.
+        $reportsPage = [
+            'data' => $pageRows,
+            'meta' => [
+                'current_page' => $page,
+                'last_page' => $lastPage,
+                'total' => $total,
+                'per_page' => $perPage,
+                'from' => $total ? ($page - 1) * $perPage + 1 : null,
+                'to' => $total ? min($page * $perPage, $total) : null,
+            ],
+        ];
+
+        return Inertia::render('admin/WeeklyReport', [
+            'reports' => $reportsPage,
+            'report_stats' => $reportStats,
+            'user_stats' => $userStats,
+            'weekly_trend' => $weeklyTrend,
+            'target_minutes' => (int) config('staks.target_minutes', 870),
+            'filters' => [
+                'search' => $search,
+                'status' => $statusFilter,
+                'week_start' => $weekFilter,
+                'sort' => $sortKey,
+                'dir' => $sortDir,
+            ],
+        ]);
     }
 
     public function export(Request $request): \Symfony\Component\HttpFoundation\BinaryFileResponse
@@ -51,16 +166,9 @@ class WeeklyReportController extends Controller
     // Ambil data
     $reports = WeeklyReport::with('user.leaves')
         ->get()
-        ->map(function($r) {
-            
-            $isOnLeave = false;
-
-            if ($r->user && $r->user->leaves) {
-                $isOnLeave = $r->user->leaves->contains(function ($leave) use ($r) {
-                    $weekStart = Carbon::parse($r->week_start)->format('Y-m-d');
-                    return $weekStart >= $leave->start_date && $weekStart <= $leave->end_date;
-                });
-            }
+        ->map(function ($r) {
+            $weekStart = Carbon::parse($r->week_start)->startOfDay();
+            $weekEnd = $weekStart->copy()->addDays(5)->endOfDay();
 
             return [
                 'user_id'       => $r->user_id,
@@ -68,10 +176,9 @@ class WeeklyReportController extends Controller
                 'week_start'    => $r->week_start,
                 'total_minutes' => $r->total_minutes,
                 'status'        => $r->status,
-                'is_on_leave'   => $isOnLeave, // Atribut dinamis baru untuk file Excel
+                'is_on_leave'   => Leave::coversFullWeek($r->user_id, $weekStart, $weekEnd),
             ];
-        }
-    );
+        });
     
     // Terima filter dari request
     $filters = $request->only(['search', 'status', 'week_start']);
@@ -80,7 +187,7 @@ class WeeklyReportController extends Controller
 
     // Perbaikan: Hapus collect() karena $reports sudah berupa Collection
     return Excel::download(
-        new WeeklyReportExport($reports, $filters), 
+        new WeeklyReportExport($reports, $filters, (int) config('staks.target_minutes', 870)),
         $filename
     );
 }

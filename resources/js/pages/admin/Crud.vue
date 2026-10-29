@@ -7,7 +7,7 @@
       <div class="crud-header">
         <div class="header-info">
           <h2>Daftar User</h2>
-          <p class="header-subtitle">{{ users.length }} user ditemukan</p>
+          <p class="header-subtitle">{{ counts.total }} user ditemukan</p>
         </div>
         <div class="crud-actions">
           <button class="btn btn-primary" @click="() => { openCreateModal(); onCollapsed?.() }">
@@ -27,7 +27,7 @@
             <Users />
           </div>
           <div class="stat-content-mini">
-            <h4>{{ users.length }}</h4>
+            <h4>{{ counts.total }}</h4>
             <p>Total Users</p>
           </div>
         </div>
@@ -36,7 +36,7 @@
             <UserCheck />
           </div>
           <div class="stat-content-mini">
-            <h4>{{ users.filter(u => u.is_admin).length }}</h4>
+            <h4>{{ counts.admins }}</h4>
             <p>Admin</p>
           </div>
         </div>
@@ -45,7 +45,7 @@
             <UserIcon />
           </div>
           <div class="stat-content-mini">
-            <h4>{{ users.filter(u => !u.is_admin).length }}</h4>
+            <h4>{{ counts.non_admins }}</h4>
             <p>User</p>
           </div>
         </div>
@@ -208,11 +208,12 @@
       <div class="table-toolbar">
         <div class="search-wrapper">
           <Search class="search-icon" />
-          <input 
-            v-model="searchQuery" 
-            type="text" 
-            class="search-input" 
-            placeholder="Cari berdasarkan nama..." 
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="search-input"
+            placeholder="Cari berdasarkan nama..."
+            @input="onSearchInput"
           />
         </div>
       </div>
@@ -233,7 +234,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(user, index) in filteredUsers" :key="user.id" class="table-row" :style="{ '--row-i': index }">
+              <tr v-for="(user, index) in pagedUsers" :key="user.id" class="table-row" :style="{ '--row-i': index }">
                 <td><span class="user-id">#{{ user.id }}</span></td>
                 <td>
                   <div class="user-info">
@@ -276,19 +277,30 @@
             </tbody>
           </table>
 
-          <div v-if="filteredUsers.length === 0" class="empty-state">
+          <div v-if="meta.total > 0" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 1rem;">
+            <span style="font-size: 0.875rem; color: #71717a;">
+              Menampilkan {{ meta.from }}–{{ meta.to }} dari {{ meta.total }} user
+            </span>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <button @click="navigate(meta.current_page - 1)" :disabled="meta.current_page === 1" class="btn btn-secondary">Sebelumnya</button>
+              <span style="font-size: 0.875rem; color: #71717a;">Halaman {{ meta.current_page }} / {{ meta.last_page }}</span>
+              <button @click="navigate(meta.current_page + 1)" :disabled="meta.current_page === meta.last_page" class="btn btn-secondary">Berikutnya</button>
+            </div>
+          </div>
+
+          <div v-if="meta.total === 0" class="empty-state">
             <div class="empty-icon">
-              <Users v-if="users.length === 0" />
+              <Users v-if="!searchQuery" />
               <Search v-else />
             </div>
-            <h3>{{ users.length === 0 ? 'Tidak ada user' : 'User tidak ditemukan' }}</h3>
-            <p>{{ users.length === 0 ? 'Belum ada user yang terdaftar dalam sistem.' : 'Tidak ada user yang cocok dengan pencarian Anda.' }}</p>
-            
-            <button v-if="users.length === 0" class="btn btn-primary" @click="openCreateModal">
+            <h3>{{ !searchQuery ? 'Tidak ada user' : 'User tidak ditemukan' }}</h3>
+            <p>{{ !searchQuery ? 'Belum ada user yang terdaftar dalam sistem.' : 'Tidak ada user yang cocok dengan pencarian Anda.' }}</p>
+
+            <button v-if="!searchQuery" class="btn btn-primary" @click="openCreateModal">
               <Plus class="icon" />
               Tambah User Pertama
             </button>
-            <button v-else class="btn btn-secondary" @click="searchQuery = ''">
+            <button v-else class="btn btn-secondary" @click="resetSearch">
               Reset Pencarian
             </button>
           </div>
@@ -312,8 +324,15 @@ import type { User } from '@/types'
 import { useInitials } from '@/composables/useInitials'
 import AppLayout from '@/layouts/AppLayout.vue'
 
+interface PaginatedUsers {
+  data: User[]
+  meta: { current_page: number; last_page: number; total: number; per_page: number; from: number | null; to: number | null }
+}
+
 interface Props {
-  users: User[]
+  users: PaginatedUsers
+  filters: { search: string }
+  counts: { total: number; admins: number; non_admins: number }
   errors?: Record<string, string>
   onCollapsed?: () => void
 }
@@ -323,18 +342,30 @@ const emit = defineEmits<{ refresh: [] }>()
 
 const { getInitials } = useInitials()
 
-// --- State Pencarian ---
-const searchQuery = ref('')
+// --- State Pencarian (server-side) ---
+const searchQuery = ref(props.filters?.search ?? '')
+const counts = computed(() => props.counts ?? { total: 0, admins: 0, non_admins: 0 })
+const meta = computed(() => props.users?.meta ?? { current_page: 1, last_page: 1, total: 0, per_page: 50, from: null, to: null })
+const pagedUsers = computed(() => props.users?.data ?? [])
 
-// --- Computed untuk Filter User ---
-const filteredUsers = computed(() => {
-  if (!searchQuery.value) return props.users
-  
-  const query = searchQuery.value.toLowerCase()
-  return props.users.filter(user => 
-    user.name.toLowerCase().includes(query)
-  )
-})
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
+function navigate(page = 1) {
+  router.get(route('users'), {
+    search: searchQuery.value || undefined,
+    page: page > 1 ? page : undefined,
+  }, { preserveState: true, preserveScroll: true, replace: true })
+}
+
+function onSearchInput() {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => navigate(1), 400)
+}
+
+function resetSearch() {
+  searchQuery.value = ''
+  navigate(1)
+}
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
