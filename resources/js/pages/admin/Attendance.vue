@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { router } from '@inertiajs/vue3'
-import { CalendarDays, Clock, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-vue-next'
+import { CalendarDays, Clock, X, ArrowUpDown, ArrowUp, ArrowDown, RefreshCw } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
 
 interface Attendance {
@@ -107,6 +107,40 @@ function clearDate() {
   navigate(1)
 }
 
+// Live refresh: when an employee successfully scans a QR code, a new
+// row (or a completed check-out) appears in this table without the
+// admin having to reload the page. Polling every 10 seconds, with
+// only the table + stats props reloaded, keeps the admin's search,
+// date and sort untouched. Skipped while the admin is typing in a
+// filter field, and while the tab is hidden.
+const lastUpdated = ref(new Date())
+let refreshInterval: ReturnType<typeof setInterval> | null = null
+
+function refreshAttendances() {
+  if (document.hidden) return
+  const active = document.activeElement
+  if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return
+  router.reload({
+    only: ['attendances', 'stats'],
+    preserveState: true,
+    preserveScroll: true,
+    replace: true,
+    onSuccess: () => { lastUpdated.value = new Date() },
+  })
+}
+
+const lastUpdatedText = computed(() =>
+  lastUpdated.value.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+)
+
+onMounted(() => {
+  refreshInterval = setInterval(refreshAttendances, 10000)
+})
+
+onUnmounted(() => {
+  if (refreshInterval) clearInterval(refreshInterval)
+})
+
 function getInitial(name: string) {
   return name?.charAt(0)?.toUpperCase() || '?'
 }
@@ -127,7 +161,6 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
       <!-- Header -->
       <div class="header-enter">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Absensi</h1>
-        <p class="text-gray-500 dark:text-neutral-400 mt-2 text-sm">Melacak catatan kehadiran harian</p>
         <p class="text-gray-500 dark:text-neutral-400 mt-1 text-sm">Jarak di bawah adalah jarak GPS yang dilaporkan ponsel saat check-in — angka ini bisa ditinjau admin, tetapi bukan bukti mutlak bahwa karyawan ada di kantor.</p>
       </div>
 
@@ -191,17 +224,14 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
 
       </div>
 
-      <!-- Sort hint badge -->
-      <Transition name="hint">
-        <div v-if="sortKey" class="sort-hint-bar">
-          <span class="sort-hint-dot" />
-          Urutan aktif:
-          <strong class="text-gray-900 dark:text-white">{{columns.find(c => c.key === sortKey)?.label}}</strong>
-          —
-          <span class="text-gray-500 dark:text-neutral-400">{{ sortDir === 'asc' ? '↑ Ascending' : '↓ Descending'
-            }}</span>
-        </div>
-      </Transition>
+      <!-- Live refresh status -->
+      <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-neutral-400">
+        <span>Terakhir diperbarui {{ lastUpdatedText }} · Memperbarui otomatis setiap 10 detik</span>
+        <button @click="refreshAttendances" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-white hover:border-gray-400 transition">
+          <RefreshCw class="w-3.5 h-3.5" />
+          Perbarui
+        </button>
+      </div>
 
       <!-- Table -->
       <div class="table-card table-enter">
@@ -256,10 +286,7 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
 
                 <!-- Hours Worked -->
                 <td class="py-4 px-6">
-                  <div class="hours-wrap">
-                    <span class="hours-value">{{ record.hoursWorked.toFixed(1) }}h</span>
-                    <div class="hours-bar" :style="{ '--w': Math.min(record.hoursWorked / 12, 1) }" />
-                  </div>
+                  <span class="hours-value">{{ record.hoursWorked.toFixed(1) }}h</span>
                 </td>
 
                 <!-- GPS distance reported by the phone -->
@@ -431,72 +458,6 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
 .dark .filter-pill:focus-within,
 .dark .filter-pill--active {
   border-color: #52525b;
-}
-
-/* ── Sort hint bar ── */
-.sort-hint-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.78rem;
-  color: #6b7280;
-  /* gray-500 */
-  padding: 0.35rem 0.75rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  width: fit-content;
-}
-
-.dark .sort-hint-bar {
-  color: #71717a;
-  background: #09090b;
-  border: 1px solid #27272a;
-}
-
-.sort-hint-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 9999px;
-  background: #6b7280;
-  animation: pulse 1.8s ease-in-out infinite;
-}
-
-.dark .sort-hint-dot {
-  background: #52525b;
-}
-
-@keyframes pulse {
-
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.4;
-    transform: scale(0.7);
-  }
-}
-
-/* hint transition */
-.hint-enter-active {
-  transition: all 0.3s ease;
-}
-
-.hint-leave-active {
-  transition: all 0.2s ease;
-}
-
-.hint-enter-from {
-  opacity: 0;
-  transform: translateY(-6px);
-}
-
-.hint-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
 }
 
 /* ── Table card ── */
@@ -741,52 +702,6 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
 .dark .table-row:hover .checkout-chip {
   background: #27272a;
   border-color: #3f3f46;
-}
-
-/* ── Hours worked mini-bar ── */
-.hours-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.hours-value {
-  color: #111827;
-  font-weight: 500;
-  font-size: 0.875rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.dark .hours-value {
-  color: #ffffff;
-}
-
-.hours-bar {
-  height: 3px;
-  border-radius: 9999px;
-  background: #e5e7eb;
-  position: relative;
-  width: 60px;
-  overflow: hidden;
-}
-
-.dark .hours-bar {
-  background: #27272a;
-}
-
-.hours-bar::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  background: #0f172a;
-  transform-origin: left;
-  transform: scaleX(var(--w, 0));
-  transition: transform 0.6s cubic-bezier(.22, 1, .36, 1);
-}
-
-.dark .hours-bar::after {
-  background: #e4e4e7;
 }
 
 /* ── Empty state ── */
