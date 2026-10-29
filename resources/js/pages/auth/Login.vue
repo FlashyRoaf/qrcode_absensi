@@ -8,10 +8,6 @@ import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
-import { useWindowSize } from '@vueuse/core';
-
-const { width } = useWindowSize();
-
 defineProps<{
     status?: string;
     canResetPassword: boolean;

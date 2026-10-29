@@ -3,26 +3,12 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { QrCode, Clock, LogIn, LogOut, RefreshCw, AlertCircle } from 'lucide-vue-next';
 
-// ─── INTERFACES (tidak diubah) ───────────────────────────────────────────────
-
-interface Particle {
-  id: number;
-  size: number;
-  left: number;
-  top: number;
-  delay: number;
-  duration: number;
-}
-
-interface AttendanceData {
-  // sessionId: string;
-  timestamp: Date;
-}
+// ─── PROPS ───────────────────────────────────────────────────────────────────
 
 interface Props {
-  qrCodeImage?: String,
-  qr_token?: String,
-  expires_at?: String,
+  qrCodeImage?: string,
+  qr_token?: string,
+  expires_at?: string,
 }
 
 const form = useForm({
@@ -31,7 +17,6 @@ const form = useForm({
 });
 
 const props = defineProps<Props>();
-const particles = ref<Particle[]>([]);
 
 // One QR code is for one employee only. Watch the code's status so the
 // operator is told as soon as it has been used, instead of showing a

@@ -431,7 +431,7 @@
     </AppLayout>
 </template>
 
-<script setup>
+<script setup lang="ts">
 // (script tetap sama persis seperti sebelumnya)
 import { ref, computed } from 'vue'
 import { Head, router } from '@inertiajs/vue3'

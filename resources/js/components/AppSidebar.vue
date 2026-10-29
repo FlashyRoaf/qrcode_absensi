@@ -5,7 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { AlertTriangle, BookOpen, ClipboardCheck, FileSpreadsheet, Folder, LayoutGrid, ShieldAlert, Users } from 'lucide-vue-next';
+import { AlertTriangle, ClipboardCheck, FileSpreadsheet, LayoutGrid, ShieldAlert, Users } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import AppLogoIcon from './AppLogoIcon.vue';
 

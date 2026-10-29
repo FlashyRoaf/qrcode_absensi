@@ -11,7 +11,7 @@ interface Props {
     imgSize?: string;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const isDark = ref(false);
 let observer: MutationObserver | null = null;

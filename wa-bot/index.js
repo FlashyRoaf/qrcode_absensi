@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 const pino = require('pino');
 const qrcode = require('qrcode-terminal');
 const quotesData = require('./quotes.json');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 app.use(bodyParser.json());
@@ -37,14 +39,13 @@ function maskPhone(phone) {
 }
 
 function resolveReportFile(filePath) {
-    const path = require('path');
     const base = process.env.WA_BOT_STORAGE_PATH;
     if (!base) return null;
     const resolved = path.resolve(filePath);
     const baseResolved = path.resolve(base);
     if (resolved !== baseResolved && !resolved.startsWith(baseResolved + path.sep)) return null;
     if (path.extname(resolved).toLowerCase() !== '.xlsx') return null;
-    if (!require('fs').existsSync(resolved)) return null;
+    if (!fs.existsSync(resolved)) return null;
     return resolved;
 }
 
@@ -212,8 +213,6 @@ app.post('/send-notification', requireBotSecret, async (req, res) => {
         return res.status(500).json({ success: false, message: err.message });
     }
 });
-
-const fs = require('fs');
 
 app.post('/send-file', requireBotSecret, async (req, res) => {
     try {
