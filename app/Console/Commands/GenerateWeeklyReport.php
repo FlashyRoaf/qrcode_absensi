@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Exception;
 use Illuminate\Console\Command;
+use App\Models\Leave;
 use App\Models\User;
 use App\Models\Attendance;
 use App\Models\WeeklyReport;
@@ -129,8 +130,7 @@ class GenerateWeeklyReport extends Command
 
                 $this->info("\nTotal menit {$user->name} : {$totalMinutes}");
                 // $totalHours = $totalMinutes / 60;
-                $targetMinutes = 14.5 * 60; // 870 menit
-                // $targetHours = 14.5;
+                $targetMinutes = (int) config('staks.target_minutes', 870);
                 $isTargetMet = $totalMinutes >= $targetMinutes;
                 // $percentage = min(100, ($totalMinutes / $targetMinutes) * 100);
                 $status = $isTargetMet ? 'memenuhi' : 'tidak_memenuhi';
@@ -158,10 +158,7 @@ class GenerateWeeklyReport extends Command
                     where('week_start', $weekStart->toDateString())->first();
                     
                 if ($status === 'tidak_memenuhi') {
-                    $isOnLeave = $user->leaves()
-                        ->where('start_date', '<=', $weekStart)
-                        ->where('end_date', '>=', $weekEnd)
-                        ->exists();
+                    $isOnLeave = Leave::coversFullWeek($user->id, $weekStart, $weekEnd);
 
                     if (!$isOnLeave) {
                         Penalty::firstOrCreate(
@@ -207,18 +204,12 @@ class GenerateWeeklyReport extends Command
             $reports = WeeklyReport::with('user.leaves') // <- 1. Tambahkan .leaves di sini
                 ->where('week_start', $weekStart->toDateString())
                 ->get()
-                ->map(function ($r) { // <- 2. Ubah menjadi function biasa
-                    
-                    // Default: dianggap tidak izin
-                    $isOnLeave = false;
-
-                    // Pastikan user memiliki relasi leaves sebelum mengecek
-                    if ($r->user && $r->user->leaves) {
-                        $isOnLeave = $r->user->leaves->contains(function ($leave) use ($r) {
-                            $weekStartString = \Carbon\Carbon::parse($r->week_start)->format('Y-m-d');
-                            return $weekStartString >= $leave->start_date && $weekStartString <= $leave->end_date;
-                        });
-                    }
+                ->map(function ($r) {
+                    // Same rule as everywhere else: only a leave covering
+                    // the whole Monday-Saturday week counts as leave.
+                    $weekStartDate = \Carbon\Carbon::parse($r->week_start)->startOfDay();
+                    $weekEndDate = $weekStartDate->copy()->addDays(5)->endOfDay();
+                    $isOnLeave = Leave::coversFullWeek($r->user_id, $weekStartDate, $weekEndDate);
 
                     return [
                         'user_id'       => $r->user_id,
@@ -238,13 +229,16 @@ class GenerateWeeklyReport extends Command
             chmod(storage_path('app/private/reports'), 0755);
 
             // Simpan file
-            Excel::store(new WeeklyReportExport($reports, $filters), 'reports/' . $filename);
+            Excel::store(new WeeklyReportExport($reports, $filters, (int) config('staks.target_minutes', 870)), 'reports/' . $filename);
 
-            // Kirim ke WA bot
+            // Kirim ke WA bot (the bot checks this shared secret; without
+            // it the bot refuses, so a stranger cannot use it to send
+            // WhatsApp messages or files).
             $filePath = config('services.wa_bot.storage_path') . '/' . $filename;
             $groupId = config('services.wa_bot.group_id');
+            $waHeaders = ['X-WA-Secret' => (string) config('services.wa_bot.secret', '')];
 
-            Http::post(
+            Http::withHeaders($waHeaders)->post(
                 config('services.wa_bot.url') . '/send-file',
                 [
                     'groupId'  => $groupId,
@@ -258,7 +252,7 @@ class GenerateWeeklyReport extends Command
             $atasans = User::where('role', 'atasan')->whereNotNull('phone')->get();
 
             foreach ($atasans as $atasan) {
-                Http::post(
+                Http::withHeaders($waHeaders)->post(
                     config('services.wa_bot.url') . '/send-file-user',
                     [
                         'phone'  => $atasan->phone,

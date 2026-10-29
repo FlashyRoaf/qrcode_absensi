@@ -10,6 +10,7 @@ interface AttendanceRecord {
   check_in: string | null
   check_out: string | null
   hours_worked: number
+  missing_checkout?: boolean
 }
 
 interface Props {
@@ -29,7 +30,8 @@ function formatHours(hours: number): string {
   return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 
-function getStatus(record: AttendanceRecord): 'present dark:bg-[#052e16]' | 'in_progress dark:bg-[#1c1206]' | 'absent' {
+function getStatus(record: AttendanceRecord): 'present dark:bg-[#052e16]' | 'in_progress dark:bg-[#1c1206]' | 'absent' | 'missing_checkout' {
+  if (record.missing_checkout) return 'missing_checkout'
   if (record.hours_worked > 0) return 'present dark:bg-[#052e16]'
   if (record.check_in)         return 'in_progress dark:bg-[#1c1206]'
   return 'absent'
@@ -37,10 +39,12 @@ function getStatus(record: AttendanceRecord): 'present dark:bg-[#052e16]' | 'in_
 
 const circumference = 2 * Math.PI * 54
 
-const TARGET_HOURS = 14.5
-
+// Use the target the server sends (from config/staks.php), not a
+// second hard-coded copy that can drift from it.
 const progressPercentage = computed(() =>
-  Math.min((props.hours_worked / TARGET_HOURS) * 100, 100)
+  props.target_hours > 0
+    ? Math.min((props.hours_worked / props.target_hours) * 100, 100)
+    : 0
 )
 
 const strokeDashoffset = computed(() =>
@@ -61,8 +65,18 @@ const filteredRecords = computed(() =>
 
       <!-- Header -->
       <div class="page-header">
-        <h1>Dashboard</h1>
+        <h1>Dasbor</h1>
         <p>Pantau kehadiran dan jam kerja minggu ini.</p>
+      </div>
+
+      <!-- How the week works: target, Sunday, leave, missing check-out -->
+      <div class="table-card bg-[#fafafa] text-[#0a0a0a] dark:bg-[#09090b] dark:text-[#ffffff]" style="padding: 1rem 1.25rem;">
+        <p class="text-sm leading-relaxed">
+          Target minggu ini: <strong>{{ props.target_hours }} jam</strong> (Senin–Sabtu).
+          Hari Minggu tidak dihitung dan tidak bisa absensi.
+          Jika Anda izin selama satu minggu penuh (Senin–Sabtu), minggu itu tidak dihitung sebagai hukuman.
+          Jika ada hari yang check-in tapi tidak check-out, hari itu ditandai "Check-out hilang" — jamnya tidak dihitung sampai admin menindaklanjuti.
+        </p>
       </div>
 
       <div class="dashboard-grid">
@@ -70,7 +84,7 @@ const filteredRecords = computed(() =>
         <!-- Attendance Table -->
         <div class="table-card bg-[#fafafa] text-[#0a0a0a] dark:bg-[#09090b] dark:text-[#ffffff]">
           <div class="card-header border-b border-[#e4e4e7] dark:border-[#1c1c1f]">
-            <h3>Attendance History</h3>
+            <h3>Riwayat Absensi</h3>
             <p>Catatan check-in dan check-out minggu ini</p>
           </div>
 
@@ -109,9 +123,10 @@ const filteredRecords = computed(() =>
                   </td>
                   <td>
                     <span class="badge shadow-lg dark:shadow-none" :class="`badge--${getStatus(record)}`">
-                      <template v-if="getStatus(record) === 'present dark:bg-[#052e16]'">Present</template>
-                      <template v-else-if="getStatus(record) === 'in_progress dark:bg-[#1c1206]'">In Progress</template>
-                      <template v-else>Absent</template>
+                      <template v-if="getStatus(record) === 'missing_checkout'">Check-out hilang</template>
+                      <template v-else-if="getStatus(record) === 'present dark:bg-[#052e16]'">Hadir</template>
+                      <template v-else-if="getStatus(record) === 'in_progress dark:bg-[#1c1206]'">Sedang bekerja</template>
+                      <template v-else>Tidak hadir</template>
                     </span>
                   </td>
                 </tr>
@@ -126,7 +141,7 @@ const filteredRecords = computed(() =>
           <!-- Donut Progress -->
           <div class="chart-card">
             <div class="card-header border border-b-[#e4e4e7] dark:border-none">
-              <h3>Work Progress</h3>
+              <h3>Progres Kerja</h3>
               <p>Target jam kerja minggu ini</p>
             </div>
             <div class="chart-body">
@@ -146,7 +161,7 @@ const filteredRecords = computed(() =>
                 </svg>
                 <div class="donut-label">
                   <span class="donut-pct">{{ progressPercentage.toFixed(0) }}%</span>
-                  <span class="donut-sub">Completed</span>
+                  <span class="donut-sub">Selesai</span>
                 </div>
               </div>
               <div class="chart-meta">
@@ -165,7 +180,7 @@ const filteredRecords = computed(() =>
               <CheckCircle class="stat-svg" :class="present_today ? 'icon--green' : 'icon--muted'" />
             </div>
             <div>
-              <p class="stat-label">Present Today</p>
+              <p class="stat-label">Hadir Hari Ini</p>
               <p class="stat-value">{{ present_today ? 'Ya' : 'Tidak' }}</p>
             </div>
           </div>
@@ -315,9 +330,11 @@ color: #4ade80; border-color: #166534; }
 .badge--in_progress { 
 /* background: #1c1206;  */
 color: #fbbf24; border-color: #78350f; }
-.badge--absent      { 
+.badge--absent      {
 /* background: #111113;  */
 color: #52525b; border-color: #27272a; }
+.badge--missing_checkout {
+color: #f87171; border-color: #7f1d1d; }
 
 /* Right col */
 .right-col {

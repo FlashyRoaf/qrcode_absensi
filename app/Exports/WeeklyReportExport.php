@@ -26,7 +26,8 @@ class WeeklyReportExport implements
 {
     public function __construct(
         private readonly Collection $reports,
-        private readonly array      $filters = []
+        private readonly array      $filters = [],
+        private readonly int        $targetMinutes = 870
     ) {}
 
     // ── Data ──────────────────────────────────────────────────────────────────
@@ -80,7 +81,9 @@ class WeeklyReportExport implements
         $minutes  = (int) $row['total_minutes'];
         $hours    = floor($minutes / 60);
         $mins     = $minutes % 60;
-        $progress = min(100, round(($minutes / 870) * 100));
+        $progress = $this->targetMinutes > 0
+            ? min(100, round(($minutes / $this->targetMinutes) * 100))
+            : 0;
 
         if ($row['is_on_leave'] ?? false) {
             $statusText = 'Izin';

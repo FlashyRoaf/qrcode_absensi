@@ -16,12 +16,12 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="text-xs text-gray-500 dark:text-zinc-500 uppercase tracking-widest">Admin Panel</p>
-                            <h1 class="text-sm font-bold text-gray-900 dark:text-zinc-100 leading-tight">Weekly Work Report</h1>
+                            <p class="text-xs text-gray-500 dark:text-zinc-500 uppercase tracking-widest">Panel Admin</p>
+                            <h1 class="text-sm font-bold text-gray-900 dark:text-zinc-100 leading-tight">Laporan Kerja Mingguan</h1>
                         </div>
                     </div>
                     <div class="text-xs text-gray-500 dark:text-zinc-500">
-                        Target: <span class="text-emerald-600 dark:text-emerald-400 font-bold">14.5 jam / minggu</span>
+                        Target: <span class="text-emerald-600 dark:text-emerald-400 font-bold">{{ target_minutes / 60 }} jam / minggu</span>
                     </div>
                 </div>
             </header>
@@ -37,7 +37,7 @@
                     </div>
                     <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-4 flex flex-col gap-1">
                         <p class="text-xs text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Total Laporan</p>
-                        <p class="text-3xl font-bold text-gray-900 dark:text-zinc-100">{{ reports.length }}</p>
+                        <p class="text-3xl font-bold text-gray-900 dark:text-zinc-100">{{ report_stats.totalReports }}</p>
                     </div>
                     <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-4 flex flex-col gap-1">
                         <p class="text-xs text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Minggu Tercatat</p>
@@ -65,7 +65,7 @@
                     <div class="flex items-center justify-between mb-3">
                         <p class="text-xs font-bold text-gray-600 dark:text-zinc-400 uppercase tracking-widest">Tingkat Kepatuhan
                             Keseluruhan</p>
-                        <span class="text-xs text-gray-500 dark:text-zinc-500">{{ memenuhi }} / {{ reports.length }}</span>
+                        <span class="text-xs text-gray-500 dark:text-zinc-500">{{ memenuhi }} / {{ report_stats.totalReports }}</span>
                     </div>
                     <div class="h-3 bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                         <div class="h-full rounded-full transition-all duration-700"
@@ -103,7 +103,7 @@
                     <div class="flex flex-col md:flex-row gap-3">
                         <input v-model="search" type="text" placeholder="Cari user ID atau nama..."
                             class="flex-1 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg px-4 py-2 text-sm text-gray-900 dark:text-zinc-200 placeholder-gray-400 dark:placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition"
-                            @input="currentPage = 1" />
+                            @input="onSearchInput" />
                         <div class="flex items-center gap-2 bg-white dark:bg-zinc-900 border rounded-lg px-3 py-2 transition"
                             :class="selectedWeek ? 'border-emerald-500/50' : 'border-gray-300 dark:border-zinc-700'">
                             <svg class="w-3.5 h-3.5 text-gray-400 dark:text-zinc-500 flex-shrink-0" fill="none" viewBox="0 0 24 24"
@@ -113,7 +113,7 @@
                             </svg>
                             <input type="date" :value="selectedWeek" @change="handleWeekInput"
                                 class="bg-transparent text-sm text-gray-900 dark:text-zinc-200 focus:outline-none w-36" />
-                            <button v-if="selectedWeek" @click="selectedWeek = ''" class="clear-btn" title="Hapus Filter Tanggal">
+                            <button v-if="selectedWeek" @click="clearWeek" class="clear-btn" title="Hapus Filter Tanggal">
                                 <X />
                             </button>
                         </div>
@@ -204,7 +204,7 @@
                                         <span class="font-bold"
                                             :class="row.is_on_leave 
                                                 ? 'text-amber-600 dark:text-amber-400' 
-                                                : (row.total_minutes >= 870 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400')">
+                                                : (row.total_minutes >= target_minutes ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400')">
                                             {{ fmtMinutes(row.total_minutes) }}
                                         </span>
                                         <span class="text-gray-500 dark:text-zinc-600 text-xs ml-1">({{ Math.floor(row.total_minutes) }}m)</span>
@@ -232,11 +232,11 @@
                                                     :class="row.is_on_leave 
                                                         ? 'bg-amber-500' 
                                                         : (row.status === 'memenuhi' ? 'bg-emerald-500' : 'bg-red-500')"
-                                                    :style="{ width: Math.min(100, Math.round((row.total_minutes / 870) * 100)) + '%' }">
+                                                    :style="{ width: Math.min(100, Math.round((row.total_minutes / target_minutes) * 100)) + '%' }">
                                                 </div>
                                             </div>
                                             <span class="text-xs text-gray-500 dark:text-zinc-600">
-                                                {{ Math.min(100, Math.round((row.total_minutes / 870) * 100)) }}%
+                                                {{ Math.min(100, Math.round((row.total_minutes / target_minutes) * 100)) }}%
                                             </span>
                                         </div>
                                     </td>
@@ -245,23 +245,22 @@
                         </table>
                     </div>
 
-                    <!-- Pagination -->
+                    <!-- Server pagination -->
                     <div class="flex items-center justify-between text-xs text-gray-500 dark:text-zinc-500">
                         <span>
-                            Menampilkan {{ Math.min((currentPage - 1) * perPage + 1, filtered.length) }}–{{
-                                Math.min(currentPage * perPage, filtered.length) }} dari {{ filtered.length }} laporan
+                            Menampilkan {{ meta.from }}–{{ meta.to }} dari {{ meta.total }} laporan
                         </span>
                         <div class="flex gap-1">
-                            <button @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1"
+                            <button @click="navigate(meta.current_page - 1)" :disabled="meta.current_page === 1"
                                 class="px-3 py-1.5 rounded-md bg-gray-100 dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 hover:border-gray-400 dark:hover:border-zinc-500 transition disabled:opacity-30 text-gray-700 dark:text-zinc-300">←
                                 Prev</button>
-                            <button v-for="p in totalPages" :key="p" @click="currentPage = p"
-                                class="px-3 py-1.5 rounded-md border transition font-bold" :class="currentPage === p
+                            <button v-for="p in pageNumbers" :key="p" @click="navigate(p)"
+                                class="px-3 py-1.5 rounded-md border transition font-bold" :class="meta.current_page === p
                                     ? 'bg-emerald-500 border-emerald-500 text-white dark:text-black'
                                     : 'bg-gray-100 dark:bg-zinc-900 border-gray-300 dark:border-zinc-700 text-gray-700 dark:text-zinc-400 hover:border-gray-400 dark:hover:border-zinc-500'">{{ p
                                 }}</button>
-                            <button @click="currentPage = Math.min(totalPages, currentPage + 1)"
-                                :disabled="currentPage === totalPages || totalPages === 0"
+                            <button @click="navigate(meta.current_page + 1)"
+                                :disabled="meta.current_page === meta.last_page || meta.last_page === 0"
                                 class="px-3 py-1.5 rounded-md bg-gray-100 dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 hover:border-gray-400 dark:hover:border-zinc-500 transition disabled:opacity-30 text-gray-700 dark:text-zinc-300">Next
                                 →</button>
                         </div>
@@ -425,17 +424,17 @@
 
                 <!-- Footer -->
                 <div class="pt-4 border-t border-gray-200 dark:border-zinc-800 text-center text-xs text-gray-400 dark:text-zinc-700">
-                    Admin Panel · Weekly Work Report · Target 14.5 jam/minggu (870 menit)
+                    Panel Admin · Laporan Kerja Mingguan · Target {{ target_minutes / 60 }} jam/minggu ({{ target_minutes }} menit)
                 </div>
             </main>
         </div>
     </AppLayout>
 </template>
 
-<script setup>
+<script setup lang="ts">
 // (script tetap sama persis seperti sebelumnya)
 import { ref, computed } from 'vue'
-import { Head } from '@inertiajs/vue3'
+import { Head, router } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useInitials } from '@/composables/useInitials'
 import {
@@ -443,24 +442,44 @@ import {
 } from 'lucide-vue-next'
 
 const props = defineProps({
+    // Server-paginated table page: { data, meta }.
     reports: {
+        type: Object,
+        default: () => ({ data: [], meta: { current_page: 1, last_page: 1, total: 0, per_page: 10, from: null, to: null } })
+    },
+    report_stats: {
+        type: Object,
+        default: () => ({ totalUsers: 0, totalReports: 0, totalWeeks: 0, memenuhi: 0, tidakMemenuhi: 0, complianceRate: 0 })
+    },
+    user_stats: {
         type: Array,
         default: () => []
+    },
+    weekly_trend: {
+        type: Array,
+        default: () => []
+    },
+    filters: {
+        type: Object,
+        default: () => ({ search: '', status: 'all', week_start: '', sort: 'week_start', dir: 'desc' })
+    },
+    // From config/staks.php via WeeklyReportController, not hard-coded.
+    target_minutes: {
+        type: Number,
+        default: 870
     }
 })
 
-// ── State ─────────────────────────────────────────────────────────────────────
-const search = ref('')
-const filterStatus = ref('all')
-const sortKey = ref('week_start')
-const sortDir = ref('desc')
-const currentPage = ref(1)
-const perPage = 10
+// ── State (from server filters; changes ask the server for a new page) ──
+const search = ref(props.filters?.search ?? '')
+const filterStatus = ref(props.filters?.status ?? 'all')
+const sortKey = ref(props.filters?.sort ?? 'week_start')
+const sortDir = ref(props.filters?.dir ?? 'desc')
 const activeTab = ref('tabel')
 const isExporting = ref(false)
 
 // State filter week
-const selectedWeek = ref('')
+const selectedWeek = ref(props.filters?.week_start ?? '')
 
 // Initial
 const { getInitials } = useInitials()
@@ -475,109 +494,58 @@ const snapToMonday = (dateStr) => {
     return date.toISOString().split('T')[0]
 }
 
+let searchTimer = null
+
+function navigate(page = 1) {
+    router.get(route('weekly-reports'), {
+        search: search.value || undefined,
+        status: filterStatus.value !== 'all' ? filterStatus.value : undefined,
+        week_start: selectedWeek.value || undefined,
+        sort: sortKey.value,
+        dir: sortDir.value,
+        page: page > 1 ? page : undefined,
+    }, { preserveState: true, preserveScroll: true, replace: true })
+}
+
+function onSearchInput() {
+    if (searchTimer) clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => navigate(1), 400)
+}
+
 const handleWeekInput = (e) => {
     if (e.target instanceof HTMLInputElement) {
         selectedWeek.value = snapToMonday(e.target.value)
-        currentPage.value = 1
+        navigate(1)
     }
 }
 
 const clearWeek = () => {
     selectedWeek.value = ''
-    currentPage.value = 1
+    navigate(1)
 }
 
 
-// ── Computed: Filter + Sort + Paginate ────────────────────────────────────────
-const filtered = computed(() => {
-    let data = [...props.reports]
-
-    if (search.value) {
-        const q = search.value.toLowerCase()
-        data = data.filter(r =>
-            String(r.user_id).includes(q) ||
-            (r.user_name && r.user_name.toLowerCase().includes(q)) ||
-            r.week_start.includes(q)
-        )
-    }
-
-    if (filterStatus.value !== 'all') {
-        if (filterStatus.value != 'izin') {
-            data = data.filter(r => r.status === filterStatus.value && r.is_on_leave === false)
-        } else {
-            data = data.filter(r => r.is_on_leave === true)
-        }
-    }
-
-    if (selectedWeek.value) {
-        data = data.filter(r => r.week_start === selectedWeek.value)
-    }
-
-    data.sort((a, b) => {
-        let va = a[sortKey.value]
-        let vb = b[sortKey.value]
-        if (sortKey.value === 'total_minutes') {
-            va = Number(va); vb = Number(vb)
-        }
-        if (va < vb) return sortDir.value === 'asc' ? -1 : 1
-        if (va > vb) return sortDir.value === 'asc' ? 1 : -1
-        return 0
-    })
-
-    return data
+// ── Server data: the table page, stats and aggregates ───────────────────
+const paginated = computed(() => props.reports?.data ?? [])
+const meta = computed(() => props.reports?.meta ?? { current_page: 1, last_page: 1, total: 0, per_page: 10, from: null, to: null })
+const pageNumbers = computed(() => {
+    const pages = []
+    for (let i = 1; i <= meta.value.last_page; i++) pages.push(i)
+    return pages
 })
 
-const totalPages = computed(() => Math.ceil(filtered.value.length / perPage))
-const paginated = computed(() => {
-    const start = (currentPage.value - 1) * perPage
-    return filtered.value.slice(start, start + perPage)
-})
+// ── Computed: Stats (from the server, all reports, not just the page) ──
+const totalUsers = computed(() => props.report_stats?.totalUsers ?? 0)
+const totalWeeks = computed(() => props.report_stats?.totalWeeks ?? 0)
+const memenuhi = computed(() => props.report_stats?.memenuhi ?? 0)
+const tidakMemenuhi = computed(() => props.report_stats?.tidakMemenuhi ?? 0)
+const complianceRate = computed(() => props.report_stats?.complianceRate ?? 0)
 
-// ── Computed: Stats ───────────────────────────────────────────────────────────
-const totalUsers = computed(() => new Set(props.reports.map(r => r.user_id)).size)
-const totalWeeks = computed(() => new Set(props.reports.map(r => r.week_start)).size)
-const memenuhi = computed(() => props.reports.filter(r => r.status === 'memenuhi').length)
-const tidakMemenuhi = computed(() => props.reports.filter(r => r.status === 'tidak_memenuhi').length)
-const complianceRate = computed(() =>
-    props.reports.length ? Math.round((memenuhi.value / props.reports.length) * 100) : 0
-)
+// ── Computed: Per User Stats (from the server) ───────────────────────────
+const userStats = computed(() => props.user_stats ?? [])
 
-// ── Computed: Per User Stats ──────────────────────────────────────────────────
-const userStats = computed(() => {
-    const map = {}
-    for (const r of props.reports) {
-        if (!map[r.user_id]) {
-            map[r.user_id] = {
-                user_id: r.user_id,
-                user_name: r.user_name || `User #${r.user_id}`,
-                total: 0,
-                memenuhi: 0,
-                tidak_memenuhi: 0,
-                total_minutes: 0,
-                is_on_leave: 0,
-            }
-        }
-        map[r.user_id].total++
-        map[r.user_id].total_minutes += Number(r.total_minutes)
-        if (r.status === 'memenuhi') map[r.user_id].memenuhi++
-        else if (r.is_on_leave === true) map[r.user_id].is_on_leave++
-        else map[r.user_id].tidak_memenuhi++
-    }
-    return Object.values(map).sort((a, b) => b.memenuhi - a.memenuhi)
-})
-
-// ── Computed: Weekly Trend ────────────────────────────────────────────────────
-const weeklyTrend = computed(() => {
-    const map = {}
-    for (const r of props.reports) {
-        if (!map[r.week_start]) map[r.week_start] = { week: r.week_start, memenuhi: 0, tidak: 0, izin: 0, total: 0 }
-        map[r.week_start].total++
-        if (r.status === 'memenuhi') map[r.week_start].memenuhi++
-        else if (r.is_on_leave === true) map[r.week_start].izin++
-        else map[r.week_start].tidak++
-    }
-    return Object.values(map).sort((a, b) => a.week.localeCompare(b.week)).slice(-8)
-})
+// ── Computed: Weekly Trend (from the server, last 8 weeks) ─────────────
+const weeklyTrend = computed(() => props.weekly_trend ?? [])
 
 const maxTrendTotal = computed(() => Math.max(...weeklyTrend.value.map(w => w.total), 1))
 
@@ -609,12 +577,12 @@ const fmtWeek = (weekStart) => {
 function toggleSort(key) {
     if (sortKey.value === key) sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
     else { sortKey.value = key; sortDir.value = 'desc' }
-    currentPage.value = 1
+    navigate(1)
 }
 
 function setFilter(val) {
     filterStatus.value = val
-    currentPage.value = 1
+    navigate(1)
 }
 
 // ✅ Diperbarui: Feedback visual + pencegahan klik saat loading

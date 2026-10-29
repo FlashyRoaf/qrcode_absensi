@@ -10,7 +10,7 @@ interface Props {
     className?: HTMLAttributes['class'];
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 </script>
 
 <template>

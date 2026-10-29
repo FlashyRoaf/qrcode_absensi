@@ -45,6 +45,11 @@ class DeletePenaltyProof extends Command
 
         foreach ($penalties as $penalty) {
             try {
+                // New proofs are on the private disk; older ones may
+                // still be on the public disk.
+                if (Storage::disk('local')->exists($penalty->proof_path)) {
+                    Storage::disk('local')->delete($penalty->proof_path);
+                }
                 if (Storage::disk('public')->exists($penalty->proof_path)) {
                     Storage::disk('public')->delete($penalty->proof_path);
                 }

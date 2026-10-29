@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 const pino = require('pino');
 const qrcode = require('qrcode-terminal');
 const quotesData = require('./quotes.json');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 app.use(bodyParser.json());
@@ -13,6 +15,39 @@ const PORT = process.env.WA_BOT_PORT || 3000;
 
 let sock = null;
 let isConnected = false;
+
+// ─────────────────────────────────────────────
+// Security: the /send-* endpoints used to accept requests from anyone
+// who could reach this port, with any file path. Now every /send-*
+// request must carry the shared secret (X-WA-Secret) that Laravel
+// sends, and file sends may only read a .xlsx report from the
+// configured reports folder — never an arbitrary server file.
+// Set the same WA_BOT_SECRET in Laravel's .env and in wa-bot/.env.
+// If no secret is configured, the bot refuses all sends (fail closed).
+// ─────────────────────────────────────────────
+function requireBotSecret(req, res, next) {
+    const expected = process.env.WA_BOT_SECRET;
+    if (!expected || req.get('X-WA-Secret') !== expected) {
+        return res.status(401).json({ success: false, message: 'Tidak diizinkan.' });
+    }
+    next();
+}
+
+function maskPhone(phone) {
+    const digits = String(phone || '').replace(/\D/g, '');
+    return digits.length <= 4 ? '****' : '****' + digits.slice(-4);
+}
+
+function resolveReportFile(filePath) {
+    const base = process.env.WA_BOT_STORAGE_PATH;
+    if (!base) return null;
+    const resolved = path.resolve(filePath);
+    const baseResolved = path.resolve(base);
+    if (resolved !== baseResolved && !resolved.startsWith(baseResolved + path.sep)) return null;
+    if (path.extname(resolved).toLowerCase() !== '.xlsx') return null;
+    if (!fs.existsSync(resolved)) return null;
+    return resolved;
+}
 
 function getRandomQuote() {
     return quotesData[Math.floor(Math.random() * quotesData.length)];
@@ -112,7 +147,7 @@ app.get('/status', (req, res) => {
 //   - type  : "check_in" atau "check_out"
 //   - time  : waktu absensi (string)
 // ─────────────────────────────────────────────
-app.post('/send-notification', async (req, res) => {
+app.post('/send-notification', requireBotSecret, async (req, res) => {
     const { phone, name, type, time, weeklyDurasi, weeklyTarget } = req.body;
 
     const randomQuote = getRandomQuote();
@@ -171,7 +206,7 @@ app.post('/send-notification', async (req, res) => {
 
     try {
         await sock.sendMessage(jid, { text: message });
-        console.log(`✉️  Notifikasi ${label} terkirim ke ${phone}`);
+        console.log(`✉️  Notifikasi ${label} terkirim ke ${maskPhone(phone)}`);
         return res.json({ success: true, message: 'Notifikasi berhasil dikirim.' });
     } catch (err) {
         console.error('❌ Gagal kirim pesan:', err.message);
@@ -179,9 +214,7 @@ app.post('/send-notification', async (req, res) => {
     }
 });
 
-const fs = require('fs');
-
-app.post('/send-file', async (req, res) => {
+app.post('/send-file', requireBotSecret, async (req, res) => {
     try {
         const { groupId, filePath, filename, caption } = req.body;
 
@@ -189,7 +222,16 @@ app.post('/send-file', async (req, res) => {
             return res.status(503).json({ success: false, message: 'Bot belum terhubung.' });
         }
 
-        const fileBuffer = fs.readFileSync(filePath);
+        if (!groupId || !String(groupId).endsWith('@g.us')) {
+            return res.status(400).json({ success: false, message: 'Group ID tidak valid.' });
+        }
+
+        const safePath = resolveReportFile(filePath);
+        if (!safePath) {
+            return res.status(400).json({ success: false, message: 'File tidak valid.' });
+        }
+
+        const fileBuffer = fs.readFileSync(safePath);
 
         await sock.sendMessage(groupId, {
             document: fileBuffer,
@@ -206,7 +248,7 @@ app.post('/send-file', async (req, res) => {
     }
 });
 
-app.post('/send-file-user', async (req, res) => {
+app.post('/send-file-user', requireBotSecret, async (req, res) => {
     try {
         const { phone, filePath, filename, caption } = req.body;
 
@@ -215,8 +257,13 @@ app.post('/send-file-user', async (req, res) => {
         }
 
         const jid = phone.replace(/\D/g, '') + '@s.whatsapp.net';
-        
-        const fileBuffer = fs.readFileSync(filePath);
+
+        const safePath = resolveReportFile(filePath);
+        if (!safePath) {
+            return res.status(400).json({ success: false, message: 'File tidak valid.' });
+        }
+
+        const fileBuffer = fs.readFileSync(safePath);
 
         await sock.sendMessage(jid, {
             document: fileBuffer,

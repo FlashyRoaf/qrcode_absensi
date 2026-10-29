@@ -8,10 +8,6 @@ import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
-import { useWindowSize } from '@vueuse/core';
-
-const { width } = useWindowSize();
-
 defineProps<{
     status?: string;
     canResetPassword: boolean;
@@ -32,7 +28,7 @@ const submit = () => {
 
 <template>
     <AuthBase title="Masuk ke Akun Anda" description="Masukkan email dan password untuk melanjutkan">
-        <Head title="Log in" />
+        <Head title="Masuk" />
 
         <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">
             {{ status }}
@@ -41,7 +37,7 @@ const submit = () => {
         <form @submit.prevent="submit" class="flex flex-col gap-6">
             <div class="grid gap-6">
                 <div class="grid gap-2">
-                    <Label for="email">Email address</Label>
+                    <Label for="email">Alamat email</Label>
                     <Input
                         id="email"
                         type="email"
@@ -57,7 +53,7 @@ const submit = () => {
 
                 <div class="grid gap-2">
                     <div class="flex items-center justify-between">
-                        <Label for="password">Password</Label>
+                        <Label for="password">Kata sandi</Label>
                         <TextLink v-if="canResetPassword" :href="route('password.request')" class="text-sm" :tabindex="5">
                             Lupa password?
                         </TextLink>
@@ -69,7 +65,7 @@ const submit = () => {
                         :tabindex="2"
                         autocomplete="current-password"
                         v-model="form.password"
-                        placeholder="Password"
+                        placeholder="Kata sandi"
                     />
                     <InputError :message="form.errors.password" />
                 </div>
@@ -83,14 +79,11 @@ const submit = () => {
 
                 <Button type="submit" class="mt-4 w-full" :tabindex="4" :disabled="form.processing">
                     <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-                    Log in
+                    Masuk
                 </Button>
             </div>
 
-            <!-- <div class="text-center text-sm text-muted-foreground">
-                Don't have an account?
-                <TextLink :href="route('register')" :tabindex="5">Sign up</TextLink>
-            </div> -->
+            <!-- No public sign-up: accounts are created by an admin. -->
         </form>
     </AuthBase>
 </template>

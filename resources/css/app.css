@@ -2,6 +2,25 @@
 
 @import 'tw-animate-css';
 
+/* Accessibility: a visible keyboard focus ring even where a component
+   removed the default outline, and no animation for people who asked
+   their system for reduced motion. */
+:focus-visible {
+    outline: 2px solid var(--color-ring, #10b981);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 

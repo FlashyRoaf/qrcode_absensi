@@ -78,11 +78,14 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    // The UI copy is Indonesian, so the default locale is 'id'. This also
+    // sets <html lang="id"> in app.blade.php, so screen readers pronounce
+    // the Indonesian text with the right voice instead of an English one.
+    'locale' => env('APP_LOCALE', 'id'),
 
-    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
+    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'id'),
 
-    'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
+    'faker_locale' => env('APP_FAKER_LOCALE', 'id_ID'),
 
     /*
     |--------------------------------------------------------------------------

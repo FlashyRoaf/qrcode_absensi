@@ -50,22 +50,6 @@ export interface Qrcode {
     updated_at: string;
 }
 
-export interface Shift {
-    id: number;
-    name: string;
-    start_time: string;
-    end_time: string;
-    created_at: string;
-    updated_at: string;
-}
-
-export interface Division {
-    id: number;
-    name: string;
-    created_at: string;
-    updated_at: string;
-}
-
 export interface WeeklyReport {
     id: number;
     user: User;

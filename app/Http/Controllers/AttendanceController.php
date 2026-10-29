@@ -20,23 +20,79 @@ class AttendanceController extends Controller
         $this->whatsapp = $whatsapp;
     }
 
-    public function show(): Response
+    // Server-side search, sort and pagination. The page used to load
+    // every attendance row and filter it in the browser; with months of
+    // history that meant the whole table on every visit. Now the
+    // database filters and pages, and the page only renders one page.
+    // Stats are computed from the filtered query (all matching rows),
+    // not just the current page.
+    public function show(Request $request): Response
     {
-        $attendances = Attendance::with('user')
-            ->get()
-            ->map(fn($r) => [
-                'id'               => $r->id,
-                'user_id'          => $r->user_id,
-                'user_name'        => $r->user->name ?? 'Unknown',
-                'qrcode'           => $r->qrcode,
-                'date'             => $r->date,
-                'check_in'         => $r->check_in,
-                'check_out'        => $r->check_out,
-                'duration_minutes' => $r->duration_minutes,
-            ]);
+        $search = (string) $request->input('search', '');
+        $date = (string) $request->input('date', '');
+        $sortKey = (string) $request->input('sort', 'date');
+        $sortDir = $request->input('dir', 'desc') === 'asc' ? 'asc' : 'desc';
+
+        $sortColumns = [
+            'userName' => 'users.name',
+            'date' => 'attendances.date',
+            'checkIn' => 'attendances.check_in',
+            'checkOut' => 'attendances.check_out',
+            'hoursWorked' => 'attendances.duration_minutes',
+        ];
+        $sortColumn = $sortColumns[$sortKey] ?? 'attendances.date';
+
+        $query = Attendance::query()
+            ->join('users', 'users.id', '=', 'attendances.user_id')
+            ->select('attendances.*', 'users.name as user_name');
+
+        if ($search !== '') {
+            $query->where('users.name', 'like', '%' . $search . '%');
+        }
+
+        if ($date !== '') {
+            $query->whereDate('attendances.date', $date);
+        }
+
+        $statsQuery = clone $query;
+        $stats = [
+            'totalHours' => round((float) $statsQuery->sum('attendances.duration_minutes') / 60, 1),
+            'count' => (int) $statsQuery->count(),
+        ];
+
+        $page = $query
+            ->orderBy($sortColumn, $sortDir)
+            ->orderBy('attendances.id', 'desc')
+            ->paginate(50)
+            ->withQueryString();
+
+        $page->getCollection()->transform(fn ($r) => [
+            'id' => $r->id,
+            'user_id' => $r->user_id,
+            'user_name' => $r->user_name ?? 'Unknown',
+            'qrcode' => $r->qrcode,
+            'date' => $r->date,
+            'check_in' => $r->check_in,
+            'check_out' => $r->check_out,
+            'duration_minutes' => $r->duration_minutes,
+            // Shown to admins so a GPS result can be reviewed. It is
+            // client-supplied data, not proof of presence.
+            'distance' => $r->distance,
+            'latitude' => $r->latitude,
+            'longitude' => $r->longitude,
+            'missing_checkout' => $r->check_in && !$r->check_out
+                && $r->date < now()->toDateString(),
+        ]);
 
         return Inertia::render('admin/Attendance', [
-            'attendances' => $attendances,
+            'attendances' => $page,
+            'filters' => [
+                'search' => $search,
+                'date' => $date,
+                'sort' => $sortKey,
+                'dir' => $sortDir,
+            ],
+            'stats' => $stats,
         ]);
     }
 
@@ -87,14 +143,25 @@ class AttendanceController extends Controller
         }
 
         // ── Validasi Lokasi GPS ───────────────────────────────────────────
+        // These coordinates come from the employee's phone, so they are a
+        // hint, not proof of presence: they can be faked. The check below
+        // only rejects obviously invalid values; admins can review the
+        // recorded distance on the admin Attendance page.
 
-        if (is_null($latitude) || is_null($longitude)) {
+        if (is_null($latitude) || is_null($longitude)
+            || !is_numeric($latitude) || !is_numeric($longitude)
+            || $latitude < -90 || $latitude > 90
+            || $longitude < -180 || $longitude > 180
+            || ((float) $latitude === 0.0 && (float) $longitude === 0.0)
+        ) {
             return Inertia::render('qrcode/scanned', [
-                'message' => 'Lokasi tidak dapat dideteksi. Aktifkan GPS dan coba lagi.',
+                'message' => 'Lokasi tidak valid. Aktifkan GPS dan coba lagi.',
                 'type'    => $qrCode->type ?? null,
                 'success' => false,
             ]);
         }
+
+        $radiusMeters = (int) config('staks.radius_meters', 50);
 
         $distance = $this->getDistanceInMeters(
             (float) config('staks.latitude'),
@@ -103,9 +170,9 @@ class AttendanceController extends Controller
             (float) $longitude,
         );
 
-        if ($distance > 50) {
+        if ($distance > $radiusMeters) {
             return Inertia::render('qrcode/scanned', [
-                'message' => 'Anda berada ' . round($distance) . ' meter dari kantor. Absensi hanya bisa dilakukan dalam radius 50 meter.',
+                'message' => 'Anda berada ' . round($distance) . ' meter dari kantor. Absensi hanya bisa dilakukan dalam radius ' . $radiusMeters . ' meter.',
                 'type'    => $qrCode->type ?? null,
                 'success' => false,
             ]);
@@ -119,10 +186,11 @@ class AttendanceController extends Controller
             ->first();
 
         if ($openSession && $openSession->date !== now()->toDateString()) {
-            $openSession->update([
-                'check_out'        => null,
-                'duration_minutes' => 0,
-            ]);
+            // A session from a previous day that was never checked out.
+            // Do NOT invent a check-out time for it, and do NOT silently
+            // clear it: leave the row open so it shows up as a missing
+            // check-out in the dashboard and the admin Attendance page,
+            // and start today's session separately.
             $openSession = null;
         }
 
@@ -158,7 +226,7 @@ class AttendanceController extends Controller
                 // Kumulatif minggu ini SEBELUM saat ini (sesi saat ini belum selesai)
                 $weeklyMinutes   = $this->getWeeklyMinutes($user->id, $waktuSekarang);
                 $weeklyFormatted = $this->formatMinutes($weeklyMinutes);
-                $weeklyTarget = $this->formatMinutes(870 - $weeklyMinutes);
+                $weeklyTarget = $this->formatMinutes((int) config("staks.target_minutes", 870) - $weeklyMinutes);
 
                 $this->whatsapp->sendAttendanceNotification(
                     phone:        $user->phone,
@@ -202,7 +270,7 @@ class AttendanceController extends Controller
                 // Kumulatif minggu ini TERMASUK sesi yang baru selesai
                 $weeklyMinutes   = $this->getWeeklyMinutes($user->id, $waktuSekarang);
                 $weeklyFormatted = $this->formatMinutes($weeklyMinutes);
-                $weeklyTarget = $this->formatMinutes(870 - $weeklyMinutes);
+                $weeklyTarget = $this->formatMinutes((int) config("staks.target_minutes", 870) - $weeklyMinutes);
 
                 $this->whatsapp->sendAttendanceNotification(
                     phone:        $user->phone,

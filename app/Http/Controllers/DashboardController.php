@@ -29,7 +29,7 @@ class DashboardController extends Controller
 
             $firstCheckIn = $attendance->sortBy('check_in')->first();
 
-            $lastCheckOut = $attendance->sortByDesc('check_out')->first();
+            $lastCheckOut = $attendance->whereNotNull('check_out')->sortByDesc('check_out')->first();
 
             $totalMinutes = $attendance->sum('duration_minutes');
             
@@ -46,6 +46,11 @@ class DashboardController extends Controller
                 'hours_worked' => $totalMinutes
                                     ? round($totalMinutes / 60, 2)
                                     : 0,
+                // A past day with any session that was checked in but
+                // never checked out: flag it instead of showing it as
+                // "in progress" forever.
+                'missing_checkout' => $dateKey < Carbon::today()->toDateString()
+                    && $attendance->contains(fn ($a) => $a->check_in && !$a->check_out),
             ]);
         }
 
@@ -62,7 +67,7 @@ class DashboardController extends Controller
             'present_today' => $presentToday,
             'avg_hours'     => $avgHours,
             'hours_worked'  => round($totalHours, 2),
-            'target_hours'  => 14.5,
+            'target_hours'  => round((int) config('staks.target_minutes', 870) / 60, 2),
         ]);
     }
 }

@@ -46,10 +46,11 @@ class GeneratePenalty extends Command
                     continue;
                 }
 
-                $onLeave = Leave::where('user_id', $report->user_id)
-                    ->where('start_date', '<=', $report->week_start)
-                    ->where('end_date', '>=', $report->week_start)
-                    ->exists();
+                // Same rule as weekly reports: only a leave covering
+                // the whole Monday-Saturday week excuses the penalty.
+                $weekStart = \Carbon\Carbon::parse($report->week_start)->startOfDay();
+                $weekEnd = $weekStart->copy()->addDays(5)->endOfDay();
+                $onLeave = Leave::coversFullWeek($report->user_id, $weekStart, $weekEnd);
 
                 if ($onLeave) {
                     $skipped++;

@@ -5,7 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { AlertTriangle, BookOpen, ClipboardCheck, FileSpreadsheet, Folder, LayoutGrid, ShieldAlert, Users } from 'lucide-vue-next';
+import { AlertTriangle, ClipboardCheck, FileSpreadsheet, LayoutGrid, ShieldAlert, Users } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import AppLogoIcon from './AppLogoIcon.vue';
 
@@ -17,12 +17,12 @@ const isAdmin = page.props.auth.user.role != 'anggota' && page.props.auth.user.i
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
+        title: 'Dasbor',
         href: '/dashboard',
         icon: LayoutGrid,
     },
     {
-        title: 'My Penalties',
+        title: 'Hukuman Saya',
         href: '/penalties',
         icon: AlertTriangle,
     },
@@ -30,22 +30,22 @@ const mainNavItems: NavItem[] = [
 
 const AdminNavItems: NavItem[] = [
     {
-        title: 'User Management',
+        title: 'Kelola Pengguna',
         href: '/admin/users',
         icon: Users,
     },
     {
-        title: 'Attendance',
+        title: 'Absensi',
         href: '/admin/attendance',
         icon: ClipboardCheck,
     },
     {
-        title: 'Weekly Report',
+        title: 'Laporan Mingguan',
         href: '/admin/weekly-report',
         icon: FileSpreadsheet,
     },
     {
-        title: 'Penalty Management',
+        title: 'Kelola Hukuman',
         href: '/admin/penalties',
         icon: ShieldAlert,
     },
