@@ -123,13 +123,13 @@ const success = computed(() => props.success ?? false);
 // Motivational boost, success only. Rotates by day of month, so the
 // sentence changes daily instead of repeating identically every day.
 const checkInMotivation = [
-  'Semangat bekerja hari ini — mulai dari satu tugas terpenting, selesaikan dengan baik.',
+  'Semangat bekerja hari ini — mulai dari satu tugas terpenting, selesaikan sebaik mungkin.',
   'Hari baru, kesempatan baru. Kerja pelan tapi konsisten, hasilnya akan terasa.',
   'Kehadiran tepat waktu adalah awal yang baik. Fokus, dan buat hari ini berarti.',
 ];
 const checkOutMotivation = [
   'Kerja hari ini sudah selesai. Istirahat yang cukup, besok kita lanjut lagi.',
-  'Terima kasih atas kerja hari ini. Selamat beristirahat — besok mulai lagi dengan segar.',
+  'Terima kasih atas kerja hari ini. Selamat beristirahat — besok mulai lagi dengan semangat baru.',
   'Satu hari kerja tuntas. Luangkan waktu untuk istirahat dan orang-orang terdekat.',
 ];
 const motivation = computed(() => {
