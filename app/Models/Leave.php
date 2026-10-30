@@ -32,4 +32,26 @@ class Leave extends Model
             ->exists();
     }
 
+    // Same rule, but against leaves already loaded in memory, so a
+    // page listing many reports does not run one query per row.
+    public static function coversFullWeekFromCollection($leaves, Carbon $weekStart, Carbon $weekEnd): bool
+    {
+        foreach ($leaves as $leave) {
+            // Normalise to Y-m-d: a date column may arrive as a string
+            // or a Carbon instance, and a Carbon string includes a time.
+            $start = $leave->start_date instanceof Carbon
+                ? $leave->start_date->toDateString()
+                : substr((string) $leave->start_date, 0, 10);
+            $end = $leave->end_date instanceof Carbon
+                ? $leave->end_date->toDateString()
+                : substr((string) $leave->end_date, 0, 10);
+
+            if ($start <= $weekStart->toDateString() && $end >= $weekEnd->toDateString()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 }

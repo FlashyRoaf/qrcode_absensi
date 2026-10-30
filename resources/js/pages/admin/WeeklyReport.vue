@@ -1,5 +1,5 @@
 <template>
-    <Head title="Weekly Report - Admin" />
+    <Head title="Laporan Mingguan - Admin" />
 
     <AppLayout>
         <div class="min-h-screen bg-white dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 font-mono">
@@ -28,11 +28,20 @@
 
             <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
 
+                <div v-if="props.schedule_warning" class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                    <p class="font-semibold">Jadwal otomatis mungkin tidak berjalan</p>
+                    <p class="mt-1">
+                        Laporan mingguan, pembersihan QR, dan penghapusan bukti lama hanya berjalan
+                        jika server menjalankan <code>php artisan schedule:run</code> setiap menit (lihat README).
+                        Terakhir tercatat berjalan: {{ props.schedule_last_run_at ?? 'belum pernah tercatat' }}.
+                    </p>
+                </div>
+
                 <!-- ── STAT CARDS ── -->
                 <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                     <div
                         class="col-span-2 md:col-span-1 lg:col-span-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-4 flex flex-col gap-1">
-                        <p class="text-xs text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Total User</p>
+                        <p class="text-xs text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Total Pengguna</p>
                         <p class="text-3xl font-bold text-gray-900 dark:text-zinc-100">{{ totalUsers }}</p>
                     </div>
                     <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-4 flex flex-col gap-1">
@@ -467,6 +476,14 @@ const props = defineProps({
     target_minutes: {
         type: Number,
         default: 870
+    },
+    schedule_warning: {
+        type: Boolean,
+        default: false
+    },
+    schedule_last_run_at: {
+        type: String,
+        default: null
     }
 })
 

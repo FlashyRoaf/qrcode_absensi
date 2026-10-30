@@ -6,13 +6,14 @@ use Exception;
 use Illuminate\Console\Command;
 use App\Models\Leave;
 use App\Models\User;
-use App\Models\Attendance;
 use App\Models\WeeklyReport;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\WeeklyReportExport;
-use App\Models\Penalty;
 use App\Models\PenaltyExemptWeek;
+use App\Services\AttendanceService;
+use App\Services\PenaltyService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
@@ -23,7 +24,7 @@ class GenerateWeeklyReport extends Command
      *
      * @var string
      */
-    protected $signature = 'app:generate-weekly-report {--week-start= : Tanggal Senin akhir minggu (Y-m-d)}
+    protected $signature = 'app:generate-weekly-report {--week-start= : Tanggal Senin minggu yang dibuat (YYYY-MM-DD, mis. 2026-10-26, atau D-M-YYYY, mis. 26-10-2026)}
     {--send-wa : Kirim hasil report ke grup WA}';
 
     /**
@@ -38,7 +39,10 @@ class GenerateWeeklyReport extends Command
      */
     public function handle()
     {
-        //
+        // The scheduler ran: record it so the admin Weekly Report page
+        // can warn when the cron job has stopped running.
+        Cache::put('schedule_last_run_at', now()->toIso8601String());
+
         $this->info('🚀 Memulai generate weekly reports...');
         $this->newLine();
 
@@ -51,25 +55,37 @@ class GenerateWeeklyReport extends Command
 
         // Tentukan minggu yang akan di-generate
         if ($weekOption) {
-            try {
-                $dateFormat = Carbon::createFromFormat('j-n-Y', $weekOption);
-
-                if ($dateFormat->format('j-n-Y') !== $weekOption) {
-                    throw new Exception();
+            // Accept both the natural format (YYYY-MM-DD) and the old
+            // day-month-year format, so typing 2026-10-26 no longer
+            // fails with a confusing format error.
+            $dateFormat = null;
+            foreach (['Y-m-d', 'j-n-Y'] as $format) {
+                try {
+                    $candidate = Carbon::createFromFormat($format, $weekOption);
+                    if ($candidate->format($format) === $weekOption) {
+                        $dateFormat = $candidate;
+                        break;
+                    }
+                } catch (Exception $e) {
+                    // Try the next format.
                 }
+            }
 
-                if (!$dateFormat->isMonday()) {
-                    $this->error('--week-start harus hari Senin.');
-                    return self::FAILURE;
-                }
-
-                // Manual: dari parameter
-                $weekStart = Carbon::parse($weekOption)->startOfDay();
-                $weekEnd = $weekStart->copy()->endOfWeek(6);
-            } catch (Exception $e) {
-                $this->error('Format tanggal tidak valid. Gunakan format d-m-Y');
+            if (!$dateFormat) {
+                $this->error('Format tanggal tidak valid. Gunakan format YYYY-MM-DD (mis. 2026-10-26) atau D-M-YYYY (mis. 26-10-2026).');
                 return self::FAILURE;
             }
+
+            if (!$dateFormat->isMonday()) {
+                $this->error('--week-start harus hari Senin.');
+                return self::FAILURE;
+            }
+
+            // Manual: dari parameter. Use the parsed date itself, not
+            // a fresh parse of the string, so day-month-year input
+            // cannot be misread as month-day-year.
+            $weekStart = $dateFormat->copy()->startOfDay();
+            $weekEnd = $weekStart->copy()->endOfWeek(6);
         } else {
             if ($today->isSunday()) {
                 $weekStart = $today->copy()->startOfWeek(1);
@@ -99,7 +115,7 @@ class GenerateWeeklyReport extends Command
 
         foreach ($users as $user) {
             try {
-                $isExempt = PenaltyExemptWeek::where('week_start', $weekStart->toDateTime())->exists();
+                $isExempt = PenaltyExemptWeek::whereDate('week_start', $weekStart->toDateString())->exists();
                 if ($isExempt) {
                     $progressBar->finish();
                     $this->info("\nMinggu ini termasuk minggu exempt, tidak melakukan generate weekly report.");
@@ -121,12 +137,7 @@ class GenerateWeeklyReport extends Command
 
 
                 // Hitung total menit kerja user untuk minggu ini
-                $totalMinutes = Attendance::where('user_id', $user->id)
-                    ->whereBetween('date', [
-                        $weekStart->toDateString(),
-                        $weekEnd->toDateString()
-                    ])
-                    ->sum('duration_minutes');
+                $totalMinutes = AttendanceService::weeklyMinutes($user->id, $weekStart, $weekEnd);
 
                 $this->info("\nTotal menit {$user->name} : {$totalMinutes}");
                 // $totalHours = $totalMinutes / 60;
@@ -137,7 +148,7 @@ class GenerateWeeklyReport extends Command
 
 
                 // Buat weekly report
-                WeeklyReport::create([
+                $weeklyReport = WeeklyReport::create([
                     'user_id' => $user->id,
                     'week_start' => $weekStart->toDateString(),
                     'total_minutes' => $totalMinutes,
@@ -153,23 +164,8 @@ class GenerateWeeklyReport extends Command
                 //     continue;
                 // }
 
-                // Buat penalty jika status tidak_memenuhi dan belum ada
-                $weeklyReport = WeeklyReport::where('user_id', $user->id)->
-                    where('week_start', $weekStart->toDateString())->first();
-                    
-                if ($status === 'tidak_memenuhi') {
-                    $isOnLeave = Leave::coversFullWeek($user->id, $weekStart, $weekEnd);
-
-                    if (!$isOnLeave) {
-                        Penalty::firstOrCreate(
-                            [
-                                'user_id'          => $user->id,
-                                'weekly_report_id' => $weeklyReport->id, // simpan hasil WeeklyReport::create()
-                            ],
-                            ['status' => 'pending']
-                        );
-                    }
-                }
+                // Buat penalty jika status tidak_memenuhi dan belum ada.
+                PenaltyService::createIfNeeded($weeklyReport);
 
             } catch (\Exception $e) {
                 $this->error("Error untuk user {$user->id}: {$e->getMessage()}");
@@ -195,7 +191,7 @@ class GenerateWeeklyReport extends Command
         );
 
         if ($this->option('send-wa')) {
-            $isExempt = PenaltyExemptWeek::where('week_start', $weekStart->toDateTime())->exists();
+            $isExempt = PenaltyExemptWeek::whereDate('week_start', $weekStart->toDateString())->exists();
             if ($isExempt) {
                 return $this->info('Minggu ini termasuk minggu exempt, tidak mengirim report ke WA.');
             }
@@ -238,32 +234,67 @@ class GenerateWeeklyReport extends Command
             $groupId = config('services.wa_bot.group_id');
             $waHeaders = ['X-WA-Secret' => (string) config('services.wa_bot.secret', '')];
 
-            Http::withHeaders($waHeaders)->post(
-                config('services.wa_bot.url') . '/send-file',
-                [
-                    'groupId'  => $groupId,
-                    'filePath' => $filePath,
-                    'filename' => $filename,
-                    'caption'  => '📊 Weekly Report ' . $weekStart->format('d/m/Y') . ' - ' . $weekEnd->format('d/m/Y'),
-                ]
-            );
+            $caption = '📊 Weekly Report ' . $weekStart->format('d/m/Y') . ' - ' . $weekEnd->format('d/m/Y');
+
+            // One retry, then report the failure loudly instead of
+            // looking successful: a failed send used to be silent,
+            // so nobody noticed the report never arrived.
+            $sendFile = function (string $endpoint, array $payload) use ($waHeaders) {
+                $response = Http::withHeaders($waHeaders)->post(
+                    config('services.wa_bot.url') . $endpoint, $payload
+                );
+
+                if (!$response->successful()) {
+                    $response = Http::withHeaders($waHeaders)->post(
+                        config('services.wa_bot.url') . $endpoint, $payload
+                    );
+                }
+
+                return $response;
+            };
+
+            $waFailed = [];
+            $groupResponse = $sendFile('/send-file', [
+                'groupId' => $groupId,
+                'filePath' => $filePath,
+                'filename' => $filename,
+                'caption' => $caption,
+            ]);
+
+            if (!$groupResponse->successful()) {
+                $waFailed[] = 'grup WA';
+                \Illuminate\Support\Facades\Log::error('Weekly report WA send failed (group)', [
+                    'week_start' => $weekStart->toDateString(),
+                    'status' => $groupResponse->status(),
+                ]);
+            }
 
             // Kirim file ke WA Atasan
             $atasans = User::where('role', 'atasan')->whereNotNull('phone')->get();
 
             foreach ($atasans as $atasan) {
-                Http::withHeaders($waHeaders)->post(
-                    config('services.wa_bot.url') . '/send-file-user',
-                    [
-                        'phone'  => $atasan->phone,
-                        'filePath' => $filePath,
-                        'filename' => $filename,
-                        'caption'  => '📊 Weekly Report ' . $weekStart->format('d/m/Y') . ' - ' . $weekEnd->format('d/m/Y'),
-                    ]
-                );
+                $userResponse = $sendFile('/send-file-user', [
+                    'phone' => $atasan->phone,
+                    'filePath' => $filePath,
+                    'filename' => $filename,
+                    'caption' => $caption,
+                ]);
+
+                if (!$userResponse->successful()) {
+                    $waFailed[] = "atasan #{$atasan->id}";
+                    \Illuminate\Support\Facades\Log::error('Weekly report WA send failed (atasan)', [
+                        'week_start' => $weekStart->toDateString(),
+                        'atasan_id' => $atasan->id,
+                        'status' => $userResponse->status(),
+                    ]);
+                }
             }
 
-            $this->info('📤 Weekly report terkirim ke grup WA dan WA atasan!');
+            if ($waFailed) {
+                $this->error('⚠️ Weekly report TIDAK terkirim ke: ' . implode(', ', $waFailed) . '. File tetap tersimpan di reports/' . $filename . '.');
+            } else {
+                $this->info('📤 Weekly report terkirim ke grup WA dan WA atasan!');
+            }
         }
     }
 }

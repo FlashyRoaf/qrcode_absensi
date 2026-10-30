@@ -18,18 +18,16 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    // Only the fields a user can set for themselves. Privileged
+    // fields (is_admin, role, admin_assigned_at, device_id,
+    // identifier, is_blocked) are deliberately NOT mass-assignable:
+    // the admin controller sets them one by one after validating
+    // the request, and device registration sets them directly.
     protected $fillable = [
         'name',
         'email',
         'phone',
         'password',
-        'is_admin',
-        'role',
-        'admin_assigned_at',
-        'device_id',
-        'identifier',
-        'is_blocked',
-        'phone',
     ];
 
     protected $casts = [

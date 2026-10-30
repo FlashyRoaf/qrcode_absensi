@@ -40,8 +40,21 @@ class PenaltyController extends Controller
 
         $penalties = $query->orderByDesc('id')->paginate(20)->withQueryString();
 
+        // Explicit data+meta shape (see AttendanceController):
+        // paginator toArray() flattens per_page/total at the top
+        // level instead of nesting them under 'meta'.
         return Inertia::render('Penalty', [
-            'penalties' => $penalties,
+            'penalties' => [
+                'data' => $penalties->items(),
+                'meta' => [
+                    'current_page' => $penalties->currentPage(),
+                    'last_page' => $penalties->lastPage(),
+                    'total' => $penalties->total(),
+                    'per_page' => $penalties->perPage(),
+                    'from' => $penalties->firstItem(),
+                    'to' => $penalties->lastItem(),
+                ],
+            ],
             'counts' => $counts,
             'filters' => ['tab' => $tab],
         ]);
@@ -65,7 +78,7 @@ class PenaltyController extends Controller
                 'required',
                 'image',
                 'mimes:jpg,jpeg,png',
-                'max:1024', // 1 MB
+                'max:' . (int) config('staks.proof_upload_max_kb', 1024),
             ],
         ], [
             'proof.required' => 'Bukti wajib diupload.',
@@ -161,7 +174,17 @@ class PenaltyController extends Controller
         $exemptWeeks = PenaltyExemptWeek::all();
 
         return Inertia::render('admin/Penalty', [
-            'penalties' => $penalties,
+            'penalties' => [
+                'data' => $penalties->items(),
+                'meta' => [
+                    'current_page' => $penalties->currentPage(),
+                    'last_page' => $penalties->lastPage(),
+                    'total' => $penalties->total(),
+                    'per_page' => $penalties->perPage(),
+                    'from' => $penalties->firstItem(),
+                    'to' => $penalties->lastItem(),
+                ],
+            ],
             'counts' => $counts,
             'exemptWeeks' => $exemptWeeks,
             'filters' => [

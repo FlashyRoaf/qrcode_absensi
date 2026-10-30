@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import { QrCode, Clock, LogIn, LogOut, RefreshCw, AlertCircle } from 'lucide-vue-next';
+import { QrCode, Clock, LogIn, LogOut, RefreshCw, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 
 interface Props {
   qrCodeImage?: string,
@@ -59,6 +59,24 @@ const formatTime = (date: Date): string => {
     minute: '2-digit'
   });
 };
+
+// One-line stepper for the QR expiry: left arrow, value, right
+// arrow, 30 seconds per step, clamped to 30 seconds – 10 minutes.
+// The server field is still expires_in_minutes (a float), so 30
+// seconds is sent as 0.5 and passes the server's min:0.1 rule.
+const expirySeconds = computed(() => Math.round(form.expires_in_minutes * 60))
+
+const formattedDuration = computed(() => {
+  const seconds = expirySeconds.value
+  if (seconds < 60) return `${seconds} Detik`
+  if (seconds % 60 === 0) return `${seconds / 60} Menit`
+  return `${Math.floor(seconds / 60)} Menit ${seconds % 60} Detik`
+})
+
+const stepDuration = (deltaSeconds: number) => {
+  const seconds = Math.min(600, Math.max(30, expirySeconds.value + deltaSeconds))
+  form.expires_in_minutes = seconds / 60
+}
 
 const submit = () => {
   // Keep the chosen type: after one employee has used a code, the
@@ -168,6 +186,8 @@ onMounted(() => {
             <p class="text-sm text-gray-600 dark:text-zinc-400 uppercase tracking-widest font-mono">QR Code</p>
             <span
               v-if="qrCodeImage"
+              role="status"
+              aria-live="polite"
               class="text-xs px-2 py-0.5 rounded-full font-mono"
               :class="{
                 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20': urgencyLevel === 'normal',
@@ -244,7 +264,7 @@ onMounted(() => {
         <div class="flex flex-col gap-5">
           <div>
             <h2 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Buat QR Code</h2>
-            <p class="text-sm text-gray-500 dark:text-zinc-400 mt-1">Satu QR Code untuk satu karyawan, berlaku 2 menit.</p>
+            <p class="text-sm text-gray-500 dark:text-zinc-400 mt-1">Satu QR Code untuk satu karyawan, berlaku {{ formattedDuration }}.</p>
           </div>
 
           <form @submit.prevent="submit" class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 flex flex-col gap-6">
@@ -253,6 +273,7 @@ onMounted(() => {
               <div class="grid grid-cols-2 gap-3">
                 <button
                   type="button"
+                  :aria-pressed="form.type === 'check_in'"
                   @click="form.type = 'check_in'"
                   class="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left"
                   :class="form.type === 'check_in'
@@ -268,6 +289,7 @@ onMounted(() => {
 
                 <button
                   type="button"
+                  :aria-pressed="form.type === 'check_out'"
                   @click="form.type = 'check_out'"
                   class="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left"
                   :class="form.type === 'check_out'
@@ -279,6 +301,37 @@ onMounted(() => {
                     <p class="text-sm font-semibold">Check Out</p>
                     <p class="text-sm opacity-80">Selesai kerja</p>
                   </div>
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <p class="text-sm font-semibold text-gray-800 dark:text-zinc-200">Masa Berlaku QR Code</p>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  aria-label="Kurangi 30 detik"
+                  :disabled="expirySeconds <= 30"
+                  @click="stepDuration(-30)"
+                  class="w-10 h-10 flex shrink-0 items-center justify-center rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-zinc-400 hover:border-gray-300 dark:hover:border-zinc-600 disabled:opacity-40"
+                >
+                  <ChevronLeft class="w-5 h-5" />
+                </button>
+                <div
+                  role="status"
+                  aria-live="polite"
+                  class="w-48 shrink-0 px-4 h-10 flex items-center justify-center rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-base font-bold whitespace-nowrap text-gray-800 dark:text-zinc-100"
+                >
+                  {{ formattedDuration }}
+                </div>
+                <button
+                  type="button"
+                  aria-label="Tambah 30 detik"
+                  :disabled="expirySeconds >= 600"
+                  @click="stepDuration(30)"
+                  class="w-10 h-10 flex shrink-0 items-center justify-center rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-zinc-400 hover:border-gray-300 dark:hover:border-zinc-600 disabled:opacity-40"
+                >
+                  <ChevronRight class="w-5 h-5" />
                 </button>
               </div>
             </div>

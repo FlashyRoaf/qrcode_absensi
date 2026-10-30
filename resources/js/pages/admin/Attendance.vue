@@ -109,17 +109,38 @@ function clearDate() {
 
 // Live refresh: when an employee successfully scans a QR code, a new
 // row (or a completed check-out) appears in this table without the
-// admin having to reload the page. Polling every 10 seconds, with
-// only the table + stats props reloaded, keeps the admin's search,
-// date and sort untouched. Skipped while the admin is typing in a
-// filter field, and while the tab is hidden.
+// admin having to reload the page. Every 10 seconds the page first
+// asks the lightweight /admin/attendance/latest endpoint (just the
+// newest id and timestamp), and only reloads the table + stats when
+// something actually changed — so idle ticks no longer run the full
+// stats query. Skipped while the admin is typing in a filter field,
+// and while the tab is hidden.
 const lastUpdated = ref(new Date())
+const lastSeenId = ref<number | null>(props.attendances?.data?.[0]?.id ?? null)
+const lastSeenUpdatedAt = ref<string | null>(null)
 let refreshInterval: ReturnType<typeof setInterval> | null = null
 
-function refreshAttendances() {
+async function refreshAttendances() {
   if (document.hidden) return
   const active = document.activeElement
   if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return
+  try {
+    const response = await fetch(route('attendance.latest'), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+    if (!response.ok) return
+    const latest = await response.json()
+    if (latest.latest_id === lastSeenId.value && latest.latest_updated_at === lastSeenUpdatedAt.value) {
+      // Nothing changed: skip the full reload entirely.
+      lastUpdated.value = new Date()
+      return
+    }
+    lastSeenId.value = latest.latest_id
+    lastSeenUpdatedAt.value = latest.latest_updated_at
+  } catch {
+    // If the lightweight check fails, fall back to a normal reload
+    // rather than leaving the table stale.
+  }
   router.reload({
     only: ['attendances', 'stats'],
     preserveState: true,
@@ -147,10 +168,10 @@ function getInitial(name: string) {
 
 const columns: { key: SortKey; label: string; hint: string }[] = [
   { key: 'userName', label: 'Anggota', hint: 'A–Z / Z–A' },
-  { key: 'date', label: 'Date', hint: 'Terlama / Terbaru' },
+  { key: 'date', label: 'Tanggal', hint: 'Terlama / Terbaru' },
   { key: 'checkIn', label: 'Check In', hint: 'Paling awal / Akhir' },
   { key: 'checkOut', label: 'Check Out', hint: 'Paling awal / Akhir' },
-  { key: 'hoursWorked', label: 'Hours Worked', hint: 'Tercepat / Terlama' },
+  { key: 'hoursWorked', label: 'Jam Kerja', hint: 'Tercepat / Terlama' },
 ]
 </script>
 
@@ -167,12 +188,12 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
       <!-- Stat Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        <div class="stat-card" style="--delay: 0.05s">
+        <div class="admin-stat-card" style="--delay: 0.05s">
           <div class="stat-icon">
             <Clock class="w-5 h-5 text-gray-500 dark:text-white" />
           </div>
           <div>
-            <p class="text-gray-500 dark:text-neutral-400 text-sm">Total Hours</p>
+            <p class="text-gray-500 dark:text-neutral-400 text-sm">Total Jam</p>
             <p class="text-gray-900 dark:text-white font-semibold text-lg leading-tight">
               {{ stats.totalHours.toFixed(1) }}<span
                 class="text-gray-400 dark:text-neutral-500 text-sm font-normal">h</span>
@@ -180,12 +201,12 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
           </div>
         </div>
 
-        <div class="stat-card" style="--delay: 0.1s">
+        <div class="admin-stat-card" style="--delay: 0.1s">
           <div class="stat-icon">
             <CalendarDays class="w-5 h-5 text-gray-500 dark:text-white" />
           </div>
           <div>
-            <p class="text-gray-500 dark:text-neutral-400 text-sm">Total Records</p>
+            <p class="text-gray-500 dark:text-neutral-400 text-sm">Total Data</p>
             <p class="text-gray-900 dark:text-white font-semibold text-lg leading-tight">{{ stats.count }}</p>
           </div>
         </div>
@@ -234,15 +255,17 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
       </div>
 
       <!-- Table -->
-      <div class="table-card table-enter">
+      <div class="admin-card table-enter">
         <div class="overflow-x-auto">
           <table class="w-full">
 
             <thead class="table-head">
               <tr>
-                <th v-for="col in columns" :key="col.key" class="text-left py-4 px-6 text-sm font-medium">
+                <th v-for="col in columns" :key="col.key" class="text-left py-4 px-6 text-sm font-medium"
+                  :aria-sort="sortKey === col.key ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'">
                   <button @click="toggleSort(col.key)" class="sort-btn group"
-                    :class="{ 'sort-btn--active': sortKey === col.key }" :title="col.hint">
+                    :class="{ 'sort-btn--active': sortKey === col.key }" :title="col.hint"
+                    :aria-label="`Urutkan berdasarkan ${col.label}`">
                     <span>{{ col.label }}</span>
                     <span class="sort-icon-wrap">
                       <ArrowUp v-if="getSortIcon(col.key) === 'asc'" class="sort-arrow sort-arrow--active" />
@@ -269,7 +292,7 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
                   </div>
                 </td>
 
-                <!-- Date -->
+                <!-- Tanggal -->
                 <td class="py-4 px-6 text-gray-900 dark:text-white tabular-nums">{{ record.date }}</td>
 
                 <!-- Check In -->
@@ -284,7 +307,7 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
                   <span v-else class="text-gray-400 dark:text-neutral-600">—</span>
                 </td>
 
-                <!-- Hours Worked -->
+                <!-- Jam Kerja -->
                 <td class="py-4 px-6">
                   <span class="hours-value">{{ record.hoursWorked.toFixed(1) }}h</span>
                 </td>
@@ -379,32 +402,9 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
 }
 
 /* ── Stat cards ── */
-.stat-card {
-  background: #ffffff;
-  border: 1px solid #e4e4e7;
-  border-radius: 0.75rem;
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  animation: slideUp 0.5s cubic-bezier(.22, 1, .36, 1) var(--delay, 0s) both;
-  transition: border-color 0.25s, transform 0.25s;
-  cursor: default;
-}
 
-.dark .stat-card {
-  background: #09090b;
-  border: 1px solid #27272a;
-}
 
-.stat-card:hover {
-  border-color: #a1a1aa;
-  transform: translateY(-2px);
-}
 
-.dark .stat-card:hover {
-  border-color: #52525b;
-}
 
 .stat-icon {
   width: 2.5rem;
@@ -461,17 +461,7 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
 }
 
 /* ── Table card ── */
-.table-card {
-  background: #ffffff;
-  border: 1px solid #e4e4e7;
-  border-radius: 0.75rem;
-  overflow: hidden;
-}
 
-.dark .table-card {
-  background: #09090b;
-  border: 1px solid #27272a;
-}
 
 /* ── Table head ── */
 .table-head {

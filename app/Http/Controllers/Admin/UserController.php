@@ -60,15 +60,18 @@ class UserController extends Controller
             'role' => 'nullable|string|max:255',
         ]);
 
+        // Privileged fields are set one by one, not by mass
+        // assignment: they are not in User::$fillable on purpose.
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'is_admin' => $request->boolean('is_admin'),
-            'role' => $request->role,
             'phone' => $request->phone,
-            'admin_assigned_at' => $request->boolean('is_admin') ? now() : null
         ]);
+        $user->is_admin = $request->boolean('is_admin');
+        $user->role = $request->role;
+        $user->admin_assigned_at = $request->boolean('is_admin') ? now() : null;
+        $user->save();
 
         return redirect()->route('users')
             ->with('success', 'Akun berhasil ditambahkan');
@@ -97,10 +100,7 @@ class UserController extends Controller
         $updateData = [
             'name' => $request->name,
             'email' => $request->email,
-            'is_admin' => $request->boolean('is_admin'),
-            'role' => $request->role,
             'phone' => $request->phone,
-            'admin_assigned_at' => $request->boolean('is_admin') ? now() : null
         ];
 
         // Only update password if provided
@@ -109,6 +109,12 @@ class UserController extends Controller
         }
 
         $user->update($updateData);
+
+        // Privileged fields, set one by one (see store()).
+        $user->is_admin = $request->boolean('is_admin');
+        $user->role = $request->role;
+        $user->admin_assigned_at = $request->boolean('is_admin') ? now() : null;
+        $user->save();
 
         return redirect()->route('users')
             ->with('success', 'Akun berhasil diperbarui');
@@ -132,10 +138,10 @@ class UserController extends Controller
     }
 
     public function resetDevice(User $user) {
-        $user->update([
-            'device_id' => null,
-            'identifier' => null,
-        ]);
+        // Set one by one: device fields are not mass-assignable.
+        $user->device_id = null;
+        $user->identifier = null;
+        $user->save();
 
         return redirect()->route('users')
             ->with('success', 'Device berhasil direset. Pengguna dapat login kembali dari perangkat baru.');

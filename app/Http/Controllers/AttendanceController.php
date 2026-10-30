@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\Qrcode;
+use App\Services\AttendanceService;
 use App\Services\WhatsAppService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -84,8 +85,22 @@ class AttendanceController extends Controller
                 && $r->date < now()->toDateString(),
         ]);
 
+        // Explicit data+meta shape, matching WeeklyReportController
+        // and the frontend's Props type. Note: a paginator's
+        // toArray() does NOT nest these under 'meta' — it flattens
+        // per_page/total at the top level — so build it by hand.
         return Inertia::render('admin/Attendance', [
-            'attendances' => $page,
+            'attendances' => [
+                'data' => $page->items(),
+                'meta' => [
+                    'current_page' => $page->currentPage(),
+                    'last_page' => $page->lastPage(),
+                    'total' => $page->total(),
+                    'per_page' => $page->perPage(),
+                    'from' => $page->firstItem(),
+                    'to' => $page->lastItem(),
+                ],
+            ],
             'filters' => [
                 'search' => $search,
                 'date' => $date,
@@ -93,6 +108,20 @@ class AttendanceController extends Controller
                 'dir' => $sortDir,
             ],
             'stats' => $stats,
+        ]);
+    }
+
+    // Lightweight poll target for the admin Attendance page: returns
+    // only the newest attendance id and timestamp, so the page can
+    // skip the full stats query when nothing has changed.
+    public function latest(): \Illuminate\Http\JsonResponse
+    {
+        $latest = Attendance::query()->orderByDesc('id')->first(['id', 'updated_at']);
+
+        return response()->json([
+            'latest_id' => $latest?->id,
+            'latest_updated_at' => $latest?->updated_at?->toIso8601String(),
+            'count' => Attendance::count(),
         ]);
     }
 
@@ -299,10 +328,7 @@ class AttendanceController extends Controller
         $senin = $now->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
         $akhir = $now->copy()->endOfDay();
 
-        return (int) Attendance::where('user_id', $userId)
-            ->whereBetween('date', [$senin->toDateString(), $akhir->toDateString()])
-            ->whereNotNull('check_out')
-            ->sum('duration_minutes');
+        return AttendanceService::weeklyMinutes($userId, $senin, $akhir, true);
     }
 
     // ── Format menit → "X jam Y menit" ───────────────────────────────────
