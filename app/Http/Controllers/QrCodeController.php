@@ -24,7 +24,11 @@ class QrCodeController extends Controller
         ]);
 
         $token = Str::uuid();
-        $expiresAt = now()->addMinutes($request->expires_in_minutes);
+        // In seconds, not minutes: the scan page can now send a
+        // fractional value (30 seconds = 0.5 minutes), and converting
+        // here guarantees the exact expiry instead of relying on
+        // fractional-minute handling.
+        $expiresAt = now()->addSeconds((int) round($request->expires_in_minutes * 60));
 
         // One QR code is for one employee only. It is marked used after
         // that employee's first successful scan, so the operator must
