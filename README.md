@@ -19,6 +19,7 @@ qrcode absensi adalah website sistem absensi yang menggunakan laravel, vite dan 
 - openssl
 - pdo_sqlite
 - sqlite3
+- zip
 
 Menghapus ; di bagian extension di php.ini
 
