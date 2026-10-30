@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import { QrCode, Clock, LogIn, LogOut, RefreshCw, AlertCircle } from 'lucide-vue-next';
+import { QrCode, Clock, LogIn, LogOut, RefreshCw, AlertCircle, ChevronUp, ChevronDown } from 'lucide-vue-next';
 
 interface Props {
   qrCodeImage?: string,
@@ -59,6 +59,17 @@ const formatTime = (date: Date): string => {
     minute: '2-digit'
   });
 };
+
+// Vertical stepper for the QR expiry: up arrow, value box, down
+// arrow, 1 minute per step, clamped to 1–60 minutes.
+const stepMinutes = (delta: number) => {
+  form.expires_in_minutes = Math.min(60, Math.max(1, Math.round(form.expires_in_minutes) + delta))
+}
+
+const clampMinutes = () => {
+  const n = Math.round(Number(form.expires_in_minutes))
+  form.expires_in_minutes = Number.isFinite(n) ? Math.min(60, Math.max(1, n)) : 2
+}
 
 const submit = () => {
   // Keep the chosen type: after one employee has used a code, the
@@ -289,22 +300,39 @@ onMounted(() => {
 
             <div class="space-y-3">
               <p class="text-sm font-semibold text-gray-800 dark:text-zinc-200">Masa Berlaku QR Code</p>
-              <div class="grid grid-cols-3 gap-3" role="group" aria-label="Masa berlaku QR Code">
+              <div class="inline-flex flex-col items-center gap-1">
                 <button
-                  v-for="minutes in [2, 5, 10]"
-                  :key="minutes"
                   type="button"
-                  :aria-pressed="form.expires_in_minutes === minutes"
-                  @click="form.expires_in_minutes = minutes"
-                  class="px-4 py-3 rounded-xl border transition-all text-sm font-semibold"
-                  :class="form.expires_in_minutes === minutes
-                    ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-300 dark:border-emerald-500/50 text-emerald-700 dark:text-emerald-400'
-                    : 'bg-gray-50 dark:bg-zinc-800/50 border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 hover:border-gray-300 dark:hover:border-zinc-600'"
+                  aria-label="Tambah 1 menit"
+                  :disabled="form.expires_in_minutes >= 60"
+                  @click="stepMinutes(1)"
+                  class="w-24 flex items-center justify-center py-1 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-zinc-400 hover:border-gray-300 dark:hover:border-zinc-600 disabled:opacity-40"
                 >
-                  {{ minutes }} menit
+                  <ChevronUp class="w-5 h-5" />
+                </button>
+                <div class="flex items-center gap-2">
+                  <input
+                    v-model.number="form.expires_in_minutes"
+                    @blur="clampMinutes"
+                    @change="clampMinutes"
+                    type="text"
+                    inputmode="numeric"
+                    aria-label="Masa berlaku QR Code dalam menit"
+                    class="w-16 px-2 py-2 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-center text-base font-bold text-gray-800 dark:text-zinc-100"
+                  />
+                  <span class="text-sm text-gray-600 dark:text-zinc-400">Menit</span>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Kurangi 1 menit"
+                  :disabled="form.expires_in_minutes <= 1"
+                  @click="stepMinutes(-1)"
+                  class="w-24 flex items-center justify-center py-1 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-zinc-400 hover:border-gray-300 dark:hover:border-zinc-600 disabled:opacity-40"
+                >
+                  <ChevronDown class="w-5 h-5" />
                 </button>
               </div>
-              <p class="text-sm text-gray-500 dark:text-zinc-400">Default 2 menit. Pilih lebih lama kalau antrean panjang.</p>
+              <p class="text-sm text-gray-500 dark:text-zinc-400">Default 2 menit. Naikkan kalau antrean panjang.</p>
             </div>
 
             <button
