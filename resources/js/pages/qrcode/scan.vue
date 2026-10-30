@@ -61,14 +61,14 @@ const formatTime = (date: Date): string => {
 };
 
 // Vertical stepper for the QR expiry: up arrow, value box, down
-// arrow, 1 minute per step, clamped to 1–60 minutes.
+// arrow, 1 minute per step, clamped to 1–10 minutes.
 const stepMinutes = (delta: number) => {
-  form.expires_in_minutes = Math.min(60, Math.max(1, Math.round(form.expires_in_minutes) + delta))
+  form.expires_in_minutes = Math.min(10, Math.max(1, Math.round(form.expires_in_minutes) + delta))
 }
 
 const clampMinutes = () => {
   const n = Math.round(Number(form.expires_in_minutes))
-  form.expires_in_minutes = Number.isFinite(n) ? Math.min(60, Math.max(1, n)) : 2
+  form.expires_in_minutes = Number.isFinite(n) ? Math.min(10, Math.max(1, n)) : 2
 }
 
 const submit = () => {
@@ -304,7 +304,7 @@ onMounted(() => {
                 <button
                   type="button"
                   aria-label="Tambah 1 menit"
-                  :disabled="form.expires_in_minutes >= 60"
+                  :disabled="form.expires_in_minutes >= 10"
                   @click="stepMinutes(1)"
                   class="w-24 flex items-center justify-center py-1 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-zinc-400 hover:border-gray-300 dark:hover:border-zinc-600 disabled:opacity-40"
                 >
