@@ -261,9 +261,11 @@ const columns: { key: SortKey; label: string; hint: string }[] = [
 
             <thead class="table-head">
               <tr>
-                <th v-for="col in columns" :key="col.key" class="text-left py-4 px-6 text-sm font-medium">
+                <th v-for="col in columns" :key="col.key" class="text-left py-4 px-6 text-sm font-medium"
+                  :aria-sort="sortKey === col.key ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'">
                   <button @click="toggleSort(col.key)" class="sort-btn group"
-                    :class="{ 'sort-btn--active': sortKey === col.key }" :title="col.hint">
+                    :class="{ 'sort-btn--active': sortKey === col.key }" :title="col.hint"
+                    :aria-label="`Urutkan berdasarkan ${col.label}`">
                     <span>{{ col.label }}</span>
                     <span class="sort-icon-wrap">
                       <ArrowUp v-if="getSortIcon(col.key) === 'asc'" class="sort-arrow sort-arrow--active" />

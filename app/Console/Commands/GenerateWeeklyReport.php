@@ -24,7 +24,7 @@ class GenerateWeeklyReport extends Command
      *
      * @var string
      */
-    protected $signature = 'app:generate-weekly-report {--week-start= : Tanggal Senin akhir minggu (Y-m-d)}
+    protected $signature = 'app:generate-weekly-report {--week-start= : Tanggal Senin minggu yang dibuat (YYYY-MM-DD, mis. 2026-10-26, atau D-M-YYYY, mis. 26-10-2026)}
     {--send-wa : Kirim hasil report ke grup WA}';
 
     /**
@@ -55,25 +55,37 @@ class GenerateWeeklyReport extends Command
 
         // Tentukan minggu yang akan di-generate
         if ($weekOption) {
-            try {
-                $dateFormat = Carbon::createFromFormat('j-n-Y', $weekOption);
-
-                if ($dateFormat->format('j-n-Y') !== $weekOption) {
-                    throw new Exception();
+            // Accept both the natural format (YYYY-MM-DD) and the old
+            // day-month-year format, so typing 2026-10-26 no longer
+            // fails with a confusing format error.
+            $dateFormat = null;
+            foreach (['Y-m-d', 'j-n-Y'] as $format) {
+                try {
+                    $candidate = Carbon::createFromFormat($format, $weekOption);
+                    if ($candidate->format($format) === $weekOption) {
+                        $dateFormat = $candidate;
+                        break;
+                    }
+                } catch (Exception $e) {
+                    // Try the next format.
                 }
+            }
 
-                if (!$dateFormat->isMonday()) {
-                    $this->error('--week-start harus hari Senin.');
-                    return self::FAILURE;
-                }
-
-                // Manual: dari parameter
-                $weekStart = Carbon::parse($weekOption)->startOfDay();
-                $weekEnd = $weekStart->copy()->endOfWeek(6);
-            } catch (Exception $e) {
-                $this->error('Format tanggal tidak valid. Gunakan format d-m-Y');
+            if (!$dateFormat) {
+                $this->error('Format tanggal tidak valid. Gunakan format YYYY-MM-DD (mis. 2026-10-26) atau D-M-YYYY (mis. 26-10-2026).');
                 return self::FAILURE;
             }
+
+            if (!$dateFormat->isMonday()) {
+                $this->error('--week-start harus hari Senin.');
+                return self::FAILURE;
+            }
+
+            // Manual: dari parameter. Use the parsed date itself, not
+            // a fresh parse of the string, so day-month-year input
+            // cannot be misread as month-day-year.
+            $weekStart = $dateFormat->copy()->startOfDay();
+            $weekEnd = $weekStart->copy()->endOfWeek(6);
         } else {
             if ($today->isSunday()) {
                 $weekStart = $today->copy()->startOfWeek(1);

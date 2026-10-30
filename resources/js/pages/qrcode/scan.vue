@@ -168,6 +168,8 @@ onMounted(() => {
             <p class="text-sm text-gray-600 dark:text-zinc-400 uppercase tracking-widest font-mono">QR Code</p>
             <span
               v-if="qrCodeImage"
+              role="status"
+              aria-live="polite"
               class="text-xs px-2 py-0.5 rounded-full font-mono"
               :class="{
                 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20': urgencyLevel === 'normal',
@@ -244,7 +246,7 @@ onMounted(() => {
         <div class="flex flex-col gap-5">
           <div>
             <h2 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Buat QR Code</h2>
-            <p class="text-sm text-gray-500 dark:text-zinc-400 mt-1">Satu QR Code untuk satu karyawan, berlaku 2 menit.</p>
+            <p class="text-sm text-gray-500 dark:text-zinc-400 mt-1">Satu QR Code untuk satu karyawan, berlaku {{ form.expires_in_minutes }} menit.</p>
           </div>
 
           <form @submit.prevent="submit" class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 flex flex-col gap-6">
@@ -253,6 +255,7 @@ onMounted(() => {
               <div class="grid grid-cols-2 gap-3">
                 <button
                   type="button"
+                  :aria-pressed="form.type === 'check_in'"
                   @click="form.type = 'check_in'"
                   class="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left"
                   :class="form.type === 'check_in'
@@ -268,6 +271,7 @@ onMounted(() => {
 
                 <button
                   type="button"
+                  :aria-pressed="form.type === 'check_out'"
                   @click="form.type = 'check_out'"
                   class="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left"
                   :class="form.type === 'check_out'
@@ -281,6 +285,26 @@ onMounted(() => {
                   </div>
                 </button>
               </div>
+            </div>
+
+            <div class="space-y-3">
+              <p class="text-sm font-semibold text-gray-800 dark:text-zinc-200">Masa Berlaku QR Code</p>
+              <div class="grid grid-cols-3 gap-3" role="group" aria-label="Masa berlaku QR Code">
+                <button
+                  v-for="minutes in [2, 5, 10]"
+                  :key="minutes"
+                  type="button"
+                  :aria-pressed="form.expires_in_minutes === minutes"
+                  @click="form.expires_in_minutes = minutes"
+                  class="px-4 py-3 rounded-xl border transition-all text-sm font-semibold"
+                  :class="form.expires_in_minutes === minutes
+                    ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-300 dark:border-emerald-500/50 text-emerald-700 dark:text-emerald-400'
+                    : 'bg-gray-50 dark:bg-zinc-800/50 border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 hover:border-gray-300 dark:hover:border-zinc-600'"
+                >
+                  {{ minutes }} menit
+                </button>
+              </div>
+              <p class="text-sm text-gray-500 dark:text-zinc-400">Default 2 menit. Pilih lebih lama kalau antrean panjang.</p>
             </div>
 
             <button

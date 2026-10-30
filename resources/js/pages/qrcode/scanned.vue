@@ -18,7 +18,7 @@
     </header>
 
     <main v-if="message" class="flex-1 w-full max-w-5xl mx-auto px-6 py-10 flex items-center justify-center">
-      <div class="w-full max-w-xl mx-auto bg-white border rounded-2xl p-8 flex flex-col items-center gap-5 text-center dark:bg-zinc-900"
+      <div role="status" aria-live="polite" class="w-full max-w-xl mx-auto bg-white border rounded-2xl p-8 flex flex-col items-center gap-5 text-center dark:bg-zinc-900"
         :class="success ? 'border-emerald-300 dark:border-emerald-500/30' : 'border-red-300 dark:border-red-500/30'">
         <div class="w-16 h-16 rounded-full flex items-center justify-center border"
           :class="success ? 'bg-emerald-50 border-emerald-300 dark:bg-emerald-500/15 dark:border-emerald-500/50' : 'bg-red-50 border-red-300 dark:bg-red-500/10 dark:border-red-500/40'">
