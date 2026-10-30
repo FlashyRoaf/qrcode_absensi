@@ -334,7 +334,6 @@ onMounted(() => {
                   <ChevronRight class="w-5 h-5" />
                 </button>
               </div>
-              <p class="text-sm text-gray-500 dark:text-zinc-400">Rentang 30 detik – 10 menit, langkah 30 detik. Default 2 menit.</p>
             </div>
 
             <button
