@@ -85,11 +85,22 @@ class AttendanceController extends Controller
                 && $r->date < now()->toDateString(),
         ]);
 
-        // Explicit paginator shape (see note in PenaltyController):
-        // the browser gets this from Inertia anyway, but tests see
-        // the raw paginator, which has no 'meta' key to assert on.
+        // Explicit data+meta shape, matching WeeklyReportController
+        // and the frontend's Props type. Note: a paginator's
+        // toArray() does NOT nest these under 'meta' — it flattens
+        // per_page/total at the top level — so build it by hand.
         return Inertia::render('admin/Attendance', [
-            'attendances' => $page->toArray(),
+            'attendances' => [
+                'data' => $page->items(),
+                'meta' => [
+                    'current_page' => $page->currentPage(),
+                    'last_page' => $page->lastPage(),
+                    'total' => $page->total(),
+                    'per_page' => $page->perPage(),
+                    'from' => $page->firstItem(),
+                    'to' => $page->lastItem(),
+                ],
+            ],
             'filters' => [
                 'search' => $search,
                 'date' => $date,
