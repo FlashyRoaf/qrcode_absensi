@@ -320,7 +320,7 @@ onMounted(() => {
                 <div
                   role="status"
                   aria-live="polite"
-                  class="px-4 h-10 flex items-center justify-center rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-base font-bold whitespace-nowrap text-gray-800 dark:text-zinc-100"
+                  class="w-48 shrink-0 px-4 h-10 flex items-center justify-center rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-base font-bold whitespace-nowrap text-gray-800 dark:text-zinc-100"
                 >
                   {{ formattedDuration }}
                 </div>
