@@ -16,7 +16,10 @@ test('mass assignment cannot set admin or device fields', function () {
     ]);
 
     expect($user->fresh()->is_admin)->toBeFalse()
-        ->and($user->fresh()->role)->toBeNull()
+        // Not null: role falls back to its database default
+        // ('anggota'). What matters is it is NOT the 'scan' value
+        // the mass assignment tried to set.
+        ->and($user->fresh()->role)->toBe('anggota')
         ->and($user->fresh()->device_id)->toBeNull();
 });
 

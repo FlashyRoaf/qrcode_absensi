@@ -85,8 +85,11 @@ class AttendanceController extends Controller
                 && $r->date < now()->toDateString(),
         ]);
 
+        // Explicit paginator shape (see note in PenaltyController):
+        // the browser gets this from Inertia anyway, but tests see
+        // the raw paginator, which has no 'meta' key to assert on.
         return Inertia::render('admin/Attendance', [
-            'attendances' => $page,
+            'attendances' => $page->toArray(),
             'filters' => [
                 'search' => $search,
                 'date' => $date,

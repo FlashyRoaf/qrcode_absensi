@@ -9,11 +9,11 @@ use App\Services\AttendanceService;
 use App\Services\PenaltyService;
 use Carbon\Carbon;
 
-function makeReport(User $user, string $status = 'tidak_memenuhi'): WeeklyReport
+function makeReport(User $user, string $status = 'tidak_memenuhi', string $weekStart = '2026-10-26'): WeeklyReport
 {
     return WeeklyReport::create([
         'user_id' => $user->id,
-        'week_start' => '2026-10-26',
+        'week_start' => $weekStart,
         'total_minutes' => 100,
         'status' => $status,
     ]);
@@ -29,7 +29,9 @@ test('penalty service creates a penalty for a failing report', function () {
 
 test('penalty service skips passing reports and duplicates', function () {
     $user = User::factory()->create();
-    $passing = makeReport($user, 'memenuhi');
+    // Different week from the failing report below, or the two
+    // creates collide on the unique (user_id, week_start) key.
+    $passing = makeReport($user, 'memenuhi', '2026-10-19');
     $failing = makeReport($user);
 
     expect(PenaltyService::createIfNeeded($passing))->toBeFalse();

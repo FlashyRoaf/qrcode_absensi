@@ -40,8 +40,11 @@ class PenaltyController extends Controller
 
         $penalties = $query->orderByDesc('id')->paginate(20)->withQueryString();
 
+        // Explicit paginator shape: identical to what Inertia
+        // serialises for the browser, but also assertable in tests
+        // (a raw paginator object has no 'meta' key).
         return Inertia::render('Penalty', [
-            'penalties' => $penalties,
+            'penalties' => $penalties->toArray(),
             'counts' => $counts,
             'filters' => ['tab' => $tab],
         ]);
@@ -161,7 +164,7 @@ class PenaltyController extends Controller
         $exemptWeeks = PenaltyExemptWeek::all();
 
         return Inertia::render('admin/Penalty', [
-            'penalties' => $penalties,
+            'penalties' => $penalties->toArray(),
             'counts' => $counts,
             'exemptWeeks' => $exemptWeeks,
             'filters' => [

@@ -22,16 +22,19 @@ test('admin attendance is paged at 50 rows', function () {
 test('penalties are paged at 20 rows', function () {
     $admin = User::factory()->create(['is_admin' => true]);
     $employee = User::factory()->create();
-    $report = WeeklyReport::create([
-        'user_id' => $employee->id,
-        'week_start' => '2026-10-26',
-        'total_minutes' => 100,
-        'status' => 'tidak_memenuhi',
-    ]);
+    // One report per penalty: penalties are unique per
+    // (user_id, weekly_report_id), so 25 penalties for one report
+    // would collide on that key.
     foreach (range(1, 25) as $i) {
+        $weeklyReport = WeeklyReport::create([
+            'user_id' => $employee->id,
+            'week_start' => now()->startOfWeek()->subWeeks($i)->toDateString(),
+            'total_minutes' => 100,
+            'status' => 'tidak_memenuhi',
+        ]);
         Penalty::create([
             'user_id' => $employee->id,
-            'weekly_report_id' => $report->id,
+            'weekly_report_id' => $weeklyReport->id,
             'status' => 'pending',
         ]);
     }
